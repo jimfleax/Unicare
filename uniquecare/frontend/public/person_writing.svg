@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 450" fill="none">
+  <!-- Desk Base / Border -->
+  <line x1="80" y1="410" x2="480" y2="410" stroke="#18181b" stroke-width="3.5" stroke-linecap="round" />
+
+  <!-- Sheet of Paper on Desk -->
+  <polygon points="170,370 320,370 300,410 145,410" fill="#ffffff" stroke="#18181b" stroke-width="3" />
+
+  <!-- Red Shirt Torso & Shoulders -->
+  <!-- Left Shoulder to Arm -->
+  <path d="M 120,400 C 90,320 90,260 170,200 C 220,165 290,165 340,200 C 420,260 420,320 440,390 L 400,410 C 370,340 370,300 325,275 L 305,370 L 195,370 L 175,275 C 130,300 130,340 100,410 Z" fill="#dc2626" stroke="#18181b" stroke-width="3.5" stroke-linejoin="round" />
+
+  <!-- Chest Center Button Placket Line -->
+  <line x1="250" y1="230" x2="275" y2="370" stroke="#18181b" stroke-width="2.5" />
+
+  <!-- Left Pocket on Red Shirt -->
+  <path d="M 285,280 L 325,280 C 325,325 285,325 285,280 Z" fill="#dc2626" stroke="#18181b" stroke-width="2.5" />
+
+  <!-- Shirt Seam / Detail Lines -->
+  <path d="M 165,280 L 190,370" stroke="#18181b" stroke-width="2.5" />
+  <path d="M 355,270 L 390,380" stroke="#18181b" stroke-width="2.5" />
+  <path d="M 390,385 C 400,390 405,405 395,410" stroke="#18181b" stroke-width="2.5" />
+
+  <!-- Shirt Collar (V-neck with collar flaps) -->
+  <polygon points="215,225 240,265 250,230" fill="#dc2626" stroke="#18181b" stroke-width="3" />
+  <polygon points="285,225 260,265 250,230" fill="#dc2626" stroke="#18181b" stroke-width="3" />
+  <polygon points="240,265 260,265 250,278" fill="#18181b" />
+
+  <!-- Face / Head Contour -->
+  <path d="M 215,130 C 205,170 215,225 250,225 C 285,225 295,170 285,130 C 280,90 220,90 215,130 Z" fill="#ffffff" stroke="#18181b" stroke-width="3.5" />
+
+  <!-- Black Hair (Matching Line Art) -->
+  <path d="M 210,135 C 205,80 230,40 270,45 C 300,50 300,90 290,135 C 285,100 275,80 250,85 C 225,90 215,110 210,135 Z" fill="#18181b" />
+
+  <!-- Facial Features (Line Art) -->
+  <!-- Eyebrows -->
+  <path d="M 225,125 C 232,122 238,124 240,126" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 255,120 C 263,118 270,120 273,122" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Eyes -->
+  <circle cx="236" cy="138" r="3" fill="#18181b" />
+  <circle cx="266" cy="133" r="3" fill="#18181b" />
+
+  <!-- Nose -->
+  <path d="M 244,136 L 248,160 L 258,155" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Smile -->
+  <path d="M 260,168 C 265,174 272,172 273,166" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Right Hand (Holding Pen & Resting on Paper) -->
+  <!-- Hand -->
+  <path d="M 175,360 C 160,345 140,360 140,380 C 140,395 160,405 180,395 C 190,390 190,375 175,360 Z" fill="#ffffff" stroke="#18181b" stroke-width="3" />
+  <path d="M 155,375 C 165,370 175,375 180,385" stroke="#18181b" stroke-width="2" />
+  <path d="M 160,390 C 170,385 178,390 182,398" stroke="#18181b" stroke-width="2" />
+
+  <!-- Pen -->
+  <polygon points="148,340 185,405 180,410 143,345" fill="#18181b" />
+  <polygon points="183,405 188,416 179,411" fill="#18181b" />
+
+  <!-- Left Hand (Resting Flat on Table) -->
+  <path d="M 390,390 C 375,390 355,400 350,420 C 350,435 390,445 420,425 C 425,410 410,390 390,390 Z" fill="#ffffff" stroke="#18181b" stroke-width="3" />
+  <!-- Fingers lines -->
+  <path d="M 360,430 C 370,415 375,410 380,435" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 375,435 C 385,418 390,415 395,438" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 390,438 C 400,420 405,420 410,438" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" />
+</svg>

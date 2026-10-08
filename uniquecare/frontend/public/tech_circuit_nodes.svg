@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" fill="none">
+  <defs>
+    <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dc2626" stop-opacity="0.4" />
+      <stop offset="60%" stop-color="#ef4444" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#71717a" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Circuit Traces -->
+  <path d="M 50,80 L 180,80 L 240,140 L 380,140 L 420,180 L 550,180" stroke="url(#traceGrad)" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path d="M 100,280 L 220,280 L 260,240 L 400,240 L 450,290 L 560,290" stroke="url(#traceGrad)" stroke-width="1.5" />
+  <path d="M 240,140 L 240,220 L 260,240" stroke="url(#traceGrad)" stroke-width="1.2" />
+  <path d="M 380,140 L 380,60 L 460,60" stroke="url(#traceGrad)" stroke-width="1.2" />
+
+  <!-- Secondary Fine Grid Lines -->
+  <line x1="180" y1="20" x2="180" y2="140" stroke="#3f3f46" stroke-width="1" stroke-opacity="0.2" />
+  <line x1="420" y1="120" x2="420" y2="240" stroke="#3f3f46" stroke-width="1" stroke-opacity="0.2" />
+
+  <!-- Node Points -->
+  <circle cx="180" cy="80" r="3" fill="#ef4444" />
+  <circle cx="180" cy="80" r="8" fill="url(#nodeGlow)" />
+
+  <circle cx="240" cy="140" r="3.5" fill="#ffffff" />
+  <circle cx="240" cy="140" r="9" fill="url(#nodeGlow)" />
+
+  <circle cx="380" cy="140" r="3" fill="#ef4444" />
+  <circle cx="420" cy="180" r="3" fill="#ffffff" />
+
+  <circle cx="260" cy="240" r="3" fill="#ef4444" />
+  <circle cx="260" cy="240" r="8" fill="url(#nodeGlow)" />
+
+  <circle cx="400" cy="240" r="3.5" fill="#ef4444" />
+
+  <!-- Corner Tech Accents -->
+  <path d="M 40,40 L 40,60 M 40,40 L 60,40" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6" />
+  <path d="M 560,40 L 560,60 M 560,40 L 540,40" stroke="#71717a" stroke-width="1.5" stroke-opacity="0.4" />
+  <path d="M 560,360 L 560,340 M 560,360 L 540,360" stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6" />
+  <path d="M 40,360 L 40,340 M 40,360 L 60,360" stroke="#71717a" stroke-width="1.5" stroke-opacity="0.4" />
+</svg>

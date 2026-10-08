@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 450" fill="none">
+  <defs>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Person Standing in Background -->
+  <!-- Dark Hair -->
+  <path d="M 280,105 C 275,65 340,65 335,105 C 345,95 355,100 350,115 C 335,130 330,140 330,150 L 285,150 C 285,140 280,130 270,115 C 265,100 275,95 280,105 Z" fill="#2d3142" />
+
+  <!-- Face / Neck -->
+  <circle cx="310" cy="115" r="30" fill="#fbc4ab" />
+  <path d="M 300,135 L 320,135 L 325,160 L 295,160 Z" fill="#f8ad9d" />
+
+  <!-- White / Cream Shirt Body -->
+  <path d="M 245,175 C 265,150 355,150 375,175 L 400,240 L 370,390 L 250,390 L 220,240 Z" fill="#f0f2f5" stroke="#2d3142" stroke-width="2" />
+
+  <!-- Dark Pants -->
+  <path d="M 260,380 L 360,380 L 375,445 L 320,445 L 310,400 L 300,445 L 245,445 Z" fill="#2d3142" />
+
+  <!-- Raised Arm with Thumbs Up holding Checkmark Badge -->
+  <!-- Arm -->
+  <path d="M 370,175 C 385,190 405,240 380,265 L 355,240 C 370,210 365,190 350,180 Z" fill="#f0f2f5" />
+  <!-- Hand & Thumb pointing up -->
+  <path d="M 345,170 C 340,150 355,140 355,160 C 365,160 370,170 365,185 Z" fill="#fbc4ab" />
+
+  <!-- Crimson Circular Badge with White Checkmark (Matching Screenshot) -->
+  <circle cx="355" cy="110" r="34" fill="#dc2626" filter="url(#cardShadow)" />
+  <path d="M 342,110 L 352,122 L 370,98" stroke="#ffffff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Left Arm Hanging down slightly -->
+  <circle cx="230" cy="380" r="16" fill="#fbc4ab" />
+
+  <!-- Modern Interface Card / Dialog in Foreground -->
+  <g filter="url(#cardShadow)">
+    <!-- White Card Base with Dark Rounded Border -->
+    <rect x="70" y="215" width="280" height="175" rx="16" fill="#ffffff" stroke="#2d3142" stroke-width="3" />
+
+    <!-- Window Three Dots Top Right -->
+    <circle cx="310" cy="235" r="3.5" fill="#2d3142" />
+    <circle cx="322" cy="235" r="3.5" fill="#2d3142" />
+    <circle cx="334" cy="235" r="3.5" fill="#2d3142" />
+
+    <!-- Placeholder Line 1 Header -->
+    <rect x="90" y="245" width="95" height="10" rx="5" fill="#e2e8f0" />
+
+    <!-- Placeholder Short Line Right -->
+    <rect x="295" y="270" width="30" height="11" rx="5.5" fill="#e2e8f0" />
+
+    <!-- Main Red Progress Bar 1 -->
+    <rect x="90" y="285" width="235" height="5" rx="2.5" fill="#f1f5f9" />
+    <rect x="90" y="285" width="200" height="5" rx="2.5" fill="#dc2626" />
+
+    <!-- Placeholder Short Line Right 2 -->
+    <rect x="295" y="320" width="30" height="11" rx="5.5" fill="#e2e8f0" />
+
+    <!-- Main Red Progress Bar 2 -->
+    <rect x="90" y="335" width="235" height="5" rx="2.5" fill="#f1f5f9" />
+    <rect x="90" y="335" width="125" height="5" rx="2.5" fill="#dc2626" />
+  </g>
+</svg>

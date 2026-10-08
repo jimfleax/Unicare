@@ -1,0 +1,147 @@
+.hero-3d-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-3d-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Floating HUD telemetry overlay cards */
+.hud-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(15, 15, 23, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-lg, 12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  user-select: none;
+}
+
+.hud-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.hud-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red, #ef4444);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.hud-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--txt, #ffffff);
+  letter-spacing: 0.3px;
+}
+
+.hud-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--txt-sub, #94a3b8);
+}
+
+.hud-status.status-active {
+  color: #4ade80;
+}
+
+.hud-val {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--red, #ef4444);
+}
+
+/* Card placement */
+.hud-top-left {
+  top: 20px;
+  left: 0;
+  animation: hudFloat 4s ease-in-out infinite alternate;
+}
+
+.hud-bottom-right {
+  bottom: 30px;
+  right: 10px;
+  animation: hudFloat 5s ease-in-out infinite alternate-reverse;
+}
+
+.hud-top-right {
+  top: 40px;
+  right: 0;
+  animation: hudFloat 4.5s ease-in-out 1s infinite alternate;
+}
+
+@keyframes hudFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ── Light Mode HUD Card Overrides ── */
+[data-theme="light"] .hud-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(220, 38, 38, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+[data-theme="light"] .hud-card:hover {
+  border-color: rgba(220, 38, 38, 0.3);
+  box-shadow: 0 12px 32px rgba(220, 38, 38, 0.12), 0 0 0 1px rgba(220, 38, 38, 0.2);
+}
+
+[data-theme="light"] .hud-icon {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+}
+
+[data-theme="light"] .hud-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .hud-status {
+  color: #64748b;
+}
+
+[data-theme="light"] .hud-status.status-active {
+  color: #16a34a;
+}
+
+[data-theme="light"] .hud-val {
+  color: #dc2626;
+}
