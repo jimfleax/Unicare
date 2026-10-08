@@ -30,7 +30,7 @@ import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import type { DisplayRole } from './context/AuthContext'
-import { fetchIssuesFromApi, markNotificationsReadApi, markNotificationReadApi, updateIncidentStatusApi, fetchLocationsApi, fetchCategoriesApi, fetchPrioritiesApi, fetchStatusesApi } from './services/api'
+import { fetchIssuesFromApi, createIssueApi, addRepairLogApi, markNotificationsReadApi, markNotificationReadApi, updateIncidentStatusApi, fetchLocationsApi, fetchCategoriesApi, fetchPrioritiesApi, fetchStatusesApi, getStoredToken } from './services/api'
 import { INSTITUTION_NAME } from './config/branding'
 
 import useSWR from 'swr'
@@ -51,6 +51,7 @@ interface IssueRecord {
   time?: string
   description?: string
   category?: string
+  activityLogs?: any[]
 }
 
 interface AssetRecord {
@@ -154,17 +155,19 @@ function IssueDetailModal({ issue, onClose, onStatusChange }: {
   onStatusChange: (id: string, status: 'Open' | 'In Progress' | 'Resolved') => void;
 }) {
   const [comment, setComment] = useState('')
-  const { data: comments = [], mutate } = useSWR(`/incidents/${issue.id}/activity`, fetcher)
+  const { data: fullIssue, mutate } = useSWR(`/incidents/${issue.id}`, fetcher)
   const { data: statuses = [] } = useSWR('statuses', fetchStatusesApi)
+  
+  const comments = fullIssue?.activityLogs?.map((log: any) => ({
+    author: log.createdBy?.name || 'Unknown',
+    time: new Date(log.createdAt).toLocaleString(),
+    text: log.message
+  })) || issue.activityLogs || []
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!comment.trim()) return
-    await fetch(`/api/incidents/${issue.id}/activity`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: comment })
-    })
+    await addRepairLogApi(issue.id, comment)
     mutate()
     setComment('')
   }
@@ -825,31 +828,6 @@ export default function App() {
     localStorage.setItem('ucare-theme', theme)
   }, [theme])
 
-  const { data: recordsData, mutate: mutateRecords } = useSWR('/incidents', fetcher)
-  const { data: assetsData } = useSWR('/assets', fetcher)
-
-  const records = (recordsData || []).map((inc: any) => ({
-    id: inc._id,
-    title: inc.assetId?.name || inc.description?.substring(0, 20) || 'Unknown Issue',
-    location: inc.assetId?.location || 'Campus',
-    priority: 'Medium', // Default for now
-    status: inc.status || 'Open',
-    assignee: inc.assignedTo?.name || 'Unassigned',
-    ticketId: 'UC-' + String(inc._id).slice(-6).toUpperCase(),
-    reporter: inc.reportedBy?.name ? inc.reportedBy.name + (inc.reportedBy.rollNo ? ' (' + inc.reportedBy.rollNo + ')' : '') : 'Unknown',
-    date: new Date(inc.createdAt).toLocaleDateString(),
-    time: new Date(inc.createdAt).toLocaleTimeString(),
-    description: inc.description || '',
-    category: inc.assetId?.category || 'General',
-    activityLogs: inc.activityLogs || []
-  }))
-  const assets = assetsData || []
-
-  const setRecords = (_val: any) => {
-    mutateRecords();
-  }
-  const setAssets = () => {}
-
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
   }
@@ -866,7 +844,7 @@ export default function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordPage theme={theme} toggleTheme={toggleTheme} />} />
                     <Route path="/*" element={
             <ProtectedRoute>
-              <Portal records={records} setRecords={setRecords} assets={assets} theme={theme} toggleTheme={toggleTheme} />
+              <Portal theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           } />
         </Routes>
@@ -875,13 +853,41 @@ export default function App() {
   )
 }
 
-function Portal({ records, setRecords, assets, theme, toggleTheme }: { 
-  records: IssueRecord[]; 
-  setRecords: React.Dispatch<React.SetStateAction<IssueRecord[]>>;
-  assets: AssetRecord[];
+function Portal({ theme, toggleTheme }: { 
   theme: 'dark' | 'light';
   toggleTheme: () => void;
 }) {
+  const token = getStoredToken()
+  const { data: recordsData, mutate: mutateRecords } = useSWR(token ? '/incidents' : null, fetcher)
+  const { data: assetsData } = useSWR(token ? '/assets' : null, fetcher)
+
+  const records: IssueRecord[] = (recordsData || []).map((inc: any) => ({
+    id: inc._id,
+    title: inc.assetId?.name || inc.description?.substring(0, 20) || 'Unknown Issue',
+    location: inc.assetId?.location || 'Campus',
+    priority: inc.priority || 'Medium',
+    status: inc.status || 'Open',
+    assignee: inc.assignedTo?.name || 'Unassigned',
+    ticketId: 'UC-' + String(inc._id).slice(-6).toUpperCase(),
+    reporter: inc.reportedBy?.name ? inc.reportedBy.name + (inc.reportedBy.rollNo ? ' (' + inc.reportedBy.rollNo + ')' : '') : 'Unknown',
+    date: new Date(inc.createdAt).toLocaleDateString(),
+    time: new Date(inc.createdAt).toLocaleTimeString(),
+    description: inc.description || '',
+    category: inc.assetId?.category || 'General',
+    activityLogs: inc.activityLogs || []
+  }))
+  const assets: AssetRecord[] = assetsData || []
+
+  const setRecords: React.Dispatch<React.SetStateAction<IssueRecord[]>> = (val) => {
+    if (typeof val === 'function') {
+      const updated = val(records);
+      mutateRecords(updated, false);
+    } else {
+      mutateRecords(val, false);
+    }
+  };
+  const setAssets = () => {};
+
   const { user, isAuthenticated, displayRole: role, logout } = useAuth()
   const [sideOpen, setSideOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<IssueRecord | null>(null)
@@ -1578,20 +1584,27 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Check if there is a real createIssue endpoint. Wait, onAddRecord handles it.
-    onAddRecord({
-      id: scannedAsset ? `UC-${scannedAsset.id.replace('INV-', '')}` : `UC-EFDA${Math.floor(10 + Math.random() * 90)}`,
+    const payload = {
+      id: scannedAsset ? scannedAsset.id : undefined,
       title,
       location,
       category,
       priority,
-      status: 'Open',
+      status: 'Open' as const,
       assignee: 'Unassigned',
       reporter: user?.name || 'Unknown',
       date: new Date().toISOString().split('T')[0],
       description,
-    })
-    setSubmitted(true)
+    };
+    
+    const result = await createIssueApi(payload);
+    
+    if (result) {
+      onAddRecord(result);
+      setSubmitted(true);
+    } else {
+      alert("Failed to create the issue. Please try again.");
+    }
   }
 
   if (submitted) {

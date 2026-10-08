@@ -13,6 +13,7 @@ export interface IIncident extends Document {
   reportedBy: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId;
   status: 'Open' | 'In Progress' | 'Resolved'; // Open -> In Progress -> Resolved
+  priority: 'Critical' | 'High' | 'Medium' | 'Low';
   description: string;
   mediaUrls: string[];
   activityLogs: IActivityLog[];
@@ -35,6 +36,11 @@ const incidentSchema = new Schema<IIncident>(
       type: String,
       enum: INCIDENT_STATUSES, // Open -> In Progress -> Resolved
       default: 'Open',
+    },
+    priority: {
+      type: String,
+      enum: ['Critical', 'High', 'Medium', 'Low'],
+      default: 'Medium',
     },
     description: { type: String, required: true },
     mediaUrls: [{ type: String }],

@@ -56,7 +56,7 @@ export interface MeResponse {
 }
 
 /* ── Auth Token Helper ─────────────────────────────────────── */
-function getStoredToken(): string | null {
+export function getStoredToken(): string | null {
   try {
     const raw = localStorage.getItem('ucare-auth');
     if (!raw) return null;
@@ -155,6 +155,7 @@ export async function createIssueApi(issue: Partial<IssueRecord>): Promise<Issue
       description: issue.description || issue.title,
       location: issue.location,
       category: issue.category,
+      priority: issue.priority || 'Medium',
       tagId: issue.id
     };
     const res = await fetch(`${API_BASE}/incidents`, {

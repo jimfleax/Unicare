@@ -7,7 +7,7 @@ import { AppError } from '../utils/AppError';
 import { createTargetedNotification } from '../services/notificationService';
 
 export const createIncident = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { assetId, tagId, title, description, mediaUrls, location, category } = req.body;
+  const { assetId, tagId, title, description, mediaUrls, location, category, priority } = req.body;
   if (!description && !title) {
     return next(new AppError('Missing required fields: description or title', 400));
   }
@@ -33,6 +33,7 @@ export const createIncident = catchAsync(async (req: AuthRequest, res: Response,
   const incident = await Incident.create({
     assetId: asset._id,
     description: description || title,
+    priority: priority || 'Medium',
     mediaUrls: mediaUrls || [],
     reportedBy: req.user._id,
     status: 'Open'
