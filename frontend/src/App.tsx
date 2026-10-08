@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import { SystemStatus } from './components/shared/SystemStatus'
 import {
   BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate,
@@ -855,6 +856,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <SpeedInsights />
       <BrowserRouter>
         <ScrollRevealManager />
         <div className="global-ambient-glow" aria-hidden="true" />
