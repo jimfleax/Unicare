@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
-import User from '../src/models/User';
-import Asset from '../src/models/Asset';
+import User, { IUser } from '../src/models/User';
+import Asset, { IAsset } from '../src/models/Asset';
 import Notification from '../src/models/Notification';
 import Incident from '../src/models/Incident';
 import { generateToken } from '../src/services/authService';
@@ -10,10 +10,10 @@ describe('Notification Endpoints', () => {
   let studentToken: string;
   let adminToken: string;
   let technicianToken: string;
-  let student: any;
-  let admin: any;
-  let technician: any;
-  let asset: any;
+  let student: IUser;
+  let admin: IUser;
+  let technician: IUser;
+  let asset: IAsset;
 
   beforeEach(async () => {
     await User.deleteMany({});

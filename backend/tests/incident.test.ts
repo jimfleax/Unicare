@@ -1,17 +1,16 @@
 import request from 'supertest';
 import app from '../src/app';
-import User from '../src/models/User';
-import Asset from '../src/models/Asset';
+import User, { IUser } from '../src/models/User';
+import Asset, { IAsset } from '../src/models/Asset';
 import Incident from '../src/models/Incident';
-import mongoose from 'mongoose';
 import { generateToken } from '../src/services/authService';
 
 describe('Incident Endpoints', () => {
   let token: string;
-  let user: any;
-  let admin: any;
+  let user: IUser;
+  let admin: IUser;
   let adminToken: string;
-  let asset: any;
+  let asset: IAsset;
 
   beforeEach(async () => {
     await User.deleteMany({});
@@ -76,7 +75,7 @@ describe('Incident Endpoints', () => {
       
       // Asset should be newly created
       const incident = await Incident.findById(res.body.data.incident._id).populate('assetId');
-      expect((incident?.assetId as any).name).toBe('Water leak');
+      expect((incident?.assetId as unknown as { name: string }).name).toBe('Water leak');
     });
 
     it('should return 400 if description and title are missing', async () => {
@@ -154,7 +153,7 @@ describe('Incident Endpoints', () => {
         .set('Authorization', `Bearer ${adminToken}`);
       
       expect(res.status).toBe(200);
-      const fetchedIncident = res.body.data.find((i: any) => i._id === incident._id.toString());
+      const fetchedIncident = res.body.data.find((i: { _id: string }) => i._id === incident._id.toString());
       expect(fetchedIncident.activityLogs[0].message).toBe('Initial check');
       expect(fetchedIncident.activityLogs[0].createdBy.name).toBe('Test Admin');
     });

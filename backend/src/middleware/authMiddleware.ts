@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/User';
+import User, { IUser } from '../models/User';
 import { verifyToken } from '../services/authService';
 import { AppError } from '../utils/AppError';
 import { catchAsync } from '../utils/catchAsync';
 
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: IUser;
 }
 
 // 🛡️ Middleware to verify JWT and attach authenticated user to req.user
@@ -21,7 +21,7 @@ export const protect = catchAsync(async (req: AuthRequest, res: Response, next: 
   }
 
   try {
-    const decoded = verifyToken(token);
+    const decoded = verifyToken(token) as { id: string };
 
     const currentUser = await User.findById(decoded.id).select('-password');
     if (!currentUser) {
@@ -30,7 +30,7 @@ export const protect = catchAsync(async (req: AuthRequest, res: Response, next: 
 
     req.user = currentUser;
     next();
-  } catch (error) {
+  } catch {
     return next(new AppError('Not authorized, token failed or expired', 401));
   }
 });

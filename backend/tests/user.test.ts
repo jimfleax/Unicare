@@ -48,7 +48,7 @@ describe('User Endpoints', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(2);
       
-      const tech1 = res.body.data.find((t: any) => t.email === 'tech1@example.com');
+      const tech1 = res.body.data.find((t: { email: string }) => t.email === 'tech1@example.com');
       expect(tech1).toBeDefined();
       expect(tech1.name).toBe('Tech One');
       expect(tech1.role).toBe('technician');

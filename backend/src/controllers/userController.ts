@@ -2,14 +2,16 @@ import { Request, Response } from 'express';
 import User from '../models/User';
 import { catchAsync } from '../utils/catchAsync';
 
+import { AuthRequest } from '../middleware/authMiddleware';
+
 export const getTechnicians = catchAsync(async (req: Request, res: Response) => {
   const technicians = await User.find({ role: 'technician' });
   
   // Mongoose documents can be converted to JSON directly or we can use map
   // To ensure the _id is mapped to id, we can convert to objects
   const data = technicians.map(tech => {
-    const obj: any = tech.toObject();
-    obj.id = obj._id;
+    const obj = tech.toObject() as unknown as Record<string, unknown>;
+    obj['id'] = obj['_id'];
     return obj;
   });
 
@@ -19,9 +21,9 @@ export const getTechnicians = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
-export const updateMyStatus = catchAsync(async (req: Request, res: Response) => {
+export const updateMyStatus = catchAsync(async (req: AuthRequest, res: Response) => {
   const { status } = req.body;
-  const user = (req as any).user;
+  const user = req.user;
 
   if (!user) {
     return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -65,7 +67,7 @@ export const updateTechnician = catchAsync(async (req: Request, res: Response) =
   const updatableFields = ['name', 'email', 'title', 'specialty', 'phone', 'avatarColor', 'status'];
   updatableFields.forEach((field) => {
     if (req.body[field] !== undefined) {
-      (user as any)[field] = req.body[field];
+      (user as unknown as Record<string, unknown>)[field] = req.body[field];
     }
   });
 
@@ -89,12 +91,12 @@ export const deleteTechnician = catchAsync(async (req: Request, res: Response) =
 
 
 export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const filter: any = req.query.role ? { role: req.query.role } : {};
+  const filter: Record<string, unknown> = req.query.role ? { role: req.query.role } : {};
   const users = await User.find(filter);
   
   const data = users.map(u => {
-    const obj: any = u.toObject();
-    obj.id = obj._id;
+    const obj = u.toObject() as unknown as Record<string, unknown>;
+    obj['id'] = obj['_id'];
     return obj;
   });
 

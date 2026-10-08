@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Incident from '../models/Incident';
-import Asset from '../models/Asset';
+import Asset, { IAsset } from '../models/Asset';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/AppError';
 import { createTargetedNotification } from '../services/notificationService';
@@ -12,7 +12,7 @@ export const createIncident = catchAsync(async (req: AuthRequest, res: Response,
     return next(new AppError('Missing required fields: description or title', 400));
   }
 
-  let asset: any = null;
+  let asset: IAsset | null = null;
   if (assetId) {
     asset = await Asset.findById(assetId);
   } else if (tagId) {
@@ -35,7 +35,7 @@ export const createIncident = catchAsync(async (req: AuthRequest, res: Response,
     description: description || title,
     priority: priority || 'Medium',
     mediaUrls: mediaUrls || [],
-    reportedBy: req.user._id,
+    reportedBy: req.user!._id,
     status: 'Open'
   });
 
@@ -54,10 +54,10 @@ export const createIncident = catchAsync(async (req: AuthRequest, res: Response,
   });
 });
 
-export const getIncidents = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getIncidents = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
   let filter = {};
-  if (req.user.role === 'student') {
-    filter = { reportedBy: req.user._id };
+  if (req.user!.role === 'student') {
+    filter = { reportedBy: req.user!._id };
   }
 
   const incidents = await Incident.find(filter)
@@ -83,7 +83,7 @@ export const getIncidentById = catchAsync(async (req: AuthRequest, res: Response
     return next(new AppError('Incident not found', 404));
   }
 
-  if (req.user.role === 'student' && incident.reportedBy._id.toString() !== req.user._id.toString()) {
+  if (req.user!.role === 'student' && incident.reportedBy._id.toString() !== req.user!._id.toString()) {
     return next(new AppError('Forbidden', 403));
   }
 
@@ -106,7 +106,7 @@ export const updateIncidentStatus = catchAsync(async (req: AuthRequest, res: Res
 
   incident.status = status;
   if (status === 'In Progress' && !incident.assignedTo) {
-    incident.assignedTo = req.user._id;
+    incident.assignedTo = req.user!._id;
   }
   await incident.save();
 
@@ -144,7 +144,7 @@ export const addActivityLog = catchAsync(async (req: AuthRequest, res: Response,
 
   incident.activityLogs.push({
     message: content,
-    createdBy: req.user._id,
+    createdBy: req.user!._id,
     createdAt: new Date()
   });
 

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 // Declare a cached variable in the global scope to hold the connection promise.
 // Caching the promise rather than the connection prevents race conditions
 // when multiple concurrent requests hit a cold container simultaneously.
-let cachedDb: any = null;
+let cachedDb: Promise<typeof mongoose> | null = null;
 
 export const connectDB = async () => {
   // If a connection already exists and is fully ready, return it immediately

@@ -15,12 +15,12 @@ router.get('/', catchAsync(async (req: AuthRequest, res: Response) => {
   const limit = parseInt(req.query.limit as string) || 50;
   const skip = (page - 1) * limit;
 
-  const notifications = await Notification.find({ recipient: req.user._id })
+  const notifications = await Notification.find({ recipient: req.user!._id })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
-  const total = await Notification.countDocuments({ recipient: req.user._id });
+  const total = await Notification.countDocuments({ recipient: req.user!._id });
 
   res.status(200).json({
     success: true,
@@ -35,13 +35,13 @@ router.get('/', catchAsync(async (req: AuthRequest, res: Response) => {
 }));
 
 router.put('/mark-read', catchAsync(async (req: AuthRequest, res: Response) => {
-  await Notification.updateMany({ recipient: req.user._id, unread: true }, { unread: false });
+  await Notification.updateMany({ recipient: req.user!._id, unread: true }, { unread: false });
   res.status(200).json({ success: true, message: 'All notifications marked as read' });
 }));
 
 router.put('/:id/mark-read', catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const notification = await Notification.findOneAndUpdate(
-    { _id: req.params.id, recipient: req.user._id },
+    { _id: req.params.id, recipient: req.user!._id },
     { unread: false },
     { new: true }
   );

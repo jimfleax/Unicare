@@ -18,7 +18,7 @@ export const getAssetByTagId = catchAsync(async (req: AuthRequest, res: Response
   });
 });
 
-export const getAllAssets = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAllAssets = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
   const assets = await Asset.find({});
   res.status(200).json({
     success: true,
@@ -26,7 +26,7 @@ export const getAllAssets = catchAsync(async (req: AuthRequest, res: Response, n
   });
 });
 
-export const createAsset = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createAsset = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
   const asset = await Asset.create(req.body);
   res.status(201).json({
     success: true,

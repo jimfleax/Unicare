@@ -17,12 +17,23 @@ export const sendPushNotification = async (payload: object, target: { userId?: s
   try {
     const subscriptions = await Subscription.find().populate('userId');
     
-    const targetSubs = subscriptions.filter((sub: any) => {
+    interface PopulatedSubscription {
+      _id: unknown;
+      endpoint: string;
+      keys: { p256dh: string; auth: string };
+      userId?: {
+        _id: { toString: () => string };
+        role?: string;
+      };
+    }
+
+    const targetSubs = subscriptions.filter((s) => {
+      const sub = s as unknown as PopulatedSubscription;
       if (!sub.userId) return false;
       if (target.userId && sub.userId._id.toString() !== target.userId) return false;
       if (target.role && sub.userId.role !== target.role) return false;
       return true;
-    });
+    }) as unknown as PopulatedSubscription[];
 
     const notificationPayload = JSON.stringify(payload);
     

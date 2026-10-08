@@ -1,16 +1,15 @@
 import request from 'supertest';
 import app from '../src/app';
-import User from '../src/models/User';
+import User, { IUser } from '../src/models/User';
 import Asset from '../src/models/Asset';
 import Incident from '../src/models/Incident';
-import mongoose from 'mongoose';
 import { generateToken } from '../src/services/authService';
 
 describe('Analytics Endpoints', () => {
   let adminToken: string;
-  let admin: any;
+  let admin: IUser;
   let studentToken: string;
-  let student: any;
+  let student: IUser;
 
   beforeEach(async () => {
     await User.deleteMany({});

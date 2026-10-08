@@ -4,8 +4,15 @@ import { AppError } from '../utils/AppError';
 /**
  * Global Error Handler Middleware
  */
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  let error = { ...err };
+interface CustomError extends Error {
+  statusCode?: number;
+  status?: string;
+  code?: number;
+  errors?: Record<string, { message: string }>;
+}
+
+export const errorHandler = (err: CustomError, req: Request, res: Response, _next: NextFunction) => {
+  let error = { ...err } as CustomError;
   error.message = err.message;
   
   if (err.name === 'CastError') {
@@ -18,8 +25,8 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     error = new AppError(message, 400);
   }
   
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map((val: any) => val.message).join(', ');
+  if (err.name === 'ValidationError' && err.errors) {
+    const message = Object.values(err.errors).map((val: { message: string }) => val.message).join(', ');
     error = new AppError(message, 400);
   }
   

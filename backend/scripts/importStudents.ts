@@ -46,8 +46,8 @@ const run = async () => {
         );
         credentials += `| ${student.name} | ${plainPassword} |\n`;
         validCount++;
-      } catch (dbErr: any) {
-        console.error(`DB error for ${student.email}:`, dbErr.message);
+      } catch (dbErr: unknown) {
+        console.error(`DB error for ${student.email}:`, dbErr instanceof Error ? dbErr.message : String(dbErr));
         errorCount++;
       }
     }

@@ -1,4 +1,4 @@
-import User from '../models/User';
+import User, { IUser } from '../models/User';
 import Notification from '../models/Notification';
 import { sendPushNotification } from './pushService';
 
@@ -8,7 +8,7 @@ interface NotificationPayload {
   location?: string;
   priority?: 'Low' | 'Medium' | 'High' | 'Critical';
   time: string;
-  incidentId?: any;
+  incidentId?: unknown;
 }
 
 interface Target {
@@ -17,7 +17,7 @@ interface Target {
 }
 
 export const createTargetedNotification = async (payload: NotificationPayload, target: Target) => {
-  let recipients: any[] = [];
+  let recipients: IUser[] = [];
 
   if (target.userId) {
     const user = await User.findById(target.userId);
@@ -25,7 +25,7 @@ export const createTargetedNotification = async (payload: NotificationPayload, t
       recipients.push(user);
     }
   } else if (target.role) {
-    recipients = await User.find({ role: target.role as any });
+    recipients = await User.find({ role: target.role as 'student' | 'technician' | 'admin' });
   }
 
   const notifications = recipients.map(user => ({

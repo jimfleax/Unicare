@@ -1,5 +1,4 @@
 import request from 'supertest';
-import mongoose from 'mongoose';
 import app from '../src/app';
 import Metadata from '../src/models/Metadata';
 import Asset from '../src/models/Asset';

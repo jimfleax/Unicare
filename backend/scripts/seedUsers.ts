@@ -44,7 +44,7 @@ const seedUsers = async () => {
       if (!existingUser) {
         const salt = await bcrypt.genSalt(10);
         u.password = await bcrypt.hash(u.password, salt);
-        await User.create(u as any);
+        await User.create(u);
         console.log(`Created user: ${u.email} (${u.role})`);
       } else {
         console.log(`User already exists: ${u.email}`);

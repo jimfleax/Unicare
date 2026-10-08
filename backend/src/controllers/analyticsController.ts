@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import Incident from '../models/Incident';
 import { catchAsync } from '../utils/catchAsync';
 
-export const getAnalytics = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAnalytics = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
   const totalIncidents = await Incident.countDocuments();
   const resolvedIncidents = await Incident.countDocuments({ status: 'Resolved' });
   
@@ -59,11 +59,11 @@ export const getAnalytics = catchAsync(async (req: AuthRequest, res: Response, n
   });
 });
 
-export const getTrends = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getTrends = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
   const { period } = req.query as { period: string };
   
   const now = new Date();
-  let startDate = new Date();
+  const startDate = new Date();
   let format = '%Y-%m-%d';
   let numItems = 7;
   

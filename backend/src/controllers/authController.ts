@@ -109,7 +109,7 @@ export const googleLogin = catchAsync(async (req: Request, res: Response, next: 
     const payload = JSON.parse(jsonPayload);
     email = payload.email;
     name = payload.name;
-  } catch (error) {
+  } catch {
     // If it's not a real JWT during tests, fallback to mock if required
     // or just return 401. Let's return 401.
     return next(new AppError('Invalid Google token', 401));
@@ -147,15 +147,16 @@ export const googleLogin = catchAsync(async (req: Request, res: Response, next: 
 
 // 👤 GET CURRENT USER PROFILE
 // GET /api/auth/me
-export const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+export const getMe = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+  const authReq = req as Request & { user?: { _id: unknown; name: string; email: string; role: string } };
   res.json({
     success: true,
     data: {
       user: {
-        _id: (req as any).user._id,
-        name: (req as any).user.name,
-        email: (req as any).user.email,
-        role: (req as any).user.role
+        _id: authReq.user?._id,
+        name: authReq.user?.name,
+        email: authReq.user?.email,
+        role: authReq.user?.role
       }
     }
   });

@@ -1,8 +1,6 @@
 import request from 'supertest';
 import app from '../src/app';
 import User from '../src/models/User';
-import mongoose from 'mongoose';
-import jwt from 'jsonwebtoken';
 import { generateToken } from '../src/services/authService';
 
 describe('Auth Endpoints', () => {

@@ -1,7 +1,6 @@
 import request from 'supertest';
 import app from '../src/app';
 import Inventory from '../src/models/Inventory';
-import mongoose from 'mongoose';
 
 describe('Inventory Endpoints', () => {
   beforeEach(async () => {
@@ -40,7 +39,7 @@ describe('Inventory Endpoints', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(2);
       
-      const valve = res.body.data.find((i: any) => i.sku === 'VL-002');
+      const valve = res.body.data.find((i: { sku: string }) => i.sku === 'VL-002');
       expect(valve.status).toBe('Low Stock');
     });
   });

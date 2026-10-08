@@ -17,8 +17,8 @@ export const createMaintenanceSchedule = async (req: Request, res: Response): Pr
     });
 
     res.status(201).json({ success: true, data: schedule });
-  } catch (error: any) {
-    res.status(400).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    res.status(400).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
   }
 };
 
@@ -31,7 +31,7 @@ export const getMaintenanceSchedules = async (req: Request, res: Response): Prom
       .populate('assetId', 'name')
       .populate('assignedTo', 'name email');
     res.status(200).json({ success: true, data: schedules });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
   }
 };

@@ -5,6 +5,7 @@ const ISSUE_PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 import { INCIDENT_STATUSES } from '../models/Incident';
 import Faq from '../models/Faq';
 import Metadata from '../models/Metadata';
+import { IUser } from '../models/User';
 import { catchAsync } from '../utils/catchAsync';
 
 // Incident has no location/category fields; Issue (user-reported) did.
@@ -78,7 +79,7 @@ export const getFaqs = catchAsync(async (_req: AuthRequest, res: Response, _next
 });
 
 export const getStudentProfile = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
-  const u = req.user || {};
+  const u: Partial<IUser> = req.user || {};
   res.status(200).json({
     success: true,
     data: {

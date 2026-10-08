@@ -30,10 +30,11 @@ const notificationSchema = new Schema<INotification>(
 // Add a toJSON transform to rename _id to id so frontend can use n.id
 notificationSchema.set('toJSON', {
   virtuals: true,
-  transform: (doc, ret: any) => {
-    ret.id = ret._id;
-    delete ret._id;
-    delete ret.__v;
+  transform: (doc, ret) => {
+    const r = ret as unknown as Record<string, unknown>;
+    r['id'] = r['_id'];
+    delete r['_id'];
+    delete r['__v'];
   }
 });
 
