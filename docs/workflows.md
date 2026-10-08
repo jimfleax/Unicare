@@ -1,6 +1,6 @@
 # User Workflows & Roles
 
-Unique-Care implements strict Role-Based Access Control (RBAC). The system adapts its interface and capabilities based on the authenticated user's role.
+Unicare implements strict Role-Based Access Control (RBAC). The system adapts its interface and capabilities based on the authenticated user's role.
 
 ## 1. Student / Faculty Workflow
 **Goal:** Quickly report infrastructure problems with zero friction.

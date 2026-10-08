@@ -1,6 +1,6 @@
 # Frontend Documentation
 
-The Unique-Care frontend is a highly interactive, real-time single-page application (SPA). Built with React 19, Vite, and Tailwind CSS v4, it focuses on performance and role-specific user experiences.
+The Unicare frontend is a highly interactive, real-time single-page application (SPA). Built with React 19, Vite, and Tailwind CSS v4, it focuses on performance and role-specific user experiences.
 
 ## Key Technologies
 - **React 19 & Vite**: Provides a fast development environment and optimized production builds.

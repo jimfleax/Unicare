@@ -61,7 +61,7 @@ const buildStudents = () =>
   });
 
 const run = async () => {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/uniquecare';
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unicare';
   const dbName = process.env.DB_NAME || 'ucare_test';
   await mongoose.connect(mongoUri, { dbName });
   console.log(`Connected to ${dbName}`);

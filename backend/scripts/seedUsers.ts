@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const seedUsers = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/uniquecare';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unicare';
     const dbName = process.env.DB_NAME || 'ucare_test';
     await mongoose.connect(mongoUri, { dbName });
     console.log('MongoDB Connected...');

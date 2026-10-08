@@ -1,6 +1,6 @@
 # Architecture & Technical Design
 
-The Unique-Care platform adopts a decoupled client-server architecture, allowing the frontend client to scale independently of the API and database layers.
+The Unicare platform adopts a decoupled client-server architecture, allowing the frontend client to scale independently of the API and database layers.
 
 ## High-Level Architecture
 
@@ -33,7 +33,7 @@ The frontend relies heavily on **SWR (Stale-While-Revalidate)** to fetch remote 
 - **Middleware Protection:** The backend `protect` middleware decodes JWTs, and the `authorize` middleware ensures endpoints are only accessible to the correct roles (e.g., only admins can approve part requisitions).
 
 ### Notification Pipeline
-To ensure prompt responses to facility failures, Unique-Care incorporates a robust notification pipeline:
+To ensure prompt responses to facility failures, Unicare incorporates a robust notification pipeline:
 1. **Trigger:** A new `Issue` or `Incident` is saved to MongoDB.
 2. **Service Layer:** The backend `notificationService.ts` logs an in-app `Notification` record.
 3. **Push Relay:** Simultaneously, `pushService.ts` looks up the Web Push Subscriptions for relevant roles (Admins/Technicians) and broadcasts real-time browser alerts.

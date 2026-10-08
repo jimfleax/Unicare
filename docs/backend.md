@@ -1,6 +1,6 @@
 # Backend Documentation
 
-The Unique-Care backend is a robust RESTful API built on Node.js, Express, and TypeScript, serving as the system's brain for data management and automation.
+The Unicare backend is a robust RESTful API built on Node.js, Express, and TypeScript, serving as the system's brain for data management and automation.
 
 ## Core Structure
 - **`src/app.ts` & `src/server.ts`**: Express configuration and server initialization.

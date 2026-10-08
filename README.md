@@ -1,6 +1,6 @@
-# Unique-Care: Smart Lab Maintenance System
+# Unicare: Smart Lab Maintenance System
 
-Welcome to the **Unique-Care** documentation. Unique-Care is a smart, frictionless, and automated digital platform built to manage campus infrastructure and lab assets for "The Uniques Community".
+Welcome to the **Unicare** documentation. Unicare is a smart, frictionless, and automated digital platform built to manage campus infrastructure and lab assets for "The Uniques Community".
 
 ## Project Motive & Goals
 
@@ -35,7 +35,7 @@ The project is divided into a high-performance modern frontend and a robust back
 The repository is organized into frontend and backend workspaces:
 
 ```text
-Unique-Care/
+Unicare/
 ├── README.md               # This file
 ├── docs/                   # Detailed documentation
 │   ├── architecture.md     # System architecture and technical design
