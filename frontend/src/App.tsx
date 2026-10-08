@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { SystemStatus } from './components/shared/SystemStatus'
 import {
   BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate,
 } from 'react-router-dom'
@@ -17,10 +18,15 @@ import { PreventiveMaintenanceSection } from './components/public/PreventiveMain
 import { StudentDashboard } from './components/student/StudentDashboard'
 import { TechnicianDashboard } from './components/technician/TechnicianDashboard'
 import { AdminDashboard } from './components/AdminDashboard'
+import { AdminManageTechnicians } from './components/admin/AdminManageTechnicians'
+import { AdminScheduleMaintenance } from './components/admin/AdminScheduleMaintenance'
+import { UserManagementPortal } from './components/admin/UserManagementPortal'
+import { InventoryAssetsManager } from './components/admin/InventoryAssetsManager'
 import Hero3DHub from './components/public/Hero3DHub'
 import StarBorder from './components/shared/StarBorder'
 import { Footer } from './components/shared/Footer'
 import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute'
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import type { DisplayRole } from './context/AuthContext'
 import { fetchIssuesFromApi, markNotificationsReadApi, markNotificationReadApi, updateIncidentStatusApi, fetchLocationsApi, fetchCategoriesApi, fetchPrioritiesApi, fetchStatusesApi } from './services/api'
@@ -68,6 +74,7 @@ const allNavLinks: readonly [string, string, typeof GraduationCap, readonly Disp
   ['/report', 'Report via QR', QrCode, ['Admin', 'Student']],
   ['/inventory', 'Inventory DB', Grid2X2, ['Admin', 'Tech']],
   ['/analytics', 'Analytics', BarChart3, ['Admin']],
+  ['/admin/users', 'User Management', Users, ['Admin']],
 ]
 
 /* ── SVG Generated QR Code ────────────────────────────────── */
@@ -298,6 +305,7 @@ function Home({
                       </div>
 
           <div className="header-right">
+            <SystemStatus />
             <button
               onClick={toggleTheme}
               className="theme-toggle-btn"
@@ -763,6 +771,48 @@ function ScrollRevealManager() {
   return null
 }
 
+/* ── Push Notifications ──────────────────────────────────────── */
+import { subscribeToPushNotificationsApi } from './services/api';
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+const VAPID_PUBLIC_KEY = 'BE7yQwCHAeFtI_tCGFQa7-DPn_nrOnMYTVMMYDiQAXpSFUlF74AigCYvpV-WKg78QWCYXi8w07ly_3QLNJMXjU0';
+
+const handlePushSubscription = async () => {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    const existingSub = await registration.pushManager.getSubscription();
+    
+    if (existingSub) {
+      await subscribeToPushNotificationsApi(existingSub);
+      return;
+    }
+
+    const newSub = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    
+    await subscribeToPushNotificationsApi(newSub);
+  } catch (error) {
+    console.error('Error during push subscription:', error);
+  }
+};
+
 /* ── Application Router ────────────────────────────────────── */
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -774,8 +824,8 @@ export default function App() {
     localStorage.setItem('ucare-theme', theme)
   }, [theme])
 
-  const { data: recordsData, mutate: mutateRecords } = useSWR('/incidents', fetcher, { refreshInterval: 15000 })
-  const { data: assetsData } = useSWR('/assets', fetcher, { refreshInterval: 15000 })
+  const { data: recordsData, mutate: mutateRecords } = useSWR('/incidents', fetcher)
+  const { data: assetsData } = useSWR('/assets', fetcher)
 
   const records = (recordsData || []).map((inc: any) => ({
     id: inc._id,
@@ -811,6 +861,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Home theme={theme} toggleTheme={toggleTheme} initialAuthModal={true} />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage theme={theme} toggleTheme={toggleTheme} />} />
                     <Route path="/*" element={
             <ProtectedRoute>
               <Portal records={records} setRecords={setRecords} assets={assets} theme={theme} toggleTheme={toggleTheme} />
@@ -1144,6 +1195,11 @@ function Portal({ records, setRecords, assets, theme, toggleTheme }: {
                     >
                       📦 My Assigned Assets
                     </button>
+                    {isAuthenticated && ['technician', 'admin'].includes(user?.role || '') && (
+                      <button onClick={handlePushSubscription} className="btn-dark" style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px' }}>
+                        🔔 Enable Push Alerts
+                      </button>
+                    )}
                     <button 
                       className="btn-dark" 
                       style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px', color: 'var(--red-bright)' }}
@@ -1174,6 +1230,23 @@ function Portal({ records, setRecords, assets, theme, toggleTheme }: {
             <ProtectedRoute allowedRoles={['admin', 'lab_admin']}>
               <AdminDashboard records={records} onSelectIssue={setSelectedIssue} />
             </ProtectedRoute>
+} />
+          
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin']}>
+              <UserManagementPortal />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage-technicians" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin']}>
+              <AdminManageTechnicians />
+            </ProtectedRoute>
+          } />
+          <Route path="/schedule-maintenance" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin']}>
+              <AdminScheduleMaintenance />
+            </ProtectedRoute>
+
           } />
           <Route path="/issues" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'technician']}>
@@ -1187,7 +1260,7 @@ function Portal({ records, setRecords, assets, theme, toggleTheme }: {
           } />
           <Route path="/inventory" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'technician']}>
-              <Inventory />
+              <InventoryAssetsManager />
             </ProtectedRoute>
           } />
           <Route path="/analytics" element={
@@ -1322,7 +1395,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
   const metaError = locationsError || categoriesError || prioritiesError
   const metaLoading = !metaError && (!fetchedLocations || !fetchedCategories || !fetchedPriorities)
 
-  const availableLocations: string[] = Array.isArray(fetchedLocations) ? fetchedLocations : []
+  const availableLocations: { value: string; label: string; color: string }[] = Array.isArray(fetchedLocations) ? fetchedLocations : []
   const availableCategories: { value: string; label: string }[] = Array.isArray(fetchedCategories) ? fetchedCategories : []
   const availablePriorities: { value: string; label: string }[] = Array.isArray(fetchedPriorities) ? fetchedPriorities : []
 
@@ -1330,14 +1403,14 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
   const [priority, setPriority] = useState<'Critical' | 'High' | 'Medium' | 'Low'>('' as any)
-  useEffect(() => { if (!location && availableLocations.length) setLocation(availableLocations[0]) }, [availableLocations, location])
+  useEffect(() => { if (!location && availableLocations.length) setLocation(availableLocations[0].value) }, [availableLocations, location])
   useEffect(() => { if (!category && availableCategories.length) setCategory(availableCategories[0].value) }, [availableCategories, category])
   useEffect(() => { if (!priority && availablePriorities.length) setPriority(availablePriorities[0].value as any) }, [availablePriorities, priority])
   const [description, setDescription] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    if (fetchedLocations?.length && location === 'Thinkspace') setLocation(fetchedLocations[0])
+    if (fetchedLocations?.length && location === 'Thinkspace') setLocation(fetchedLocations[0].value)
   }, [fetchedLocations])
 
   useEffect(() => {
@@ -1390,7 +1463,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
   const handleResetScan = () => {
     setScannedAsset(null)
     setTitle('')
-    setLocation(availableLocations[0] || '')
+    setLocation(availableLocations[0]?.value || '')
     setCategory(availableCategories[0]?.value || '')
     setPriority((availablePriorities[0]?.value || '') as any)
     setDescription('')
@@ -1460,7 +1533,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
                 id: code,
                 name: `Hardware Asset (${code})`,
                 category: availableCategories[0]?.value,
-                location: availableLocations[0],
+                location: availableLocations[0]?.value || '',
                 status: 'Active',
                 lastService: new Date().toISOString().split('T')[0],
                 nextDue: '2026-12-31',
@@ -1694,7 +1767,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
               <label>Location / Room</label>
               <select value={location} onChange={e => setLocation(e.target.value)}>
                 {availableLocations.map(loc => (
-                  <option key={loc} value={loc}>{loc}</option>
+                  <option key={loc.value} value={loc.value}>{loc.label}</option>
                 ))}
               </select>
             </div>
@@ -1832,11 +1905,18 @@ function AuthModal({
   
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  
+  const [view, setView] = useState<'login' | 'forgot'>('login')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSuccess, setForgotSuccess] = useState(false)
+  const [forgotError, setForgotError] = useState<string | null>(null)
 
   useEffect(() => {
     setFormError(null)
     clearError()
-  }, [isOpen, clearError])
+      setForgotError(null)
+    setForgotSuccess(false)
+  }, [isOpen, clearError, view])
 
   if (!isOpen) return null
 
@@ -1859,6 +1939,36 @@ function AuthModal({
         'student': '/student'
       }
       navigate(roleMap[targetRole] || '/', { replace: true })
+    }
+  }
+
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotError(null)
+    setForgotSuccess(false)
+    
+    if (!email.trim()) {
+      setForgotError('Please enter your email')
+      return
+    }
+    
+    setForgotLoading(true)
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to request password reset')
+      }
+      setForgotSuccess(true)
+    } catch (err: any) {
+      setForgotError(err.message || 'An error occurred. Please try again.')
+    } finally {
+      setForgotLoading(false)
     }
   }
 

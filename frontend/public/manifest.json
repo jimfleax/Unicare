@@ -1,0 +1,15 @@
+{
+  "name": "Unicare Smart Lab",
+  "short_name": "Unicare",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ca0019",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

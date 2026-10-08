@@ -6,7 +6,13 @@ const router = express.Router();
 
 router.use(protect);
 
-router.get('/', assetController.getAllAssets);
-router.get('/:tagId', assetController.getAssetByTagId);
+router.route('/')
+  .get(assetController.getAllAssets)
+  .post(assetController.createAsset);
+
+router.route('/:tagId')
+  .get(assetController.getAssetByTagId)
+  .put(assetController.updateAsset)
+  .delete(assetController.deleteAsset);
 
 export default router;

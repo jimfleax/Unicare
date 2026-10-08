@@ -17,6 +17,8 @@ export interface IUser extends Document {
   rollNo?: string;
   createdAt: Date;
   updatedAt: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -43,6 +45,8 @@ const userSchema = new Schema<IUser>(
     batchCode: { type: String },
     branch: { type: String },
     rollNo: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

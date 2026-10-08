@@ -1,19 +1,17 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import Asset from '../models/Asset';
-import Issue, { ISSUE_PRIORITIES } from '../models/Issue';
+const ISSUE_PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 import { INCIDENT_STATUSES } from '../models/Incident';
 import Faq from '../models/Faq';
+import Metadata from '../models/Metadata';
 import { catchAsync } from '../utils/catchAsync';
 
-// Incident has no location/category fields; Issue (user-reported) does.
+// Incident has no location/category fields; Issue (user-reported) did.
 const distinctMerged = async (field: 'location' | 'category'): Promise<string[]> => {
-  const [a, b] = await Promise.all([
-    Asset.distinct(field),
-    Issue.distinct(field),
-  ]);
+  const a = await Asset.distinct(field);
   const set = new Set<string>();
-  [...a, ...b].forEach((v) => {
+  a.forEach((v) => {
     if (typeof v === 'string' && v.trim()) set.add(v.trim());
   });
   return [...set].sort((x, y) => x.localeCompare(y));
@@ -22,7 +20,30 @@ const distinctMerged = async (field: 'location' | 'category'): Promise<string[]>
 const toOption = (value: string) => ({ value, label: value });
 
 export const getLocations = catchAsync(async (_req: AuthRequest, res: Response, _next: NextFunction) => {
-  res.status(200).json({ success: true, data: await distinctMerged('location') });
+  await seedMetadata();
+  
+  const dynamicLocations = await distinctMerged('location');
+  const locationMetas = await Metadata.find({ type: 'location' }).lean();
+  const colorMap = new Map();
+  locationMetas.forEach(meta => colorMap.set(meta.value, meta.color));
+
+  const data = dynamicLocations.map(loc => ({
+    value: loc,
+    label: loc,
+    color: colorMap.get(loc) || 'var(--txt-sub)' // Fallback color
+  }));
+  
+  if (data.length === 0) {
+    const fallbackData = locationMetas.map(meta => ({
+      value: meta.value,
+      label: meta.label,
+      color: meta.color
+    }));
+    res.status(200).json({ success: true, data: fallbackData });
+    return;
+  }
+
+  res.status(200).json({ success: true, data });
 });
 
 export const getCategories = catchAsync(async (_req: AuthRequest, res: Response, _next: NextFunction) => {
@@ -31,7 +52,16 @@ export const getCategories = catchAsync(async (_req: AuthRequest, res: Response,
 });
 
 export const getPriorities = catchAsync(async (_req: AuthRequest, res: Response, _next: NextFunction) => {
-  res.status(200).json({ success: true, data: ISSUE_PRIORITIES.map(toOption) });
+  await seedMetadata();
+  const priorities = await Metadata.find({ type: 'priority' }).lean();
+  if (priorities.length > 0) {
+    res.status(200).json({
+      success: true,
+      data: priorities.map(p => ({ value: p.value, label: p.label, color: p.color }))
+    });
+  } else {
+    res.status(200).json({ success: true, data: ISSUE_PRIORITIES.map(toOption) });
+  }
 });
 
 export const getStatuses = catchAsync(async (_req: AuthRequest, res: Response, _next: NextFunction) => {
@@ -72,4 +102,20 @@ const DEFAULT_FAQS = [
 export const seedFaqs = async (): Promise<void> => {
   if ((await Faq.estimatedDocumentCount()) > 0) return;
   await Faq.insertMany(DEFAULT_FAQS.map((f, i) => ({ ...f, order: i, active: true })));
+};
+
+export const seedMetadata = async (): Promise<void> => {
+  if ((await Metadata.estimatedDocumentCount()) > 0) return;
+  const defaults = [
+    { type: 'priority', value: 'Critical', label: 'Critical', color: 'var(--red)' },
+    { type: 'priority', value: 'High', label: 'High', color: 'var(--amber-border)' },
+    { type: 'priority', value: 'Medium', label: 'Medium', color: 'var(--txt-sub)' },
+    { type: 'priority', value: 'Low', label: 'Low', color: 'var(--border-bright)' },
+    // A few default locations
+    { type: 'location', value: 'Main Library', label: 'Main Library', color: 'var(--red)' },
+    { type: 'location', value: 'Science Block', label: 'Science Block', color: '#3b82f6' },
+    { type: 'location', value: 'Admin Building', label: 'Admin Building', color: 'var(--amber-border)' },
+    { type: 'location', value: 'Sports Complex', label: 'Sports Complex', color: 'var(--green-border)' },
+  ];
+  await Metadata.insertMany(defaults);
 };

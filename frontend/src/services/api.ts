@@ -1,5 +1,15 @@
 const API_BASE = 'http://localhost:5000/api';
 
+export async function checkHealthApi(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/health`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data.success;
+  } catch (error) {
+    return false;
+  }
+}
 /* ── Types ─────────────────────────────────────────────────── */
 export interface IssueRecord {
   id: string;
@@ -211,6 +221,27 @@ export async function addRepairLogApi(issueId: string, content: string): Promise
   }
 }
 
+export interface RequisitionPayload {
+  inventoryId: string;
+  technicianId: string;
+  quantityRequested: number;
+  reason?: string;
+}
+
+export async function createRequisitionApi(payload: RequisitionPayload): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/requisitions`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error("Failed to create requisition", error);
+    return false;
+  }
+}
+
 export async function fetchAssetsApi(): Promise<any[]> {
   try {
     const res = await fetch(`${API_BASE}/assets`, { headers: getAuthHeaders() });
@@ -287,11 +318,154 @@ async function fetchMetadata<T>(name: string): Promise<T> {
   return body.data as T;
 }
 
-export const fetchLocationsApi = (): Promise<string[]> => fetchMetadata<string[]>('locations');
+export const fetchLocationsApi = (): Promise<{value: string, label: string, color: string}[]> => fetchMetadata('locations');
 export const fetchCategoriesApi = (): Promise<{value: string, label: string}[]> => fetchMetadata('categories');
-export const fetchPrioritiesApi = (): Promise<{value: string, label: string}[]> => fetchMetadata('priorities');
+export const fetchPrioritiesApi = (): Promise<{value: string, label: string, color: string}[]> => fetchMetadata('priorities');
 export const fetchStatusesApi = (): Promise<string[]> => fetchMetadata<string[]>('statuses');
 export const fetchFaqsApi = (): Promise<{question: string, answer: string}[]> => fetchMetadata('faqs');
 export const fetchStudentProfileApi = (): Promise<{batch: string, batchCode: string, branch: string, rollNo: string}> => fetchMetadata('student-profile');
 export async function markNotificationsReadApi(): Promise<boolean> { try { const res = await fetch(`${API_BASE}/notifications/mark-read`, { method: "PUT", headers: getAuthHeaders() }); return res.ok; } catch { return false; } }
 export async function markNotificationReadApi(id: string): Promise<boolean> { try { const res = await fetch(`${API_BASE}/notifications/${id}/mark-read`, { method: "PUT", headers: getAuthHeaders() }); return res.ok; } catch { return false; } }
+
+/* ── Assets CRUD API ───────────────────────────────────────── */
+export async function createAssetApi(assetData: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/assets`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(assetData),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function updateAssetApi(tagId: string, assetData: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/assets/${tagId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(assetData),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteAssetApi(tagId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/assets/${tagId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Inventory CRUD API ────────────────────────────────────── */
+export async function createInventoryApi(partData: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/inventory`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(partData),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function updateInventoryApi(id: string, partData: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/inventory/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(partData),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteInventoryApi(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/inventory/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** POST /api/notifications/subscribe */
+export async function subscribeToPushNotificationsApi(subscription: PushSubscription): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/notifications/subscribe`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(subscription),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error('Failed to subscribe to push notifications', error);
+    return false;
+  }
+}
+
+export async function updateTechnicianStatusApi(status: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/me/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error("Failed to update technician status", error);
+    return false;
+  }
+}
+
+export const api = {
+  get: async (url: string) => {
+    const res = await fetch(`${API_BASE}${url}`, { headers: getAuthHeaders() });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw { response: { data: err } };
+    }
+    return { data: await res.json() };
+  },
+  post: async (url: string, body: any) => {
+    const res = await fetch(`${API_BASE}${url}`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw { response: { data: err } };
+    }
+    return { data: await res.json() };
+  },
+  put: async (url: string, body: any) => {
+    const res = await fetch(`${API_BASE}${url}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(body) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw { response: { data: err } };
+    }
+    return { data: await res.json() };
+  },
+  delete: async (url: string) => {
+    const res = await fetch(`${API_BASE}${url}`, { method: 'DELETE', headers: getAuthHeaders() });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw { response: { data: err } };
+    }
+    return { data: await res.json() };
+  }
+};
+

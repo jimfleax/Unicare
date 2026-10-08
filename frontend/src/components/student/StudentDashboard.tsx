@@ -107,7 +107,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
   const [priority, setPriority] = useState<'Critical' | 'High' | 'Medium' | 'Low'>('' as any)
-  useEffect(() => { if (!location && locations.length) setLocation(locations[0]) }, [locations, location])
+  useEffect(() => { if (!location && locations.length) setLocation(locations[0].value) }, [locations, location])
   useEffect(() => { if (!category && categories.length) setCategory(categories[0].value) }, [categories, category])
   useEffect(() => { if (!priority && priorities.length) setPriority(priorities[0].value as any) }, [priorities, priority])
   const [description, setDescription] = useState('')
@@ -597,8 +597,8 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                   <div className="reg-field">
                     <label>Lab Room Location *</label>
                     <select value={location} onChange={e => setLocation(e.target.value)}>
-                      {locations.map((loc: string) => (
-                        <option key={loc} value={loc}>{loc}</option>
+                      {locations.map((loc: {value: string, label: string, color: string}) => (
+                        <option key={loc.value} value={loc.value}>{loc.label}</option>
                       ))}
                     </select>
                   </div>

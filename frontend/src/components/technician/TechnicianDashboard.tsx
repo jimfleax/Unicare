@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import useSWR from 'swr'
 import {
   Wrench, CheckCircle2, Clock3, AlertTriangle, UserCheck,
   Search, Filter, MessageSquare, Zap, Package, User,
   MapPin, Calendar, ArrowUpRight
 } from 'lucide-react'
-import { addRepairLogApi, fetcher } from '../../services/api'
+import { addRepairLogApi, fetcher, createRequisitionApi, updateTechnicianStatusApi } from '../../services/api'
 import { INSTITUTION_NAME } from '../../config/branding'
 import type { IssueRecord, Technician, SparePart } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 
 interface TechnicianDashboardProps {
   records: IssueRecord[]
@@ -17,16 +18,12 @@ interface TechnicianDashboardProps {
 }
 
 export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, onRefresh }: TechnicianDashboardProps) {
-  const { data: technicianRoster = [] } = useSWR<Technician[]>('/users/technicians', fetcher)
+  const { data: technicianRoster = [], mutate } = useSWR<Technician[]>('/users/technicians', fetcher)
   const { data: sparePartsInventory = [] } = useSWR<SparePart[]>('/inventory', fetcher)
+  const { user } = useAuth()
 
-  const [selectedTech, setSelectedTech] = useState<Technician | null>(null)
-  
-  useEffect(() => {
-    if (technicianRoster.length > 0 && !selectedTech) {
-      setSelectedTech(technicianRoster[0])
-    }
-  }, [technicianRoster, selectedTech])
+  const currentTech = technicianRoster.find(t => t.id === user?._id)
+
 
   const [filterStatus, setFilterStatus] = useState<'All' | 'Open' | 'In Progress' | 'Resolved'>('All')
   const [searchQuery, setSearchQuery] = useState('')
@@ -35,6 +32,10 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
   // Comment note modal state
   const [noteModalIssue, setNoteModalIssue] = useState<IssueRecord | null>(null)
   const [techNote, setTechNote] = useState('')
+
+  const [requisitionModalPart, setRequisitionModalPart] = useState<SparePart | null>(null)
+  const [reqQuantity, setReqQuantity] = useState<number>(1)
+  const [reqReason, setReqReason] = useState<string>('')
 
   // Filter jobs based on search & status filter
   const filteredJobs = records.filter(r => {
@@ -69,50 +70,73 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
     setTechNote('')
     setNoteModalIssue(null)
   }
+  const handleRequisitionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!requisitionModalPart || !currentTech) return;
+
+    const success = await createRequisitionApi({
+      inventoryId: requisitionModalPart.id,
+      technicianId: currentTech.id,
+      quantityRequested: reqQuantity,
+      reason: reqReason
+    });
+
+    if (success) {
+      alert(`Requisition for ${requisitionModalPart.name} submitted successfully.`);
+      if (onRefresh) onRefresh(); // Refresh UI or inventory stock values
+    } else {
+      alert("Failed to submit requisition. Please try again.");
+    }
+
+    setRequisitionModalPart(null);
+    setReqQuantity(1);
+    setReqReason('');
+  };
+
 
   return (
     <div className="tech-dashboard-container">
       {/* ── 1. Technician Header Banner ─────────────────────────────── */}
       <div className="tech-hero-card">
         <div className="tech-hero-left">
-          <div className="tech-avatar-circle" style={{ borderColor: selectedTech?.avatarColor || '#ccc' }}>
-            <Wrench size={28} color={selectedTech?.avatarColor || '#ccc'} />
-            <span className="tech-status-dot" title={selectedTech?.status || 'Loading'}></span>
+          <div className="tech-avatar-circle" style={{ borderColor: currentTech?.avatarColor || '#ccc' }}>
+            <Wrench size={28} color={currentTech?.avatarColor || '#ccc'} />
+            <span className="tech-status-dot" title={currentTech?.status || 'Loading'}></span>
           </div>
 
           <div>
             <div className="tech-badge-row">
               <span className="badge-tech-tag">TECHNICIAN SHIFT OPERATIONS</span>
-              <span className="badge-tech-status">{selectedTech?.status || 'Loading...'}</span>
-              <span className="badge-tech-role">{selectedTech?.title || 'Unknown Role'}</span>
+              <span className="badge-tech-status">{currentTech?.status || 'Loading...'}</span>
+              <span className="badge-tech-role">{currentTech?.title || 'Unknown Role'}</span>
             </div>
 
-            <h1 className="tech-name">{selectedTech?.name || 'Loading Technician...'}</h1>
+            <h1 className="tech-name">{currentTech?.name || 'Loading Technician...'}</h1>
             <p className="tech-specialty">
-              Specialty: <strong>{selectedTech?.specialty || 'N/A'}</strong> · Hotline: <strong>{selectedTech?.phone || 'N/A'}</strong>
+              Specialty: <strong>{currentTech?.specialty || 'N/A'}</strong> · Hotline: <strong>{currentTech?.phone || 'N/A'}</strong>
             </p>
           </div>
         </div>
 
-        {/* Quick Tech Switcher Dropdown */}
+        {/* My Current Status Dropdown */}
         <div className="tech-switcher-box">
-          <label><User size={13} /> ACTIVE TECHNICIAN ON DUTY:</label>
+          <label><User size={13} /> MY CURRENT STATUS:</label>
           <select
-            value={selectedTech?.id || ''}
-            onChange={e => {
-              const found = technicianRoster.find(t => t.id === e.target.value)
-              if (found) setSelectedTech(found)
+            value={currentTech?.status || ''}
+            onChange={async (e) => {
+              const newStatus = e.target.value
+              const success = await updateTechnicianStatusApi(newStatus)
+              if (success) {
+                mutate()
+              } else {
+                alert("Failed to update status")
+              }
             }}
           >
-            {technicianRoster.length === 0 ? (
-              <option value="">Loading...</option>
-            ) : (
-              technicianRoster.map(tech => (
-                <option key={tech.id} value={tech.id}>
-                  {tech.name} ({tech.title}) — {tech.status}
-                </option>
-              ))
-            )}
+            <option value="On Shift">On Shift</option>
+            <option value="In Field">In Field</option>
+            <option value="On Call">On Call</option>
+            <option value="Off Duty">Off Duty</option>
           </select>
         </div>
       </div>
@@ -366,7 +390,7 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
                   className="btn-dark"
                   style={{ width: '100%', marginTop: '14px', fontSize: '0.8rem', padding: '8px', justifyContent: 'center' }}
                   onClick={() => {
-                    setSelectedTech(tech)
+                    setSearchQuery(tech.name)
                     setActiveTab('workorders')
                   }}
                 >
@@ -414,7 +438,15 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
                       </span>
                     </td>
                     <td>
-                      <button className="btn-red-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => alert(`Requisition request submitted for ${part.name}`)}>
+                      <button 
+                        className="btn-red-outline" 
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }} 
+                        onClick={() => {
+                          setRequisitionModalPart(part);
+                          setReqQuantity(1);
+                          setReqReason('');
+                        }}
+                      >
                         Requisition Item
                       </button>
                     </td>
@@ -443,7 +475,7 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
             <form onSubmit={handleAddTechNote} style={{ padding: '24px' }}>
               <div className="reg-field" style={{ marginBottom: '16px' }}>
                 <label>Active Technician</label>
-                <input value={selectedTech?.name || ''} disabled style={{ opacity: 0.7 }} />
+                <input value={currentTech?.name || ''} disabled style={{ opacity: 0.7 }} />
               </div>
 
               <div className="reg-field" style={{ marginBottom: '20px' }}>
@@ -461,6 +493,56 @@ export function TechnicianDashboard({ records, onStatusChange, onSelectIssue, on
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button className="btn-dark" type="button" onClick={() => setNoteModalIssue(null)}>Cancel</button>
                 <button className="btn-red" type="submit">Save Repair Log</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {requisitionModalPart && (
+        <div className="modal-overlay" onClick={() => setRequisitionModalPart(null)}>
+          <div className="modal-card" style={{ maxWidth: '520px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 700 }}>
+                  PART REQUISITION
+                </span>
+                <h3 style={{ marginTop: '2px', color: 'var(--txt)' }}>Request {requisitionModalPart.name}</h3>
+              </div>
+              <button className="modal-close" onClick={() => setRequisitionModalPart(null)}>✕</button>
+            </div>
+
+            <form onSubmit={handleRequisitionSubmit} style={{ padding: '24px' }}>
+              <div className="reg-field" style={{ marginBottom: '16px' }}>
+                <label htmlFor="req-quantity">Quantity Needed (Max: {requisitionModalPart.stock})</label>
+                <input
+                  id="req-quantity"
+                  type="number"
+                  min="1"
+                  max={requisitionModalPart.stock}
+                  value={reqQuantity}
+                  onChange={e => setReqQuantity(parseInt(e.target.value) || 1)}
+                  required
+                  style={{ background: 'var(--bg-card-alt)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--txt)' }}
+                />
+              </div>
+
+              <div className="reg-field" style={{ marginBottom: '20px' }}>
+                <label htmlFor="req-reason">Reason / Justification</label>
+                <textarea
+                  id="req-reason"
+                  rows={3}
+                  value={reqReason}
+                  onChange={e => setReqReason(e.target.value)}
+                  placeholder="Why is this part needed?"
+                  required
+                  style={{ background: 'var(--bg-card-alt)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--txt)', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button className="btn-dark" type="button" onClick={() => setRequisitionModalPart(null)}>Cancel</button>
+                <button className="btn-red" type="submit">Submit Request</button>
               </div>
             </form>
           </div>

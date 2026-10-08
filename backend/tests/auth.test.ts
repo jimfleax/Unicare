@@ -128,4 +128,68 @@ describe('Auth Endpoints', () => {
       expect(res.body.success).toBe(false);
     });
   });
+
+  describe('POST /api/auth/forgot-password', () => {
+    it('should return 200 and success message even if user does not exist', async () => {
+      expect.assertions(3);
+      const res = await request(app).post('/api/auth/forgot-password').send({
+        email: 'notfound@example.com'
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toBeDefined();
+    });
+
+    it('should set reset token and expiration on user and return 200', async () => {
+      expect.assertions(4);
+      await User.create({
+        name: 'Forgot User',
+        email: 'forgot@example.com',
+        password: 'password123',
+        role: 'student'
+      });
+      const res = await request(app).post('/api/auth/forgot-password').send({
+        email: 'forgot@example.com'
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      
+      const user = await User.findOne({ email: 'forgot@example.com' });
+      expect(user?.resetPasswordToken).toBeDefined();
+      expect(user?.resetPasswordExpires).toBeDefined();
+    });
+  });
+
+  describe('POST /api/auth/reset-password/:token', () => {
+    it('should return 400 for invalid token', async () => {
+      expect.assertions(2);
+      const res = await request(app).post('/api/auth/reset-password/invalidtoken').send({
+        newPassword: 'newpassword123'
+      });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should reset password with valid token', async () => {
+      expect.assertions(4);
+      const user = await User.create({
+        name: 'Reset User',
+        email: 'reset@example.com',
+        password: 'oldpassword',
+        role: 'student',
+        resetPasswordToken: 'validtoken',
+        resetPasswordExpires: new Date(Date.now() + 3600000)
+      });
+
+      const res = await request(app).post('/api/auth/reset-password/validtoken').send({
+        newPassword: 'newpassword123'
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const updatedUser = await User.findById(user._id);
+      expect(updatedUser?.resetPasswordToken).toBeUndefined();
+      expect(updatedUser?.resetPasswordExpires).toBeUndefined();
+    });
+  });
 });

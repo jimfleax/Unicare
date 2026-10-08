@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import type { IssueRecord } from '../types'
 import useSWR from 'swr'
-import { fetcher } from '../services/api'
+import { fetcher, fetchPrioritiesApi, fetchLocationsApi } from '../services/api'
 
 import { useAuth } from '../context/AuthContext'
 
@@ -26,6 +26,8 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
   const { data: techData } = useSWR('/users/technicians', fetcher)
   const { data: assetsData } = useSWR('/assets', fetcher)
   const { data: alertsData } = useSWR('/alerts', fetcher)
+  const { data: prioritiesMeta } = useSWR('/metadata/priorities', fetchPrioritiesApi)
+  const { data: locationsMeta } = useSWR('/metadata/locations', fetchLocationsApi)
   const { user } = useAuth()
 
   const navigate = useNavigate()
@@ -50,7 +52,7 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
   const totalCategoryCount = categoryData.reduce((s, c) => s + c.count, 0)
 
   // Chart data
-  const chartData = {
+  const chartData: { labels: string[], reported: number[], resolved: number[] } = trendsData?.data || {
     '7d': { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], reported: [5, 8, 6, 9, 7, 3, 4], resolved: [4, 6, 7, 5, 8, 3, 5] },
     '30d': { labels: ['W1', 'W2', 'W3', 'W4'], reported: [18, 24, 21, 19], resolved: [15, 20, 22, 18] },
     '6m': { labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'], reported: [42, 51, 47, 63, 58, 71], resolved: [38, 48, 45, 58, 55, 68] },
@@ -86,11 +88,11 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
     locationMap.set(loc, (locationMap.get(loc) || 0) + 1)
   })
   const fallbackLocColors = ['var(--red)', 'var(--amber-border)', '#3b82f6', 'var(--green-border)']
-  const campusBlocks = Array.from(locationMap.entries()).map(([name, issues], i) => ({
-    name,
-    issues,
-    color: fallbackLocColors[i % fallbackLocColors.length]
-  }))
+  const campusBlocks = Array.from(locationMap.entries()).map(([name, issues], i) => {
+    const meta = locationsMeta?.find(m => m.value === name)
+    const color = meta ? meta.color : fallbackLocColors[i % fallbackLocColors.length]
+    return { name, issues, color }
+  })
 
   // Greeting
   const hour = new Date().getHours()
@@ -459,22 +461,25 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           </div>
           <div className="adm-priority-list">
             {[
-              { label: 'Critical', count: criticalCount, color: 'var(--red)' },
-              { label: 'High', count: highCount, color: 'var(--amber-border)' },
-              { label: 'Medium', count: mediumCount, color: 'var(--txt-sub)' },
-              { label: 'Low', count: lowCount, color: 'var(--border-bright)' },
-            ].map((p, i) => (
+              { label: 'Critical', count: criticalCount, fallbackColor: 'var(--red)' },
+              { label: 'High', count: highCount, fallbackColor: 'var(--amber-border)' },
+              { label: 'Medium', count: mediumCount, fallbackColor: 'var(--txt-sub)' },
+              { label: 'Low', count: lowCount, fallbackColor: 'var(--border-bright)' },
+            ].map((p, i) => {
+              const meta = prioritiesMeta?.find(m => m.value === p.label)
+              const color = meta ? meta.color : p.fallbackColor
+              return (
               <div key={i} className="adm-priority-item">
                 <div className="adm-priority-label">
-                  <span className="adm-priority-dot" style={{ background: p.color }} />
+                  <span className="adm-priority-dot" style={{ background: color }} />
                   <span>{p.label}</span>
                 </div>
                 <div className="adm-priority-bar-wrap">
-                  <div className="adm-priority-bar" style={{ width: `${(p.count / (priorityMax || 1)) * 100}%`, background: p.color }} />
+                  <div className="adm-priority-bar" style={{ width: `${(p.count / (priorityMax || 1)) * 100}%`, background: color }} />
                 </div>
                 <span className="adm-priority-count">{p.count}</span>
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
@@ -512,8 +517,8 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
         <div className="adm-quick-row">
           <button className="adm-btn-primary" onClick={() => navigate('/report')}><Plus size={16} /> Report an Issue</button>
           <button className="adm-btn-secondary" onClick={() => navigate('/inventory')}><Package size={16} /> View Inventory</button>
-          <button className="adm-btn-secondary" onClick={() => navigate('/technician')}><Calendar size={16} /> Schedule Maintenance</button>
-          <button className="adm-btn-secondary" onClick={() => navigate('/technician')}><Users size={16} /> Manage Technicians</button>
+          <button className="adm-btn-secondary" onClick={() => navigate('/schedule-maintenance')}><Calendar size={16} /> Schedule Maintenance</button>
+          <button className="adm-btn-secondary" onClick={() => navigate('/manage-technicians')}><Users size={16} /> Manage Technicians</button>
         </div>
       </div>
     </main>

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
-import { generateToken } from '../services/authService';
+import { generateToken, generateResetToken, sendResetEmail } from '../services/authService';
 import { AppError } from '../utils/AppError';
 import { catchAsync } from '../utils/catchAsync';
 
@@ -158,5 +158,66 @@ export const getMe = catchAsync(async (req: Request, res: Response, next: NextFu
         role: (req as any).user.role
       }
     }
+  });
+});
+
+// 🔄 FORGOT PASSWORD
+// POST /api/auth/forgot-password
+export const forgotPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  if (!email) {
+    return next(new AppError('Please provide an email', 400));
+  }
+
+  const user = await User.findOne({ email: email.trim().toLowerCase() });
+  
+  // Generic success message to prevent email enumeration
+  const successMessage = 'If an account exists, a password reset link has been sent.';
+
+  if (!user) {
+    return res.status(200).json({ success: true, message: successMessage });
+  }
+
+  const resetToken = generateResetToken();
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+  await user.save();
+
+  await sendResetEmail(user.email, resetToken);
+
+  res.status(200).json({
+    success: true,
+    message: successMessage
+  });
+});
+
+// 🔄 RESET PASSWORD
+// POST /api/auth/reset-password/:token
+export const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return next(new AppError('Please provide a new password', 400));
+  }
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: new Date() }
+  });
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Password has been reset successfully'
   });
 });

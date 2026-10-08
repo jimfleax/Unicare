@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import healthRoutes from './routes/healthRoutes';
-import issueRoutes from './routes/issueRoutes';
 import authRoutes from './routes/authRoutes';
 import incidentRoutes from './routes/incidentRoutes';
 import assetRoutes from './routes/assetRoutes';
@@ -13,6 +12,7 @@ import userRoutes from './routes/userRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import requisitionRoutes from './routes/requisitionRoutes';
 import metadataRoutes from './routes/metadataRoutes';
+import maintenanceRoutes from './routes/maintenanceRoutes';
 
 dotenv.config();
 
@@ -39,7 +39,6 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 
 // API Routes that require database connection
 app.use('/api/auth', authRoutes);
-app.use('/api/issues', issueRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -48,6 +47,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/requisitions', requisitionRoutes);
 app.use('/api/metadata', metadataRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
 
 // Error Handler Middleware
 import { errorHandler } from './middleware/errorHandler';

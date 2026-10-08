@@ -8,5 +8,6 @@ router.use(protect);
 router.use(authorize('admin'));
 
 router.get('/', analyticsController.getAnalytics);
+router.get('/trends', analyticsController.getTrends);
 
 export default router;
