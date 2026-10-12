@@ -10,7 +10,7 @@ import { Mail, Lock,
   Menu, Package, Plus, QrCode, Search,
   Wrench, X, ArrowRight, ShieldCheck, Zap,
   Printer, Check, Sun, Moon, Upload, Video, VideoOff, Sparkles, RefreshCw, AlertTriangle, GraduationCap,
-  MapPin, ListChecks, ImagePlus, MapPinned, SendHorizonal, BadgeCheck,
+  MapPin, ListChecks, ImagePlus,
   TrendingUp, TrendingDown, Calendar, Activity, Users, Building2, Gauge, ArrowUpRight, Timer, Target, Repeat, Settings,
   LogOut, Eye, EyeOff, Loader2, UserPlus, LogIn
   } from 'lucide-react'
@@ -36,6 +36,15 @@ import { INSTITUTION_NAME } from './config/branding'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
 import { fetcher } from './services/api'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose,
+  Popover, PopoverTrigger, PopoverContent,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  TooltipProvider, Tooltip, TooltipTrigger, TooltipContent,
+  ScrollArea,
+  Avatar, AvatarFallback, AvatarImage
+} from './components/ui'
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface IssueRecord {
@@ -115,17 +124,15 @@ function AssetQRModal({ asset, onClose }: { asset: AssetRecord; onClose: () => v
   const [copied, setCopied] = useState(false)
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--red-bright)', fontWeight: 700, letterSpacing: '1px' }}>
-              OFFICIAL INDIVIDUAL / ROLL NO. TAG
-            </span>
-            <h3 style={{ marginTop: '2px', color: 'var(--txt)' }}>{asset.name}</h3>
-          </div>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent style={{ maxWidth: '440px', padding: 0, overflow: 'hidden' }}>
+        <DialogHeader style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--red-bright)', fontWeight: 700, letterSpacing: '1px' }}>
+            OFFICIAL INDIVIDUAL / ROLL NO. TAG
+          </span>
+          <DialogTitle style={{ marginTop: '2px', color: 'var(--txt)', fontSize: '1.25rem' }}>{asset.name}</DialogTitle>
+          <DialogDescription style={{ display: 'none' }}>Official QR code tag for asset {asset.id}</DialogDescription>
+        </DialogHeader>
         <div style={{ padding: '32px', textAlign: 'center' }}>
           <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', display: 'inline-block' }}>
             <GeneratedQRCode code={asset.id} />
@@ -143,8 +150,8 @@ function AssetQRModal({ asset, onClose }: { asset: AssetRecord; onClose: () => v
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -173,19 +180,17 @@ function IssueDetailModal({ issue, onClose, onStatusChange }: {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 700 }}>
-              TICKET #{issue.ticketId || issue.id} · <span className={`badge-status ${issue.priority.toLowerCase()}`}>{issue.priority}</span>
-            </span>
-            <h3 style={{ marginTop: '2px', color: 'var(--txt)' }}>{issue.title}</h3>
-          </div>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent style={{ maxWidth: '640px', padding: 0, overflow: 'hidden' }}>
+        <DialogHeader style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 700 }}>
+            TICKET #{issue.ticketId || issue.id} · <span className={`badge-status ${issue.priority.toLowerCase()}`}>{issue.priority}</span>
+          </span>
+          <DialogTitle style={{ marginTop: '2px', color: 'var(--txt)', fontSize: '1.25rem' }}>{issue.title}</DialogTitle>
+          <DialogDescription style={{ display: 'none' }}>Detailed view and status triage for ticket #{issue.ticketId || issue.id}</DialogDescription>
+        </DialogHeader>
 
-        <div style={{ padding: '28px' }}>
+        <div style={{ padding: '24px 28px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'var(--bg-card-alt)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '20px' }}>
             <div>
               <small style={{ color: 'var(--txt-sub)', fontSize: '0.72rem', fontWeight: 700 }}>LAB LOCATION</small>
@@ -223,17 +228,19 @@ function IssueDetailModal({ issue, onClose, onStatusChange }: {
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px', color: 'var(--txt)' }}>Activity Stream</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '160px', overflowY: 'auto', marginBottom: '16px' }}>
-              {comments.map((c: any, i: number) => (
-                <div key={i} style={{ background: 'var(--bg-card-alt)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <b style={{ color: 'var(--txt)' }}>{c.author}</b>
-                    <small style={{ color: 'var(--txt-sub)' }}>{c.time}</small>
+            <ScrollArea style={{ maxHeight: '180px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '10px' }}>
+                {comments.map((c: any, i: number) => (
+                  <div key={i} style={{ background: 'var(--bg-card-alt)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <b style={{ color: 'var(--txt)' }}>{c.author}</b>
+                      <small style={{ color: 'var(--txt-sub)' }}>{c.time}</small>
+                    </div>
+                    <div style={{ color: 'var(--txt-muted)' }}>{c.text}</div>
                   </div>
-                  <div style={{ color: 'var(--txt-muted)' }}>{c.text}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
 
             <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '10px' }}>
               <input
@@ -246,8 +253,8 @@ function IssueDetailModal({ issue, onClose, onStatusChange }: {
             </form>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -339,41 +346,39 @@ function Home({
         </header>
       </StarBorder>
 
-      {/* Hero Section featuring 3D Interactive Telemetry Core */}
-      <section className="hero-section reveal-on-scroll">
-        <div className="hero-bg-vectors" aria-hidden="true">
-          <img src="/tech_circuit_nodes.svg" className="bg-vector-float tech-circuit-hero" alt="" />
-          <img src="/tech_hud_elements.svg" className="bg-vector-float tech-hud-hero" alt="" />
-        </div>
-        <div className="hero-left">
-          <h1>
-            Smart Lab <span className="text-red-highlight">Maintenance</span> &amp; Automation
-          </h1>
-          <p>
-            Fully automated digital platform for reporting, tracking, and managing {INSTITUTION_NAME} campus infrastructure and lab assets. Built for The Uniques Community.
-          </p>
-          <div className="hero-btns">
-            <button 
-              onClick={() => handleProtectedAction(getDefaultDashboard(user?.role || 'student'))} 
-              className="btn-red"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}
-            >
-              Open Dashboard <ArrowRight size={16} />
-            </button>
-            <button 
-              onClick={() => handleProtectedAction('/report')} 
-              className="btn-dark"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-            >
-              <QrCode size={16} /> Report via QR
-            </button>
+      {/* Hero Section */}
+      <div className="hero-wrapper">
+        <section className="hero-section reveal-on-scroll">
+          <div className="hero-left">
+            <h1>
+              Smart Lab <span className="text-red-highlight">Maintenance</span> &amp; Automation
+            </h1>
+            <p>
+              Fully automated digital platform for reporting, tracking, and managing {INSTITUTION_NAME} campus infrastructure and lab assets. Built for The Uniques Community.
+            </p>
+            <div className="hero-btns">
+              <button 
+                onClick={() => handleProtectedAction(getDefaultDashboard(user?.role || 'student'))} 
+                className="btn-red"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none' }}
+              >
+                Open Dashboard <ArrowRight size={16} />
+              </button>
+              <button 
+                onClick={() => handleProtectedAction('/report')} 
+                className="btn-dark"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+              >
+                <QrCode size={16} /> Report via QR
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="hero-right-stage">
-          <Hero3DHub />
-        </div>
-      </section>
+          <div className="hero-right-stage">
+            <Hero3DHub />
+          </div>
+        </section>
+      </div>
 
       {/* 6-Card Numbered Feature Grid (inspired by theuniques.in design) */}
       <section id="usps" className="numbered-cards-section reveal-on-scroll">
@@ -396,13 +401,13 @@ function Home({
               <span className="nc-number">1</span>
               <div className="nc-ghost-num">01</div>
               <div className="nc-icon-wrap"><LayoutDashboard size={26} /></div>
-              <h3>Maintenance Portal</h3>
-              <p>Centralized hub for lab managers, heads, and technicians to coordinate all campus upkeep.</p>
+              <h3>Centralized Maintenance Portal</h3>
+              <p>A unified workspace for lab managers, department heads, and technicians to manage campus maintenance operations without scattered tools or disconnected records.</p>
               
               <div className="nc-expand-box">
                 <div className="nc-feature-pills">
+                  <span className="nc-pill">Unified Workspace</span>
                   <span className="nc-pill">Role Matrix</span>
-                  <span className="nc-pill">Real-Time Triage</span>
                   <span className="nc-pill">SLA Monitor</span>
                 </div>
                 <div className="nc-explore-link">
@@ -417,17 +422,17 @@ function Home({
               <span className="nc-number">2</span>
               <div className="nc-ghost-num">02</div>
               <div className="nc-icon-wrap"><ClipboardList size={26} /></div>
-              <h3>Issue Tracking Dashboard</h3>
-              <p>Real-time ticket logging with priority SLA triage, technician assignment, and resolution logs.</p>
+              <h3>Structured Complaint Records</h3>
+              <p>Keep every complaint organized with a unique reference ID, issue category, location, priority, and a documented service history.</p>
               
               <div className="nc-expand-box">
                 <div className="nc-feature-pills">
-                  <span className="nc-pill">Live Feed</span>
+                  <span className="nc-pill">Unique Ref ID</span>
                   <span className="nc-pill">Audit Trail</span>
-                  <span className="nc-pill">Escalations</span>
+                  <span className="nc-pill">Documented History</span>
                 </div>
                 <div className="nc-explore-link">
-                  <span>View Tickets</span> <ArrowRight size={14} />
+                  <span>View Records</span> <ArrowRight size={14} />
                 </div>
               </div>
               <div className="nc-bar" />
@@ -440,18 +445,18 @@ function Home({
             <div className="nc-card nc-card-expandable reveal-scale delay-3" onClick={() => handleProtectedAction('/report')}>
               <span className="nc-number">3</span>
               <div className="nc-ghost-num">03</div>
-              <div className="nc-icon-wrap"><QrCode size={26} /></div>
-              <h3>QR Asset Complaint System</h3>
-              <p>Scan any lab asset QR tag to instantly report hardware faults — no manual forms, no friction. From scan to ticket in under 10 seconds.</p>
+              <div className="nc-icon-wrap"><Camera size={26} /></div>
+              <h3>Photo-Based Issue Reporting</h3>
+              <p>Upload photos of damaged equipment, faulty wiring, leaks, or broken fixtures to give maintenance teams a clearer picture of the problem before they arrive.</p>
               
               <div className="nc-expand-box">
                 <div className="nc-feature-pills">
-                  <span className="nc-pill">Instant QR Scan</span>
-                  <span className="nc-pill">Auto-Location</span>
-                  <span className="nc-pill">Zero Login Needed</span>
+                  <span className="nc-pill">Visual Context</span>
+                  <span className="nc-pill">Evidence Upload</span>
+                  <span className="nc-pill">Fast Triage</span>
                 </div>
                 <div className="nc-explore-link">
-                  <span>Launch QR Scanner</span> <ArrowRight size={14} />
+                  <span>Report an Issue</span> <ArrowRight size={14} />
                 </div>
               </div>
               <div className="nc-bar" />
@@ -466,14 +471,14 @@ function Home({
               <span className="nc-number">4</span>
               <div className="nc-ghost-num">04</div>
               <div className="nc-icon-wrap"><Grid2X2 size={26} /></div>
-              <h3>Inventory &amp; Asset Management</h3>
-              <p>Full asset database with service schedules, health tracking, and auto-generated QR tags.</p>
+              <h3>Inventory &amp; Asset Records</h3>
+              <p>Maintain a structured record of campus equipment, asset details, and service schedules to help teams keep track of the infrastructure they manage.</p>
               
               <div className="nc-expand-box">
                 <div className="nc-feature-pills">
-                  <span className="nc-pill">Barcode Sync</span>
-                  <span className="nc-pill">Health Index</span>
-                  <span className="nc-pill">Telemetry</span>
+                  <span className="nc-pill">Asset Registry</span>
+                  <span className="nc-pill">Equipment Details</span>
+                  <span className="nc-pill">Service Schedules</span>
                 </div>
                 <div className="nc-explore-link">
                   <span>Browse Inventory</span> <ArrowRight size={14} />
@@ -487,17 +492,17 @@ function Home({
               <span className="nc-number">5</span>
               <div className="nc-ghost-num">05</div>
               <div className="nc-icon-wrap"><BarChart3 size={26} /></div>
-              <h3>Analytics &amp; Reporting</h3>
-              <p>Visual dashboards with resolution times, SLA compliance rates, and lab health trend reports.</p>
+              <h3>Maintenance Analytics &amp; Reports</h3>
+              <p>Turn maintenance records into useful insights on issue categories, recurring faults, resolution performance, and campus maintenance trends.</p>
               
               <div className="nc-expand-box">
                 <div className="nc-feature-pills">
-                  <span className="nc-pill">Mean Time to Resolve</span>
-                  <span className="nc-pill">99.4% SLA</span>
-                  <span className="nc-pill">CSV Export</span>
+                  <span className="nc-pill">Category Insights</span>
+                  <span className="nc-pill">Fault Analytics</span>
+                  <span className="nc-pill">Campus Trends</span>
                 </div>
                 <div className="nc-explore-link">
-                  <span>View Analytics</span> <ArrowRight size={14} />
+                  <span>View Reports</span> <ArrowRight size={14} />
                 </div>
               </div>
               <div className="nc-bar" />
@@ -563,9 +568,6 @@ function Home({
                 <circle className="htc-glow-dot htc-glow-2" cx="10" cy="100" r="3" />
                 <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
               </svg>
-              <div className="htc-icon-badge">
-                <MapPinned size={18} />
-              </div>
               <div className="htc-inner-content">
                 <span className="htc-step-num">03</span>
                 <h3 className="htc-step-title">ADD LOCATION</h3>
@@ -584,9 +586,6 @@ function Home({
                 <circle className="htc-glow-dot htc-glow-2" cx="190" cy="100" r="3" />
                 <circle className="htc-glow-dot htc-glow-3" cx="10" cy="100" r="3" />
               </svg>
-              <div className="htc-icon-badge">
-                <SendHorizonal size={18} />
-              </div>
               <div className="htc-inner-content">
                 <span className="htc-step-num">04</span>
                 <h3 className="htc-step-title">SUBMIT REQUEST</h3>
@@ -605,9 +604,6 @@ function Home({
                 <circle className="htc-glow-dot htc-glow-2" cx="100" cy="190" r="3" />
                 <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
               </svg>
-              <div className="htc-icon-badge">
-                <BadgeCheck size={18} />
-              </div>
               <div className="htc-inner-content">
                 <span className="htc-step-num">05</span>
                 <h3 className="htc-step-title">TRACK & RESOLVE</h3>
@@ -631,96 +627,6 @@ function Home({
 
       {/* ── PREVENTIVE MAINTENANCE SECTION (Matching Reference Infographic) ── */}
       <PreventiveMaintenanceSection />
-
-      {/* ── Section 01: Engagement & Real-Time Issue Discussion ── */}
-      <section className="feature-split-section reveal-on-scroll">
-        <div className="feature-bg-accent" aria-hidden="true">
-          <img src="/cyber_waves_vector.svg" className="bg-vector-float tech-waves-split" alt="" />
-        </div>
-        <div className="feature-split-inner">
-          <div className="feature-split-text">
-            <div className="feature-index-num reveal-scale delay-1">01</div>
-            <span className="feature-eyebrow">Live Collaboration</span>
-            <h2>
-              Engagement &amp; <span className="text-red-highlight">Real-Time</span> Issue Discussion
-            </h2>
-            <p>
-              Campus communities work best when everyone stays in sync. Students can report hardware faults, technicians reply with status updates, and admins triage priority — all in one thread. With live ticket feeds, activity streams, and SLA-aware notifications, Unicare keeps your entire maintenance workflow engaged and transparent.
-            </p>
-            <ul className="feature-bullet-list">
-              <li><span className="bullet-dot" />Instant ticket creation via QR asset scan</li>
-              <li><span className="bullet-dot" />Threaded technician activity logs per issue</li>
-              <li><span className="bullet-dot" />Priority-based SLA triage &amp; escalation alerts</li>
-              <li><span className="bullet-dot" />Weekly digest reports for department heads</li>
-            </ul>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── Section 02: Your Platform — REVERSED (visual left, text right) ── */}
-      <section className="feature-split-section feature-alt-bg reveal-on-scroll">
-        <div className="feature-bg-accent" aria-hidden="true">
-          <img src="/tech_hud_elements.svg" className="bg-vector-float tech-hud-split" alt="" />
-        </div>
-        <div className="feature-split-inner feature-reversed">
-
-          <div className="feature-split-text">
-            <div className="feature-index-num reveal-scale delay-1">02</div>
-            <span className="feature-eyebrow">Total Control</span>
-            <h2>
-              Your Campus. <span className="text-red-highlight">Your Platform.</span>
-            </h2>
-            <p>
-              Unicare is your campus maintenance system — it should feel like it. Fully configure lab zones, assign technician roles, and control access through your institutional SSO. Sync user data automatically and log everyone in to create a seamless single-platform experience.
-            </p>
-            <p style={{ marginTop: 12 }}>
-              Automate maintenance workflows using thousands of integrations — from email digest reports to Zapier triggers and full REST API access for developers.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 03: Built for Campus ── */}
-      <section className="feature-split-section built-for-section reveal-on-scroll">
-        <div className="feature-split-inner">
-          <div className="feature-split-text">
-            <div className="feature-index-num reveal-scale delay-1">03</div>
-            <span className="feature-eyebrow">Purpose-Built</span>
-            <h2>Built for <span className="text-red-highlight">Campus Communities</span></h2>
-            <p>
-              Unicare is built from the ground up with campus communities in mind — students, technicians, department heads, and administrators all working together on a unified platform.
-            </p>
-            <div className="built-pillars">
-              <div className="built-pillar">
-                <div className="built-pillar-icon"><ShieldCheck size={20} /></div>
-                <div>
-                  <strong>Safety First</strong>
-                  <p>Create a safe and verified reporting space with role-based access control, audit trails, and issue accountability at every step.</p>
-                </div>
-              </div>
-              <div className="built-pillar">
-                <div className="built-pillar-icon"><Sparkles size={20} /></div>
-                <div>
-                  <strong>Focused on People</strong>
-                  <p>Campus communities are fundamentally made up of people. Let students and technicians collaborate through rich profiles, direct assignments, and activity histories.</p>
-                </div>
-              </div>
-              <div className="built-pillar">
-                <div className="built-pillar-icon"><Zap size={20} /></div>
-                <div>
-                  <strong>Online &amp; On-Campus</strong>
-                  <p>Build a thriving maintenance workflow — online via the web dashboard or on-campus via printed QR asset tags. Works both ways.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-
-      
 
       <Footer onOpenAuth={() => handleOpenAuth()} />
 
@@ -834,21 +740,23 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <SpeedInsights />
-      <BrowserRouter>
-        <ScrollRevealManager />
-        <div className="global-ambient-glow" aria-hidden="true" />
-        <Routes>
-          <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
-          <Route path="/login" element={<Home theme={theme} toggleTheme={toggleTheme} initialAuthModal={true} />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordPage theme={theme} toggleTheme={toggleTheme} />} />
-                    <Route path="/*" element={
-            <ProtectedRoute>
-              <Portal theme={theme} toggleTheme={toggleTheme} />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </BrowserRouter>
+      <TooltipProvider delayDuration={300}>
+        <SpeedInsights />
+        <BrowserRouter>
+          <ScrollRevealManager />
+          <div className="global-ambient-glow" aria-hidden="true" />
+          <Routes>
+            <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
+            <Route path="/login" element={<Home theme={theme} toggleTheme={toggleTheme} initialAuthModal={true} />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage theme={theme} toggleTheme={toggleTheme} />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <Portal theme={theme} toggleTheme={toggleTheme} />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </AuthProvider>
   )
 }
@@ -1071,15 +979,19 @@ function Portal({ theme, toggleTheme }: {
 
           <div className="user-tools">
             {/* Functional Theme Switcher */}
-            <button
-              onClick={toggleTheme}
-              style={{ color: 'var(--txt)', padding: '6px 12px', borderRadius: 'var(--r-pill)', background: 'var(--bg-card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600 }}
-              aria-label="Toggle theme"
-              title="Switch Theme"
-            >
-              {theme === 'dark' ? <Sun size={15} color="var(--amber-txt)" /> : <Moon size={15} color="var(--red)" />}
-              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleTheme}
+                  style={{ color: 'var(--txt)', padding: '6px 12px', borderRadius: 'var(--r-pill)', background: 'var(--bg-card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? <Sun size={15} color="var(--amber-txt)" /> : <Moon size={15} color="var(--red)" />}
+                  <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Switch to {theme === 'dark' ? 'light' : 'dark'} mode</TooltipContent>
+            </Tooltip>
 
             {/* Role Badge (read-only, shows assigned role from backend) */}
             <div className="role-switch">
@@ -1088,38 +1000,44 @@ function Portal({ theme, toggleTheme }: {
               </button>
             </div>
 
-            {/* Functional Notifications Dropdown */}
+            {/* Functional Notifications Popover */}
             {isAuthenticated && (
-              <div style={{ position: 'relative' }}>
-                <button 
-                  style={{ position: 'relative', color: 'var(--txt-muted)', padding: '6px' }} 
-                  onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false) }}
-                  title="Notifications"
-                >
-                  <Bell size={18} />
-                  {notifications.filter(n => n.unread).length > 0 && (
-                    <span style={{ position: 'absolute', top: '2px', right: '2px', width: '14px', height: '14px', background: 'var(--red)', borderRadius: '50%', fontSize: '0.65rem', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
-                      {notifications.filter(n => n.unread).length}
-                    </span>
-                  )}
-                </button>
-
-                {notifOpen && (
-                  <div className="nav-popover">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
-                      <b style={{ fontSize: '0.9rem', color: 'var(--txt)' }}>System Alerts & Activity</b>
+              <Popover open={notifOpen} onOpenChange={setNotifOpen}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
                       <button 
-                        style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 600 }}
-                        onClick={() => {
-                          mutateNotifications(notificationsPages?.map(page => page.map((n: any) => ({ ...n, unread: false }))), false);
-                          markNotificationsReadApi();
-                        }}
+                        style={{ position: 'relative', color: 'var(--txt-muted)', padding: '6px', background: 'transparent', border: 'none', cursor: 'pointer' }} 
+                        aria-label="Notifications"
                       >
-                        Mark all read
+                        <Bell size={18} />
+                        {notifications.filter(n => n.unread).length > 0 && (
+                          <span style={{ position: 'absolute', top: '2px', right: '2px', width: '14px', height: '14px', background: 'var(--red)', borderRadius: '50%', fontSize: '0.65rem', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
+                            {notifications.filter(n => n.unread).length}
+                          </span>
+                        )}
                       </button>
-                    </div>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Notifications</TooltipContent>
+                </Tooltip>
+
+                <PopoverContent align="end" style={{ width: '340px', padding: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <b style={{ fontSize: '0.9rem', color: 'var(--txt)' }}>System Alerts &amp; Activity</b>
+                    <button 
+                      style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      onClick={() => {
+                        mutateNotifications(notificationsPages?.map(page => page.map((n: any) => ({ ...n, unread: false }))), false);
+                        markNotificationsReadApi();
+                      }}
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+                  <ScrollArea style={{ maxHeight: '300px' }}>
                     <div 
-                      style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '8px' }}
                       onScroll={(e) => {
                         const target = e.currentTarget;
                         if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10 && !notifValidating) {
@@ -1153,72 +1071,62 @@ function Portal({ theme, toggleTheme }: {
                       ))}
                       {notifValidating && <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--txt-muted)', padding: '8px' }}>Loading...</div>}
                     </div>
-                    <button 
-                      className="btn-dark" 
-                      style={{ width: '100%', marginTop: '12px', padding: '6px', fontSize: '0.78rem' }}
-                      onClick={() => { navigate('/issues'); setNotifOpen(false) }}
-                    >
-                      View All Issues ↗
-                    </button>
-                  </div>
-                )}
-              </div>
+                  </ScrollArea>
+                  <button 
+                    className="btn-dark" 
+                    style={{ width: '100%', marginTop: '12px', padding: '6px', fontSize: '0.78rem' }}
+                    onClick={() => { navigate('/issues'); setNotifOpen(false) }}
+                  >
+                    View All Issues ↗
+                  </button>
+                </PopoverContent>
+              </Popover>
             )}
 
             {/* User Profile Menu — shows real user info from AuthContext */}
-            <div style={{ position: 'relative' }}>
-              <div 
-                className="user-chip" 
-                style={{ cursor: 'pointer' }}
-                onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false) }}
-                title="User Profile Menu"
-              >
-                <div className="user-avatar">{userInitials}</div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name || 'User'}</span>
-              </div>
+            <DropdownMenu open={profileOpen} onOpenChange={setProfileOpen}>
+              <DropdownMenuTrigger asChild>
+                <div 
+                  className="user-chip" 
+                  style={{ cursor: 'pointer' }}
+                  title="User Profile Menu"
+                >
+                  <Avatar style={{ width: '28px', height: '28px' }}>
+                    <AvatarFallback style={{ fontSize: '0.75rem', fontWeight: 700 }}>{userInitials}</AvatarFallback>
+                  </Avatar>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name || 'User'}</span>
+                </div>
+              </DropdownMenuTrigger>
 
-              {profileOpen && (
-                <div className="nav-popover" style={{ width: '270px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '10px' }}>
-                    <div className="user-avatar" style={{ width: '40px', height: '40px', fontSize: '1rem' }}>{userInitials}</div>
-                    <div>
-                      <b style={{ fontSize: '0.92rem', color: 'var(--txt)', display: 'block' }}>{user?.name || 'User'}</b>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--txt-muted)', fontFamily: 'monospace' }}>{roleLabel}</span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--txt-sub)', display: 'block', marginTop: '2px' }}>{user?.email}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <button 
-                      className="btn-dark" 
-                      style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px' }}
-                      onClick={() => { navigate('/issues'); setProfileOpen(false) }}
-                    >
-                      📋 My Reported Tickets
-                    </button>
-                    <button 
-                      className="btn-dark" 
-                      style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px' }}
-                      onClick={() => { navigate('/inventory'); setProfileOpen(false) }}
-                    >
-                      📦 My Assigned Assets
-                    </button>
-                    {isAuthenticated && ['technician', 'admin'].includes(user?.role || '') && (
-                      <button onClick={handlePushSubscription} className="btn-dark" style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px' }}>
-                        🔔 Enable Push Alerts
-                      </button>
-                    )}
-                    <button 
-                      className="btn-dark" 
-                      style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '8px', color: 'var(--red-bright)' }}
-                      onClick={handleSignOut}
-                    >
-                      <LogOut size={15} /> Sign Out
-                    </button>
+              <DropdownMenuContent align="end" style={{ width: '270px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px 12px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '6px' }}>
+                  <Avatar style={{ width: '40px', height: '40px' }}>
+                    <AvatarFallback style={{ fontSize: '1rem', fontWeight: 700 }}>{userInitials}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <b style={{ fontSize: '0.92rem', color: 'var(--txt)', display: 'block' }}>{user?.name || 'User'}</b>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--txt-muted)', fontFamily: 'monospace' }}>{roleLabel}</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--txt-sub)', display: 'block', marginTop: '2px' }}>{user?.email}</span>
                   </div>
                 </div>
-              )}
-            </div>
+
+                <DropdownMenuItem onClick={() => { navigate('/issues'); setProfileOpen(false) }}>
+                  📋 My Reported Tickets
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { navigate('/inventory'); setProfileOpen(false) }}>
+                  📦 My Assigned Assets
+                </DropdownMenuItem>
+                {isAuthenticated && ['technician', 'admin'].includes(user?.role || '') && (
+                  <DropdownMenuItem onClick={handlePushSubscription}>
+                    🔔 Enable Push Alerts
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} style={{ color: 'var(--red-bright)' }}>
+                  <LogOut size={15} /> Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
@@ -1332,12 +1240,17 @@ function Issues({ records, onSelectIssue }: { records: IssueRecord[]; onSelectIs
 
         <div className="category-select-wrap">
           <label>Category</label>
-          <select value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="All">All</option>
-            {Array.from(new Set(records.map(r => r.category).filter(Boolean))).map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger style={{ minWidth: '160px', height: '38px', padding: '0 12px', fontSize: '0.85rem' }}>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Categories</SelectItem>
+              {(Array.from(new Set(records.map(r => r.category).filter(Boolean))) as string[]).map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="entries-count">{filtered.length} ENTRIES AVAILABLE</div>
@@ -1780,31 +1693,46 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
           <div className="form-grid-2">
             <div className="reg-field">
               <label>Location / Room</label>
-              <select value={location} onChange={e => setLocation(e.target.value)}>
-                {availableLocations.map(loc => (
-                  <option key={loc.value} value={loc.value}>{loc.label}</option>
-                ))}
-              </select>
+              <Select value={location} onValueChange={setLocation}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLocations.map(loc => (
+                    <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="reg-field">
               <label>Category</label>
-              <select value={category} onChange={e => setCategory(e.target.value)}>
-                {availableCategories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCategories.map(cat => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="form-grid-2">
             <div className="reg-field">
               <label>Priority Level</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as any)}>
-                {availablePriorities.map(p => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
-                ))}
-              </select>
+              <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePriorities.map(p => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="reg-field">
@@ -1929,11 +1857,9 @@ function AuthModal({
   useEffect(() => {
     setFormError(null)
     clearError()
-      setForgotError(null)
+    setForgotError(null)
     setForgotSuccess(false)
   }, [isOpen, clearError, view])
-
-  if (!isOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1956,7 +1882,6 @@ function AuthModal({
       navigate(roleMap[targetRole] || '/', { replace: true })
     }
   }
-
 
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1990,11 +1915,12 @@ function AuthModal({
   const displayError = formError || error
 
   return (
-    <div className="auth-modal-overlay" onClick={onClose}>
-      <div className="auth-card" onClick={e => e.stopPropagation()}>
-        <button className="auth-modal-close" onClick={onClose} title="Close">
-          <X size={18} />
-        </button>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="auth-card" style={{ maxWidth: '440px', width: '92%', padding: '36px' }}>
+        <DialogHeader style={{ display: 'none' }}>
+          <DialogTitle>Sign In</DialogTitle>
+          <DialogDescription>Sign in to access your maintenance dashboard</DialogDescription>
+        </DialogHeader>
 
         <div className="auth-brand">
           <div className="auth-brand-link">
@@ -2064,8 +1990,8 @@ function AuthModal({
             {loading ? 'Processing...' : 'Sign In'}
           </button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, MessageSquare, Check, X, ShieldCheck, Sparkles, Send, Globe, Award, Radio } from 'lucide-react'
+import { ArrowUpRight, MessageSquare, Check, X, Send, Globe } from 'lucide-react'
 
 export function Footer({ onOpenAuth }: { onOpenAuth?: () => void } = {}) {
   const [helpOpen, setHelpOpen] = useState(false)
@@ -38,57 +38,6 @@ export function Footer({ onOpenAuth }: { onOpenAuth?: () => void } = {}) {
       <div className="footer-top-accent">
         <div className="footer-notch-cutout">
           <div className="footer-notch-line" />
-        </div>
-      </div>
-
-      {/* Top Quick Stats Card Grid */}
-      <div className="footer-stats-strip">
-        <div className="footer-stats-grid">
-          
-          <div className="footer-stat-card stat-card-red">
-            <div className="f-stat-icon-wrap red">
-              <Sparkles size={26} />
-            </div>
-            <div className="f-stat-content">
-              <div className="f-stat-number">500+</div>
-              <div className="f-stat-label">Uniques Alumni &amp; Builders</div>
-            </div>
-            <div className="f-stat-glow-bar" />
-          </div>
-
-          <div className="footer-stat-card stat-card-amber">
-            <div className="f-stat-icon-wrap amber">
-              <Award size={26} />
-            </div>
-            <div className="f-stat-content">
-              <div className="f-stat-number">Uniques 1.0 &amp; 2.0</div>
-              <div className="f-stat-label">Active Student Cohorts</div>
-            </div>
-            <div className="f-stat-glow-bar" />
-          </div>
-
-          <div className="footer-stat-card stat-card-green">
-            <div className="f-stat-icon-wrap green">
-              <Radio size={26} />
-            </div>
-            <div className="f-stat-content">
-              <div className="f-stat-number">99.4%</div>
-              <div className="f-stat-label">Lab Uptime &amp; SLA Triage</div>
-            </div>
-            <div className="f-stat-glow-bar" />
-          </div>
-
-          <div className="footer-stat-card stat-card-blue">
-            <div className="f-stat-icon-wrap blue">
-              <ShieldCheck size={26} />
-            </div>
-            <div className="f-stat-content">
-              <div className="f-stat-number">&lt; 10s</div>
-              <div className="f-stat-label">Instant QR Ticket Logging</div>
-            </div>
-            <div className="f-stat-glow-bar" />
-          </div>
-
         </div>
       </div>
 

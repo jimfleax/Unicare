@@ -1,0 +1,18 @@
+import React from 'react'
+import * as SwitchPrimitive from '@radix-ui/react-switch'
+
+const Switch = React.forwardRef<
+  React.ComponentRef<typeof SwitchPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitive.Root
+    className={`rdx-switch ${className || ''}`}
+    {...props}
+    ref={ref}
+  >
+    <SwitchPrimitive.Thumb className="rdx-switch-thumb" />
+  </SwitchPrimitive.Root>
+))
+Switch.displayName = SwitchPrimitive.Root.displayName
+
+export { Switch }

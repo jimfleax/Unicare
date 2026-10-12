@@ -17,6 +17,13 @@ import {
   fetchStudentProfileApi
 } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import {
+  Tabs, TabsList, TabsTrigger, TabsContent,
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  Avatar, AvatarImage, AvatarFallback,
+  Tooltip, TooltipTrigger, TooltipContent
+} from '../ui'
 
 interface StudentDashboardProps {
   records: IssueRecord[]
@@ -250,21 +257,32 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
         <div className="student-hero-content">
           {/* Profile Avatar with Photo Upload Button */}
           <div className="student-avatar-ring">
-            <div className="student-avatar-inner">
+            <Avatar className="student-avatar-inner" style={{ width: '84px', height: '84px' }}>
               {profilePic ? (
-                <img src={profilePic} alt={student.name} className="student-profile-img" />
-              ) : (
+                <AvatarImage src={profilePic} alt={student.name} className="student-profile-img" />
+              ) : null}
+              <AvatarFallback style={{ background: 'var(--bg-card-alt)', color: 'var(--red-bright)', display: 'grid', placeItems: 'center', width: '100%', height: '100%' }}>
                 <User size={34} color="var(--red-bright)" />
-              )}
-            </div>
-            <button
-              className="student-avatar-upload-btn"
-              onClick={() => avatarInputRef.current?.click()}
-              title="Add / Change Profile Picture"
-            >
-              <Camera size={13} color="#ffffff" />
-            </button>
-            <span className="student-online-dot" title="Active on Ucare Grid"></span>
+              </AvatarFallback>
+            </Avatar>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="student-avatar-upload-btn"
+                  onClick={() => avatarInputRef.current?.click()}
+                  aria-label="Add / Change Profile Picture"
+                >
+                  <Camera size={13} color="#ffffff" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add / Change Profile Picture</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="student-online-dot" aria-label="Active on Ucare Grid"></span>
+              </TooltipTrigger>
+              <TooltipContent>Active on Ucare Grid</TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="student-details">
@@ -276,9 +294,14 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
               <h1 className="student-name">{student.name}</h1>
               {profilePic && (
-                <button className="btn-remove-avatar" onClick={removeAvatar} title="Remove Custom Picture">
-                  <X size={12} /> Clear Pic
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="btn-remove-avatar" onClick={removeAvatar} aria-label="Remove Custom Picture">
+                      <X size={12} /> Clear Pic
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove Custom Picture</TooltipContent>
+                </Tooltip>
               )}
             </div>
 
@@ -352,37 +375,38 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
       </div>
 
       {/* ── 3. Quick Action Tab Selector ─────────────────────────────── */}
-      <div className="student-tabs-nav">
-        <button
-          className={`student-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          <FileText size={15} /> My Active Tickets ({studentTickets.length})
-        </button>
-        <button
-          className={`student-tab-btn ${activeTab === 'report' ? 'active' : ''}`}
-          onClick={() => setActiveTab('report')}
-        >
-          <QrCode size={15} /> Log Incident / QR Scan
-        </button>
-        <button
-          className={`student-tab-btn ${activeTab === 'workstations' ? 'active' : ''}`}
-          onClick={() => setActiveTab('workstations')}
-        >
-          <Monitor size={15} /> Workstation Health Grid
-        </button>
-        <button
-          className={`student-tab-btn ${activeTab === 'faq' ? 'active' : ''}`}
-          onClick={() => setActiveTab('faq')}
-        >
-          <HelpCircle size={15} /> SLAs &amp; Care Guidelines
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="student-tabs-wrapper">
+        <TabsList className="student-tabs-nav">
+          <TabsTrigger
+            value="overview"
+            className={`student-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+          >
+            <FileText size={15} /> My Active Tickets ({studentTickets.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="report"
+            className={`student-tab-btn ${activeTab === 'report' ? 'active' : ''}`}
+          >
+            <QrCode size={15} /> Log Incident / QR Scan
+          </TabsTrigger>
+          <TabsTrigger
+            value="workstations"
+            className={`student-tab-btn ${activeTab === 'workstations' ? 'active' : ''}`}
+          >
+            <Monitor size={15} /> Workstation Health Grid
+          </TabsTrigger>
+          <TabsTrigger
+            value="faq"
+            className={`student-tab-btn ${activeTab === 'faq' ? 'active' : ''}`}
+          >
+            <HelpCircle size={15} /> SLAs &amp; Care Guidelines
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ── 4. Main Tab View Panels ───────────────────────────────────── */}
+        {/* ── 4. Main Tab View Panels ───────────────────────────────────── */}
 
-      {/* TAB 1: OVERVIEW & MY REPORTED TICKETS */}
-      {activeTab === 'overview' && (
+        {/* TAB 1: OVERVIEW & MY REPORTED TICKETS */}
+        <TabsContent value="overview">
         <div className="student-section">
           {/* Toolbar & Filter Bar */}
           <div className="student-toolbar">
@@ -513,10 +537,10 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
             </div>
           )}
         </div>
-      )}
+      </TabsContent>
 
       {/* TAB 2: INSTANT INCIDENT REPORTER */}
-      {activeTab === 'report' && (
+      <TabsContent value="report">
         <div className="student-section">
           <div className="portal-card" style={{ maxWidth: '840px', margin: '0 auto', padding: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
@@ -596,31 +620,46 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                 <div className="form-grid-2">
                   <div className="reg-field">
                     <label>Lab Room Location *</label>
-                    <select value={location} onChange={e => setLocation(e.target.value)}>
-                      {locations.map((loc: {value: string, label: string, color: string}) => (
-                        <option key={loc.value} value={loc.value}>{loc.label}</option>
-                      ))}
-                    </select>
+                    <Select value={location} onValueChange={setLocation}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select lab room..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((loc: {value: string, label: string, color: string}) => (
+                          <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="reg-field">
                     <label>Hardware Category</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)}>
-                      {categories.map((cat: {value: string, label: string}) => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
-                      ))}
-                    </select>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat: {value: string, label: string}) => (
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 <div className="form-grid-2">
                   <div className="reg-field">
                     <label>Priority Level</label>
-                    <select value={priority} onChange={e => setPriority(e.target.value as any)}>
-                      {priorities.map((p: {value: string, label: string}) => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
-                      ))}
-                    </select>
+                    <Select value={priority} onValueChange={(val) => setPriority(val as any)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {priorities.map((p: {value: string, label: string}) => (
+                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="reg-field">
@@ -678,10 +717,10 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
             )}
           </div>
         </div>
-      )}
+      </TabsContent>
 
       {/* TAB 3: WORKSTATION HEALTH GRID */}
-      {activeTab === 'workstations' && (
+      <TabsContent value="workstations">
         <div className="student-section">
           <div className="page-heading" style={{ marginBottom: '20px' }}>
             <div>
@@ -719,10 +758,10 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
             ))}
           </div>
         </div>
-      )}
+      </TabsContent>
 
       {/* TAB 4: GUIDELINES & FAQ */}
-      {activeTab === 'faq' && (
+      <TabsContent value="faq">
         <div className="student-section">
           <div className="portal-card" style={{ padding: '32px' }}>
             <h2 style={{ fontSize: '1.3rem', color: 'var(--txt)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -731,17 +770,22 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
 
             {faqsError && <p role="alert">Failed to load FAQs.</p>}
             {!faqsError && faqs.length === 0 && <p>Loading…</p>}
-            <div className="faq-grid">
+            <Accordion type="single" collapsible className="rdx-accordion" defaultValue="item-0">
               {faqs.map((faq: {question: string, answer: string}, idx: number) => (
-                <div className="faq-item" key={idx}>
-                  <h4>{faq.question}</h4>
-                  <p>{faq.answer}</p>
-                </div>
+                <AccordionItem value={`item-${idx}`} key={idx} style={{ marginBottom: '8px', border: '1px solid var(--border-subtle)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <AccordionTrigger style={{ padding: '16px 20px', fontSize: '0.95rem', fontWeight: 600, color: 'var(--txt)' }}>
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent style={{ padding: '0 20px 16px 20px', color: 'var(--txt-muted)', fontSize: '0.88rem', lineHeight: '1.6' }}>
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         </div>
-      )}
+      </TabsContent>
+      </Tabs>
     </div>
   )
 }
