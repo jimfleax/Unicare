@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
-  Monitor, Rocket, BarChart3, Search, Sparkles, ShieldCheck
+  Monitor, Rocket, BarChart3, Search
 } from 'lucide-react'
 
 interface StepCard {
@@ -68,8 +68,6 @@ const stepsData: StepCard[] = [
 ]
 
 export function PreventiveMaintenanceSection() {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-
   return (
     <section id="preventive-maintenance" className="pm-section reveal-on-scroll">
       {/* Background Ambient Glow & Vectors */}
@@ -78,32 +76,25 @@ export function PreventiveMaintenanceSection() {
       <div className="pm-container">
         {/* Section Header */}
         <div className="pm-header">
-          <h2 className="pm-title">Preventive Maintenance</h2>
+          <h2 className="pm-title">
+            Preventive <span className="text-red-highlight">Maintenance</span>
+          </h2>
 
           <p className="pm-subtitle">
             Your maintenance system shouldn't wait for something to fail.{' '}
             <span className="text-red-highlight">It should learn from what keeps going wrong.</span>
           </p>
-
-          <div className="pm-flow-indicator">
-            <span className="pm-flow-line" />
-            <span className="pm-flow-tag">HOW IT WORKS</span>
-            <span className="pm-flow-line" />
-          </div>
         </div>
 
         {/* 4 Infographic Notched Cards with Connected Wire Flow (Matching Reference Image) */}
         <div className="pm-cards-grid">
-          {stepsData.map((step, idx) => {
+          {stepsData.map((step) => {
             const Icon = step.icon
-            const isHovered = hoveredCard === step.id
 
             return (
               <div
                 key={step.id}
-                className={`pm-card-wrapper reveal-scale delay-${idx + 1} ${isHovered ? 'is-hovered' : ''}`}
-                onMouseEnter={() => setHoveredCard(step.id)}
-                onMouseLeave={() => setHoveredCard(null)}
+                className="pm-card-wrapper"
               >
                 {/* SVG Card Frame: Notched outline, connecting wire, decorative arcs & drop shadow */}
                 <svg
@@ -120,7 +111,7 @@ export function PreventiveMaintenanceSection() {
                         dy="12"
                         stdDeviation="10"
                         floodColor={step.shadowColor}
-                        floodOpacity={isHovered ? '0.5' : '0.28'}
+                        floodOpacity="0.32"
                       />
                     </filter>
 
@@ -224,19 +215,6 @@ export function PreventiveMaintenanceSection() {
               </div>
             )
           })}
-        </div>
-
-        {/* Bottom Assurance Note */}
-        <div className="pm-bottom-banner">
-          <div className="pm-banner-content">
-            <div className="pm-banner-icon">
-              <ShieldCheck size={20} color="var(--red-bright)" />
-            </div>
-            <div>
-              <strong>Continuous Telemetry &amp; Pattern Intelligence</strong>
-              <p>Predictive logs automatically cross-reference historical repairs to safeguard lab equipment uptime.</p>
-            </div>
-          </div>
         </div>
       </div>
     </section>

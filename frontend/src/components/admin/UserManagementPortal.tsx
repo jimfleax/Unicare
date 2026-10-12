@@ -2,12 +2,36 @@ import React, { useState } from 'react';
 import useSWR from 'swr';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../../services/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent
+} from '../ui';
 
 export const UserManagementPortal: React.FC = () => {
-  const { data: usersData, error, isLoading, mutate } = useSWR('/users');
+  const { data: usersData, isLoading, mutate } = useSWR('/users');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRole, setFilterRole] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,7 +51,7 @@ export const UserManagementPortal: React.FC = () => {
   const filteredUsers = users.filter((u: any) => {
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = filterRole ? u.role === filterRole : true;
+    const matchesRole = filterRole !== 'all' ? u.role === filterRole : true;
     return matchesSearch && matchesRole;
   });
 
@@ -86,14 +110,15 @@ export const UserManagementPortal: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        await api.delete(`/users/${id}`);
-        mutate();
-      } catch (err) {
-        console.error(err);
-      }
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await api.delete(`/users/${userToDelete.id}`);
+      mutate();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUserToDelete(null);
     }
   };
 
@@ -114,12 +139,19 @@ export const UserManagementPortal: React.FC = () => {
             onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
-        <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="adm-select">
-          <option value="">All Roles</option>
-          <option value="student">Student</option>
-          <option value="technician">Technician</option>
-          <option value="admin">Admin</option>
-        </select>
+        <div style={{ minWidth: '150px' }}>
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="adm-select" style={{ height: '38px', minWidth: '150px' }}>
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="technician">Technician</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? <p>Loading...</p> : (
@@ -138,14 +170,30 @@ export const UserManagementPortal: React.FC = () => {
               <tr key={u.id}>
                 <td>{u.name}</td>
                 <td>{u.email}</td>
-                <td>{u.role}</td>
+                <td style={{ textTransform: 'capitalize' }}>{u.role}</td>
                 <td>
                   {u.role === 'technician' && <span className="adm-badge badge-tech">{u.specialty}</span>}
                   {u.role === 'student' && <span className="adm-badge badge-student">{u.branch}</span>}
                 </td>
                 <td>
-                  <button className="adm-btn-icon" onClick={() => handleOpenModal(u)}><Edit2 size={16} /></button>
-                  <button className="adm-btn-icon text-red" onClick={() => handleDelete(u.id)}><Trash2 size={16} /></button>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="adm-btn-icon" onClick={() => handleOpenModal(u)} aria-label="Edit user">
+                          <Edit2 size={16} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit user</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="adm-btn-icon text-red" onClick={() => setUserToDelete({ id: u.id, name: u.name })} aria-label="Delete user">
+                          <Trash2 size={16} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete user</TooltipContent>
+                    </Tooltip>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -156,74 +204,106 @@ export const UserManagementPortal: React.FC = () => {
         </table>
       )}
 
-      {isModalOpen && (
-        <div className="adm-modal-overlay">
-          <div className="adm-modal">
-            <h2>{editingUserId ? 'Edit User' : 'Create User'}</h2>
-            <form onSubmit={handleSave}>
-              <div className="adm-form-group">
-                <label htmlFor="name">Name</label>
-                <input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-              </div>
-              <div className="adm-form-group">
-                <label htmlFor="email">Email</label>
-                <input id="email" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-              </div>
-              <div className="adm-form-group">
-                <label htmlFor="password">Password {editingUserId && '(Leave empty to keep)'}</label>
-                <input id="password" type="password" required={!editingUserId} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-              </div>
-              <div className="adm-form-group">
-                <label htmlFor="role">Role</label>
-                <select id="role" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                  <option value="student">Student</option>
-                  <option value="technician">Technician</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+      {/* User Create/Edit Dialog */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent style={{ maxWidth: '520px' }}>
+          <DialogHeader>
+            <DialogTitle>{editingUserId ? 'Edit User' : 'Create User'}</DialogTitle>
+            <DialogDescription>
+              {editingUserId ? 'Update account details and role permissions.' : 'Create a new user account with role permissions.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSave} style={{ marginTop: '16px' }}>
+            <div className="adm-form-group">
+              <label htmlFor="name">Name</label>
+              <input id="name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            </div>
+            <div className="adm-form-group">
+              <label htmlFor="email">Email</label>
+              <input id="email" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+            </div>
+            <div className="adm-form-group">
+              <label htmlFor="password">Password {editingUserId && '(Leave empty to keep)'}</label>
+              <input id="password" type="password" required={!editingUserId} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+            </div>
+            <div className="adm-form-group">
+              <label htmlFor="role">Role</label>
+              <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
+                <SelectTrigger id="role" style={{ width: '100%' }}>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {formData.role === 'technician' && (
-                <>
-                  <div className="adm-form-group">
-                    <label htmlFor="specialty">Specialty</label>
-                    <input id="specialty" value={formData.specialty} onChange={e => setFormData({...formData, specialty: e.target.value})} />
-                  </div>
-                  <div className="adm-form-group">
-                    <label htmlFor="status">Status</label>
-                    <select id="status" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
-                      <option value="Off Duty">Off Duty</option>
-                      <option value="On Shift">On Shift</option>
-                      <option value="In Field">In Field</option>
-                    </select>
-                  </div>
-                </>
-              )}
+            {formData.role === 'technician' && (
+              <>
+                <div className="adm-form-group">
+                  <label htmlFor="specialty">Specialty</label>
+                  <input id="specialty" value={formData.specialty} onChange={e => setFormData({...formData, specialty: e.target.value})} />
+                </div>
+                <div className="adm-form-group">
+                  <label htmlFor="status">Status</label>
+                  <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
+                    <SelectTrigger id="status" style={{ width: '100%' }}>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Off Duty">Off Duty</SelectItem>
+                      <SelectItem value="On Shift">On Shift</SelectItem>
+                      <SelectItem value="In Field">In Field</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
-              {formData.role === 'student' && (
-                <>
-                  <div className="adm-form-group">
-                    <label htmlFor="branch">Branch</label>
-                    <input id="branch" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})} />
-                  </div>
-                  <div className="adm-form-group">
-                    <label htmlFor="batch">Batch</label>
-                    <input id="batch" value={formData.batch} onChange={e => setFormData({...formData, batch: e.target.value})} />
-                  </div>
-                  <div className="adm-form-group">
-                    <label htmlFor="rollNo">Roll No</label>
-                    <input id="rollNo" value={formData.rollNo} onChange={e => setFormData({...formData, rollNo: e.target.value})} />
-                  </div>
-                </>
-              )}
+            {formData.role === 'student' && (
+              <>
+                <div className="adm-form-group">
+                  <label htmlFor="branch">Branch</label>
+                  <input id="branch" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})} />
+                </div>
+                <div className="adm-form-group">
+                  <label htmlFor="batch">Batch</label>
+                  <input id="batch" value={formData.batch} onChange={e => setFormData({...formData, batch: e.target.value})} />
+                </div>
+                <div className="adm-form-group">
+                  <label htmlFor="rollNo">Roll No</label>
+                  <input id="rollNo" value={formData.rollNo} onChange={e => setFormData({...formData, rollNo: e.target.value})} />
+                </div>
+              </>
+            )}
 
-              <div className="adm-modal-actions">
-                <button type="button" className="adm-btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="adm-btn-primary">Save</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="adm-modal-actions" style={{ marginTop: '24px' }}>
+              <button type="button" className="adm-btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button type="submit" className="adm-btn-primary">Save</button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User AlertDialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => { if (!open) setUserToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action is permanent and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} style={{ background: 'var(--red)', color: '#fff' }}>
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
