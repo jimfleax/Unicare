@@ -347,6 +347,25 @@ img, svg {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.floating-navbar-star.is-scrolled {
+  top: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(220, 38, 38, 0.22);
+  border-color: rgba(239, 68, 68, 0.32);
+}
+
+.floating-navbar-star.is-scrolled .inner-content {
+  background: rgba(8, 8, 12, 0.94) !important;
+}
+
+[data-theme="light"] .floating-navbar-star.is-scrolled {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1), 0 0 14px rgba(220, 38, 38, 0.18);
+  border-color: rgba(220, 38, 38, 0.35) !important;
+}
+
+[data-theme="light"] .floating-navbar-star.is-scrolled .inner-content {
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
 /* Light mode navbar overrides removed */
 
 .landing-header {
@@ -3430,35 +3449,153 @@ img, svg {
 }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Scroll Reveal Animations (Scroll Down to View Content) Ã¢â€â‚¬Ã¢â€â‚¬ */
-.reveal-on-scroll {
+/* ── Top Scroll Progress Bar ── */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.8), 0 0 24px rgba(220, 38, 38, 0.4);
+  z-index: 99999;
+  pointer-events: none;
+  transition: width 0.08s ease-out;
+}
+
+.reveal-on-scroll,
+.reveal-fade-up {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(44px);
+  transition: opacity 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), transform 1.15s cubic-bezier(0.2, 0.85, 0.25, 1);
   will-change: opacity, transform;
 }
 
-.reveal-on-scroll.is-visible {
+.reveal-fade-left {
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: opacity 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), transform 1.15s cubic-bezier(0.2, 0.85, 0.25, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-fade-right {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), transform 1.15s cubic-bezier(0.2, 0.85, 0.25, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-scale,
+.reveal-zoom-in {
+  opacity: 0;
+  transform: scale(0.86) translateY(28px);
+  transition: opacity 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), transform 1.15s cubic-bezier(0.2, 0.85, 0.25, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-visible,
+.reveal-fade-up.is-visible,
+.reveal-fade-left.is-visible,
+.reveal-fade-right.is-visible,
+.reveal-scale.is-visible,
+.reveal-zoom-in.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate(0, 0) scale(1);
 }
 
-.reveal-scale {
+/* Ensure feature cards maintain smooth sequential reveal timings without being overridden */
+.nc-card.reveal-fade-left,
+.nc-card.reveal-fade-right,
+.nc-card.reveal-zoom-in,
+.nc-card.reveal-fade-up {
+  transition: opacity 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), transform 1.15s cubic-bezier(0.2, 0.85, 0.25, 1), border-color 0.35s ease, background 0.35s ease, box-shadow 0.35s ease !important;
+}
+
+/* Deterministic sequential reveal for 5-step circular infographic */
+.how-to-steps-v2 .htc-step {
   opacity: 0;
-  transform: scale(0.93) translateY(25px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.68) translateY(28px);
+  pointer-events: none;
+  transition: opacity 0.45s ease-out, transform 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
   will-change: opacity, transform;
 }
 
-.reveal-scale.is-visible {
+/* Sequential reveal: first circle shows, then second, then third, then fourth, then fifth */
+.how-to-steps-v2.is-visible .htc-step:nth-child(1),
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:nth-child(1) {
   opacity: 1;
   transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition-delay: 0.08s;
 }
 
-/* Stagger transition delay helpers */
-.delay-1 { transition-delay: 0.12s; }
-.delay-2 { transition-delay: 0.24s; }
-.delay-3 { transition-delay: 0.36s; }
-.delay-4 { transition-delay: 0.48s; }
+.how-to-steps-v2.is-visible .htc-step:nth-child(2),
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:nth-child(2) {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition-delay: 0.58s;
+}
+
+.how-to-steps-v2.is-visible .htc-step:nth-child(3),
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:nth-child(3) {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition-delay: 1.08s;
+}
+
+.how-to-steps-v2.is-visible .htc-step:nth-child(4),
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:nth-child(4) {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition-delay: 1.58s;
+}
+
+.how-to-steps-v2.is-visible .htc-step:nth-child(5),
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:nth-child(5) {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  transition-delay: 2.08s;
+}
+
+.how-to-steps-v2.is-visible .htc-step:hover,
+.how-to-section.is-visible .how-to-steps-v2 .htc-step:hover {
+  transform: translateY(-10px) scale(1.02);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: 0s !important;
+}
+
+/* Stagger transition delay helpers spaced generously across the whole website for visible one-by-one sequential entry */
+.delay-1 { transition-delay: 0.18s !important; }
+.delay-2 { transition-delay: 0.46s !important; }
+.delay-3 { transition-delay: 0.76s !important; }
+.delay-4 { transition-delay: 1.06s !important; }
+.delay-5 { transition-delay: 1.36s !important; }
+.delay-6 { transition-delay: 1.66s !important; }
+.delay-7 { transition-delay: 1.96s !important; }
+
+/* Auto stagger for children */
+.reveal-stagger.is-visible > *:nth-child(1) { transition-delay: 0.18s !important; }
+.reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 0.46s !important; }
+.reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 0.76s !important; }
+.reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 1.06s !important; }
+.reveal-stagger.is-visible > *:nth-child(5) { transition-delay: 1.36s !important; }
+.reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 1.66s !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  .reveal-fade-up,
+  .reveal-fade-left,
+  .reveal-fade-right,
+  .reveal-scale,
+  .reveal-zoom-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
 
 
 /* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
@@ -4311,6 +4448,22 @@ img, svg {
   position: relative;
   min-height: 180px;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.sr-timeline-row.sr-anim-left {
+  transform: translateX(-45px);
+}
+
+.sr-timeline-row.sr-anim-right {
+  transform: translateX(45px);
+}
+
+.sr-timeline-row.is-visible {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* ── Right-content rows (01, 03): card on right, number on left ── */
@@ -4533,8 +4686,15 @@ img, svg {
   text-align: center;
   position: relative;
   z-index: 2;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
   overflow: hidden;
+}
+
+.sr-timeline-conclusion.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .sr-timeline-conclusion::before {
@@ -4667,6 +4827,15 @@ img, svg {
     grid-template-columns: 80px 1fr;
     min-height: auto;
     padding: 16px 0;
+  }
+
+  .sr-timeline-row.sr-anim-left,
+  .sr-timeline-row.sr-anim-right {
+    transform: translateY(28px);
+  }
+
+  .sr-timeline-row.is-visible {
+    transform: translateY(0);
   }
 
   /* Force all to left layout on mobile */
@@ -5445,7 +5614,6 @@ img, svg {
   width: 240px;
   flex-shrink: 0;
   cursor: default;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .htc-step:hover {

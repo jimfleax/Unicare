@@ -14,7 +14,7 @@ import { Mail, Lock,
   TrendingUp, TrendingDown, Calendar, Activity, Users, Building2, Gauge, ArrowUpRight, Timer, Target, Repeat, Settings,
   LogOut, Eye, EyeOff, Loader2, UserPlus, LogIn
   } from 'lucide-react'
-import { SmartRoutingSection, WhatHappensNextSection } from './components/public/UniquesCommunitySections'
+import { SmartRoutingSection, WhatHappensNextSection, ComplaintWorkflowSection } from './components/public/UniquesCommunitySections'
 import { PreventiveMaintenanceSection } from './components/public/PreventiveMaintenanceSection'
 import { StudentDashboard } from './components/student/StudentDashboard'
 import { TechnicianDashboard } from './components/technician/TechnicianDashboard'
@@ -348,8 +348,8 @@ function Home({
 
       {/* Hero Section */}
       <div className="hero-wrapper">
-        <section className="hero-section reveal-on-scroll">
-          <div className="hero-left">
+        <section className="hero-section">
+          <div className="hero-left reveal-fade-up">
             <h1>
               Smart Lab <span className="text-red-highlight">Maintenance</span> &amp; Automation
             </h1>
@@ -374,19 +374,19 @@ function Home({
             </div>
           </div>
 
-          <div className="hero-right-stage">
+          <div className="hero-right-stage reveal-zoom-in delay-2">
             <Hero3DHub />
           </div>
         </section>
       </div>
 
       {/* 6-Card Numbered Feature Grid (inspired by theuniques.in design) */}
-      <section id="usps" className="numbered-cards-section reveal-on-scroll">
+      <section id="usps" className="numbered-cards-section">
         <div className="numbered-bg-vectors" aria-hidden="true">
           <img src="/cyber_waves_vector.svg" className="bg-vector-float tech-waves-numbered" alt="" />
           <img src="/tech_circuit_nodes.svg" className="bg-vector-float tech-nodes-numbered" alt="" />
         </div>
-        <div className="numbered-cards-header">
+        <div className="numbered-cards-header reveal-fade-up">
           <p className="numbered-cards-eyebrow">WHAT WE OFFER</p>
           <h2>Core System <span className="text-red-highlight">Capabilities</span></h2>
           <p className="numbered-cards-sub">Everything your campus needs — from real-time fault reporting to automated asset tracking.</p>
@@ -397,7 +397,7 @@ function Home({
           <div className="numbered-cards-col">
 
             {/* Card 1 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-1" onClick={() => handleProtectedAction('/dashboard')}>
+            <div className="nc-card nc-card-expandable reveal-fade-left delay-1" onClick={() => handleProtectedAction('/dashboard')}>
               <span className="nc-number">1</span>
               <div className="nc-ghost-num">01</div>
               <div className="nc-icon-wrap"><LayoutDashboard size={26} /></div>
@@ -418,7 +418,7 @@ function Home({
             </div>
 
             {/* Card 2 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-2" onClick={() => handleProtectedAction('/issues')}>
+            <div className="nc-card nc-card-expandable reveal-fade-left delay-2" onClick={() => handleProtectedAction('/issues')}>
               <span className="nc-number">2</span>
               <div className="nc-ghost-num">02</div>
               <div className="nc-icon-wrap"><ClipboardList size={26} /></div>
@@ -442,7 +442,7 @@ function Home({
 
           {/* Center card (Card 3 - identical clean styling) */}
           <div className="numbered-cards-center">
-            <div className="nc-card nc-card-expandable reveal-scale delay-3" onClick={() => handleProtectedAction('/report')}>
+            <div className="nc-card nc-card-expandable reveal-zoom-in delay-3" onClick={() => handleProtectedAction('/report')}>
               <span className="nc-number">3</span>
               <div className="nc-ghost-num">03</div>
               <div className="nc-icon-wrap"><Camera size={26} /></div>
@@ -467,7 +467,7 @@ function Home({
           <div className="numbered-cards-col">
 
             {/* Card 4 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-4" onClick={() => handleProtectedAction('/inventory')}>
+            <div className="nc-card nc-card-expandable reveal-fade-right delay-4" onClick={() => handleProtectedAction('/inventory')}>
               <span className="nc-number">4</span>
               <div className="nc-ghost-num">04</div>
               <div className="nc-icon-wrap"><Grid2X2 size={26} /></div>
@@ -488,7 +488,7 @@ function Home({
             </div>
 
             {/* Card 5 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-5" onClick={() => handleProtectedAction('/analytics')}>
+            <div className="nc-card nc-card-expandable reveal-fade-right delay-5" onClick={() => handleProtectedAction('/analytics')}>
               <span className="nc-number">5</span>
               <div className="nc-ghost-num">05</div>
               <div className="nc-icon-wrap"><BarChart3 size={26} /></div>
@@ -513,107 +513,7 @@ function Home({
       </section>
 
       {/* ── Raise a Complaint — 5-Step Circular Infographic ── */}
-      <section className="how-to-section reveal-on-scroll">
-        <div className="how-to-header">
-          <p className="how-to-eyebrow">YOUR COMPLAINT WORKFLOW</p>
-          <h2>Raise a <span className="text-red-highlight">Complaint</span> in 5 Steps</h2>
-          <p className="how-to-sub">From spotting a fault to getting it fixed — here's exactly how the Unicare pipeline works for you.</p>
-        </div>
-
-        <div className="how-to-steps-v2">
-
-          {/* Step 1 */}
-          <div className="htc-step reveal-scale delay-1">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="10" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="10" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="190" cy="100" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">01</span>
-                <h3 className="htc-step-title">SELECT ISSUE</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Choose what's wrong — AC, Electrical, Plumbing, Furniture, Wi-Fi, or Other.</p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="htc-step reveal-scale delay-2">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-2" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="10" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="190" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="190" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">02</span>
-                <h3 className="htc-step-title">ADD DETAILS</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Describe the problem and upload a photo/video if needed.</p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="htc-step reveal-scale delay-3">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-3" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="190" cy="100" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="10" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">03</span>
-                <h3 className="htc-step-title">ADD LOCATION</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Select your building, floor, room/lab, or exact location.</p>
-          </div>
-
-          {/* Step 4 */}
-          <div className="htc-step reveal-scale delay-4">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-4" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="190" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="190" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="10" cy="100" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">04</span>
-                <h3 className="htc-step-title">SUBMIT REQUEST</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Review the details and submit your maintenance request.</p>
-          </div>
-
-          {/* Step 5 */}
-          <div className="htc-step reveal-scale delay-5">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-5" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="10" cy="100" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="100" cy="190" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">05</span>
-                <h3 className="htc-step-title">TRACK & RESOLVE</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Get a request ID, track the status, and receive updates until the issue is resolved.</p>
-          </div>
-
-        </div>
-      </section>
+      <ComplaintWorkflowSection />
 
       {/* Smart Issue Routing Section */}
       <div id="smart-routing">
@@ -643,10 +543,44 @@ function Home({
   )
 }
 
-/* ── Scroll Reveal Observer Manager ──────────────────────────── */
+/* ── Scroll Reveal Observer & Progress Bar Manager ──────────────────────────── */
 function ScrollRevealManager() {
   const navigate = useNavigate()
+  const [scrollProgress, setScrollProgress] = useState(0)
 
+  // Track scroll progress and navbar elevation
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+          if (totalHeight > 0) {
+            const current = (window.scrollY / totalHeight) * 100
+            setScrollProgress(Math.min(100, Math.max(0, current)))
+          }
+
+          const navbar = document.querySelector('.floating-navbar-star')
+          if (navbar) {
+            if (window.scrollY > 30) {
+              navbar.classList.add('is-scrolled')
+            } else {
+              navbar.classList.remove('is-scrolled')
+            }
+          }
+
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Observe scroll reveals
   useEffect(() => {
     const observerCallback: IntersectionObserverCallback = (entries) => {
       entries.forEach(entry => {
@@ -658,27 +592,43 @@ function ScrollRevealManager() {
 
     const observerOptions: IntersectionObserverInit = {
       root: null,
-      rootMargin: '0px 0px -40px 0px',
-      threshold: 0.08,
+      rootMargin: '0px 0px -70px 0px',
+      threshold: 0.12,
     }
 
     const observer = new IntersectionObserver(observerCallback, observerOptions)
     
     const observeElements = () => {
-      const elements = document.querySelectorAll('.reveal-on-scroll, .reveal-scale')
+      const elements = document.querySelectorAll(
+        '.reveal-on-scroll, .reveal-scale, .reveal-fade-up, .reveal-fade-left, .reveal-fade-right, .reveal-zoom-in, .reveal-stagger'
+      )
       elements.forEach(el => observer.observe(el))
     }
 
     observeElements()
-    const timer = setTimeout(observeElements, 120)
+    const timer1 = setTimeout(observeElements, 120)
+    const timer2 = setTimeout(observeElements, 500)
+
+    const mutationObserver = new MutationObserver(() => {
+      observeElements()
+    })
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
 
     return () => {
-      clearTimeout(timer)
+      clearTimeout(timer1)
+      clearTimeout(timer2)
       observer.disconnect()
+      mutationObserver.disconnect()
     }
   }, [navigate])
 
-  return null
+  return (
+    <div
+      className="scroll-progress-bar"
+      style={{ width: `${scrollProgress}%` }}
+      aria-hidden="true"
+    />
+  )
 }
 
 /* ── Push Notifications ──────────────────────────────────────── */
