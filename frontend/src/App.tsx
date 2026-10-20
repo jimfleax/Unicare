@@ -24,6 +24,7 @@ import { AdminScheduleMaintenance } from './components/admin/AdminScheduleMainte
 import { UserManagementPortal } from './components/admin/UserManagementPortal'
 import { InventoryAssetsManager } from './components/admin/InventoryAssetsManager'
 import Hero3DHub from './components/public/Hero3DHub'
+import { FloatingShapes } from './components/public/FloatingShapes'
 import StarBorder from './components/shared/StarBorder'
 import { Footer } from './components/shared/Footer'
 import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute'
@@ -292,6 +293,7 @@ function Home({
 
   return (
     <div className="landing-page">
+        <FloatingShapes theme={theme} className="homepage-bg" />
       {/* Ultra Professional Floating Glass Navbar with StarBorder Accent */}
       <StarBorder
         as="div"

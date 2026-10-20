@@ -468,7 +468,94 @@ img, svg {
 }
 
 /* Hero Section Ã¢â‚¬â€ Clean dark radial highlight, with decorative floating vectors */
-/* Hero Section Wrapper for Animated Dot Matrix Wave Background */
+/* ── Floating Shapes Background (theuniques.in inspired) ────────── */
+.floating-shapes-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.homepage-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Every child shape */
+.fs-shape {
+  position: absolute;
+  will-change: transform;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Circles */
+.fs-circle {
+  border-radius: 50%;
+}
+
+/* Small dots */
+.fs-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.fs-dot--lg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Ring outlines */
+.fs-ring {
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* SVG accents inherit no pointer events */
+.fs-accent {
+  pointer-events: none;
+}
+
+/* Slow spin for dashed arcs */
+.fs-spin-slow {
+  animation: fsSpin 28s linear infinite;
+}
+
+@keyframes fsSpin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Gentle float on large circles */
+.fs-circle--xl {
+  animation: fsFloat 14s ease-in-out infinite;
+}
+.fs-circle--lg {
+  animation: fsFloat 18s ease-in-out infinite reverse;
+}
+.fs-circle--md {
+  animation: fsFloat 16s ease-in-out infinite 2s;
+}
+.fs-circle--sm {
+  animation: fsFloat 12s ease-in-out infinite 4s;
+}
+.fs-circle--xs {
+  animation: fsFloat 10s ease-in-out infinite 1s;
+}
+
+@keyframes fsFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-18px); }
+}
+
+/* Ensure landing-page content layers above shapes */
+.landing-page > *:not(.floating-shapes-bg):not(.homepage-bg) {
+  position: relative;
+  z-index: 1;
+}
+
 .hero-wrapper {
   position: relative;
   width: 100%;
