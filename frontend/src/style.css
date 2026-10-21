@@ -1896,19 +1896,21 @@ img, svg {
   z-index: 300;
   border-right: 1px solid var(--border-subtle);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(0); /* Always visible on desktop */
 }
 
+/* collapsed class only used on mobile via JS */
 .app-side.collapsed {
-  transform: translateX(-100%);
+  transform: translateX(0); /* On desktop, always stay visible */
 }
 
 .sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 250;
-  animation: fadeIn 0.2s ease-out;
+  display: none; /* Hidden on desktop */
+}
+
+/* Desktop: hide sidebar close button */
+.sidebar-close-btn {
+  display: none !important;
 }
 
 .app-brand {
@@ -1965,8 +1967,14 @@ img, svg {
   transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* On desktop, never go full-width — sidebar is always open */
 .portal-main.full-width {
-  margin-left: 0;
+  margin-left: 260px;
+}
+
+/* Desktop: hide hamburger toggle button */
+.hamburger-toggle {
+  display: none !important;
 }
 
 .portal-top {
@@ -2342,9 +2350,33 @@ img, svg {
 
 @media (max-width: 768px) {
   .usp-grid { grid-template-columns: 1fr; }
+
+  /* Mobile: sidebar hidden by default, shown via toggle */
   .app-side { transform: translateX(-100%); }
+  .app-side.collapsed { transform: translateX(-100%); }
   .app-side.show { transform: translateX(0); }
+
+  /* Mobile: show close button in sidebar */
+  .sidebar-close-btn { display: flex !important; }
+
+  /* Mobile: main content goes full width */
   .portal-main { margin-left: 0; }
+  .portal-main.full-width { margin-left: 0; }
+
+  /* Mobile: show hamburger toggle */
+  .hamburger-toggle { display: flex !important; }
+
+  /* Mobile: show sidebar backdrop */
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 250;
+    animation: fadeIn 0.2s ease-out;
+  }
+
   .landing-header { padding: 16px 20px; }
   .landing-nav-links { display: none; }
   .hero-left h1 { font-size: 2.5rem; }
@@ -8168,6 +8200,60 @@ img, svg {
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
+/* ── Chart Period Radix Tabs ── */
+.adm-tabs-list.rdx-tabs-list {
+  display: flex;
+  gap: 3px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+.adm-tab-trigger.rdx-tabs-trigger {
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--txt-sub);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: var(--tr-fast);
+  font-family: var(--font-primary);
+  letter-spacing: 0.3px;
+  position: relative;
+}
+.adm-tab-trigger.rdx-tabs-trigger:hover {
+  color: var(--txt-muted);
+  background: transparent;
+}
+.adm-tab-trigger.rdx-tabs-trigger[data-state="active"] {
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+.adm-tab-trigger.rdx-tabs-trigger[data-state="active"]::after {
+  display: none;
+}
+[data-theme="light"] .adm-tabs-list.rdx-tabs-list {
+  background: #f0f2f5;
+  border-color: #dde1e7;
+}
+[data-theme="light"] .adm-tab-trigger.rdx-tabs-trigger {
+  color: #64748b;
+}
+[data-theme="light"] .adm-tab-trigger.rdx-tabs-trigger:hover {
+  color: #0f172a;
+}
+[data-theme="light"] .adm-tab-trigger.rdx-tabs-trigger[data-state="active"] {
+  background: #dc2626;
+  color: #fff;
+}
+
 /* ── Chart Body ── */
 .adm-chart-body {
   padding: 16px 22px 12px;
@@ -9476,6 +9562,333 @@ img, svg {
   padding: 6px 12px 4px;
 }
 
+/* HoverCard */
+.rdx-hovercard-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 9900;
+  outline: none;
+  padding: 16px;
+  min-width: 260px;
+}
+.rdx-hovercard-content[data-state="open"] {
+  animation: rdxHoverCardIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rdx-hovercard-content[data-state="closed"] {
+  animation: rdxHoverCardOut 0.15s ease-in;
+}
+
+@keyframes rdxHoverCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rdxHoverCardOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+/* Notification HoverCard specifics */
+.notif-hovercard {
+  width: 370px;
+  padding: 0;
+  overflow: hidden;
+}
+.notif-hovercard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.04), transparent);
+}
+.notif-hovercard-header b {
+  font-size: 0.92rem;
+  color: var(--txt);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notif-hovercard-header b::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: notifPulse 2s infinite;
+}
+@keyframes notifPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.notif-mark-all-btn {
+  font-size: 0.75rem;
+  color: var(--red-bright);
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  transition: background 0.15s ease;
+}
+.notif-mark-all-btn:hover {
+  background: var(--red-subtle);
+}
+.notif-hovercard-body {
+  padding: 8px;
+  max-height: 340px;
+}
+.notif-item {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+.notif-item.unread {
+  background: var(--bg-card-alt);
+  border-left-color: var(--red);
+}
+.notif-item:hover {
+  background: var(--bg-hover, var(--bg-card-alt));
+}
+.notif-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.notif-item-title {
+  color: var(--txt);
+  flex: 1;
+  margin-right: 8px;
+}
+.notif-item-title.critical {
+  color: var(--red-bright);
+}
+.notif-item-time {
+  font-size: 0.7rem;
+  color: var(--txt-sub);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.notif-item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.notif-item-location {
+  font-size: 0.75rem;
+  color: var(--txt-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.notif-mark-read-btn {
+  background: transparent;
+  border: none;
+  color: var(--green-txt);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.notif-mark-read-btn:hover {
+  background: rgba(34, 197, 94, 0.1);
+  transform: scale(1.15);
+}
+.notif-hovercard-footer {
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.notif-hovercard-footer .btn-dark {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.notif-loading {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--txt-muted);
+  padding: 8px;
+}
+.notif-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--txt-muted);
+  font-size: 0.85rem;
+}
+.notif-empty svg {
+  display: block;
+  margin: 0 auto 8px;
+  opacity: 0.4;
+}
+
+/* Bell icon hover animation */
+.notif-bell-trigger {
+  position: relative;
+  color: var(--txt-muted);
+  padding: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.notif-bell-trigger:hover {
+  color: var(--txt);
+  background: var(--bg-card-alt);
+}
+.notif-bell-trigger:hover svg {
+  animation: bellRing 0.5s ease-in-out;
+}
+@keyframes bellRing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(3deg); }
+  100% { transform: rotate(0deg); }
+}
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--red);
+  border-radius: 50%;
+  font-size: 0.62rem;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  padding: 0 3px;
+  border: 2px solid var(--bg-black, #09090b);
+  animation: notifBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes notifBadgePop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* Team member HoverCard */
+.team-hovercard {
+  width: 280px;
+  padding: 16px;
+}
+.team-hovercard-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.team-hovercard-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.team-hovercard-details h4 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--txt);
+  margin: 0 0 2px;
+}
+.team-hovercard-details span {
+  font-size: 0.78rem;
+  color: var(--txt-muted);
+}
+.team-hovercard-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.team-hovercard-stat {
+  text-align: center;
+  padding: 8px;
+  background: var(--bg-card-alt);
+  border-radius: var(--r-sm);
+}
+.team-hovercard-stat .stat-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--txt);
+  display: block;
+}
+.team-hovercard-stat .stat-label {
+  font-size: 0.68rem;
+  color: var(--txt-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* KPI Card Tooltips */
+.kpi-tooltip-content {
+  max-width: 220px;
+  text-align: center;
+}
+.kpi-tooltip-content p {
+  font-size: 0.72rem;
+  color: #d4d4d8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Light mode overrides */
+[data-theme="light"] .rdx-hovercard-content {
+  background: #ffffff;
+  border-color: #dde1e7;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .notif-hovercard-header {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.03), transparent);
+}
+[data-theme="light"] .notif-item.unread {
+  background: #f8f9fb;
+}
+[data-theme="light"] .notif-badge {
+  border-color: #ffffff;
+}
+[data-theme="light"] .team-hovercard-stat {
+  background: #f4f6f9;
+}
+
 /* Select */
 .rdx-select-trigger {
   display: inline-flex;
@@ -9929,4 +10342,38 @@ img, svg {
 [data-theme="light"] .rdx-checkbox[data-state="checked"] {
   background: #dc2626;
   border-color: #dc2626;
+}
+
+/* ================================================================
+   PREMIUM STUDENT DASHBOARD SPACING & LAYOUT
+   ================================================================ */
+
+.student-dashboard-container {
+  padding: 32px !important;
+}
+
+.student-hero-card {
+  margin-bottom: 28px !important;
+  padding: 32px !important;
+}
+
+.student-stats-row {
+  margin-bottom: 24px !important;
+}
+
+.student-tabs-wrapper {
+  margin-top: 24px !important;
+}
+
+.student-section {
+  padding: 24px !important;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

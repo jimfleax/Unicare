@@ -14,7 +14,13 @@ const seedUsers = async () => {
     await mongoose.connect(mongoUri, { dbName });
     console.log('MongoDB Connected...');
 
-    const users = [
+    const users: Array<{
+      name: string;
+      email: string;
+      password: string;
+      role: 'admin' | 'technician' | 'student';
+      phone: string;
+    }> = [
       {
         name: 'Admin User',
         email: 'admin@ucare.com',

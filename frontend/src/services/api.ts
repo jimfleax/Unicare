@@ -24,6 +24,7 @@ export interface IssueRecord {
   time?: string;
   description?: string;
   category?: string;
+  resolvedAt?: string;
   activityLogs?: Array<{
     _id?: string;
     message: string;
