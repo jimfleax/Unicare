@@ -75,7 +75,7 @@ export function PreventiveMaintenanceSection() {
 
       <div className="pm-container">
         {/* Section Header */}
-        <div className="pm-header">
+        <div className="pm-header reveal-fade-up">
           <h2 className="pm-title">
             Preventive <span className="text-red-highlight">Maintenance</span>
           </h2>
@@ -88,13 +88,13 @@ export function PreventiveMaintenanceSection() {
 
         {/* 4 Infographic Notched Cards with Connected Wire Flow (Matching Reference Image) */}
         <div className="pm-cards-grid">
-          {stepsData.map((step) => {
+          {stepsData.map((step, idx) => {
             const Icon = step.icon
 
             return (
               <div
                 key={step.id}
-                className="pm-card-wrapper"
+                className={`pm-card-wrapper reveal-zoom-in delay-${idx + 1}`}
               >
                 {/* SVG Card Frame: Notched outline, connecting wire, decorative arcs & drop shadow */}
                 <svg

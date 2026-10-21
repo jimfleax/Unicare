@@ -22,7 +22,8 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
   Avatar, AvatarImage, AvatarFallback,
-  Tooltip, TooltipTrigger, TooltipContent
+  Tooltip, TooltipTrigger, TooltipContent,
+  Button
 } from '../ui'
 
 interface StudentDashboardProps {
@@ -407,26 +408,124 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
 
         {/* TAB 1: OVERVIEW & MY REPORTED TICKETS */}
         <TabsContent value="overview">
-        <div className="student-section">
-          {/* Toolbar & Filter Bar */}
-          <div className="student-toolbar">
-            <div className="student-search-box">
-              <Search size={16} color="var(--txt-muted)" />
+        <div className="student-section" style={{ padding: '0', background: 'transparent' }}>
+          {/* Modern Toolbar with Search & Filter Pills */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            marginBottom: '24px'
+          }}>
+            {/* Search Bar */}
+            <div style={{
+              position: 'relative',
+              maxWidth: '400px'
+            }}>
+              <Search size={18} style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--txt-muted)',
+                pointerEvents: 'none'
+              }} />
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search ticket title, lab room, or ID..."
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 44px',
+                  background: 'rgba(18, 18, 21, 0.5)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  color: 'var(--txt)',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'all 0.25s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(220, 38, 38, 0.4)'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(220, 38, 38, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
-              {searchQuery && <button onClick={() => setSearchQuery('')} style={{ color: 'var(--txt-sub)' }}>✕</button>}
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--txt-sub)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            <div className="student-filter-chips">
-              <span className="filter-title"><Filter size={13} /> Filter:</span>
+            {/* Filter Pills Row */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: 'var(--txt-muted)',
+                fontSize: '13px',
+                fontWeight: 600
+              }}>
+                <Filter size={14} />
+                Filter:
+              </div>
               {(['All', 'Open', 'In Progress', 'Resolved'] as const).map(st => (
                 <button
                   key={st}
                   className={`chip-btn ${filterStatus === st ? 'active' : ''}`}
                   onClick={() => setFilterStatus(st)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: filterStatus === st ? '#dc2626' : 'rgba(255, 255, 255, 0.05)',
+                    color: filterStatus === st ? '#ffffff' : 'var(--txt-muted)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (filterStatus !== st) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                      e.currentTarget.style.color = 'var(--txt)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (filterStatus !== st) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                      e.currentTarget.style.color = 'var(--txt-muted)'
+                    }
+                  }}
                 >
                   {st}
                 </button>
@@ -434,15 +533,65 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
             </div>
           </div>
 
-          {/* Ticket Cards List with Clean Precision Step Tracker */}
+          {/* Ticket Cards List or Empty State */}
           {studentTickets.length === 0 ? (
-            <div className="student-empty-state">
-              <FileText size={48} color="var(--txt-dim)" />
-              <h3>No tickets found</h3>
-              <p>Found 0 reported complaints matching your active filter.</p>
-              <button className="btn-red" style={{ marginTop: '14px' }} onClick={() => setActiveTab('report')}>
-                <Plus size={15} /> Log Incident Report Now
-              </button>
+            <div style={{
+              padding: '80px 40px',
+              textAlign: 'center',
+              background: 'rgba(18, 18, 21, 0.3)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                margin: '0 auto 24px',
+                background: 'rgba(220, 38, 38, 0.1)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                <FileText size={36} color="var(--red-bright)" />
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  border: '2px dashed rgba(220, 38, 38, 0.3)',
+                  borderRadius: '50%',
+                  animation: 'spin 20s linear infinite'
+                }} />
+              </div>
+              <h3 style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                color: 'var(--txt)',
+                marginBottom: '8px'
+              }}>
+                No tickets found
+              </h3>
+              <p style={{
+                fontSize: '14px',
+                color: 'var(--txt-muted)',
+                marginBottom: '24px'
+              }}>
+                Found 0 reported complaints matching your active filter.
+              </p>
+              <Button
+                onClick={() => setActiveTab('report')}
+                className="bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '14px',
+                  fontWeight: 600
+                }}
+              >
+                <Plus size={16} style={{ marginRight: '8px' }} />
+                Log Incident Report Now
+              </Button>
             </div>
           ) : (
             <div className="student-ticket-list">

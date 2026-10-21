@@ -104,6 +104,13 @@ export const updateIncidentStatus = catchAsync(async (req: AuthRequest, res: Res
     return next(new AppError('Incident not found', 404));
   }
 
+  if (status === 'Resolved') {
+    if (incident.status !== 'Resolved' || !incident.resolvedAt) {
+      incident.resolvedAt = new Date();
+    }
+  } else {
+    incident.resolvedAt = undefined;
+  }
   incident.status = status;
   if (status === 'In Progress' && !incident.assignedTo) {
     incident.assignedTo = req.user!._id;

@@ -1,13 +1,19 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Package, CircleAlert, CheckCircle2, Timer, TrendingUp, TrendingDown,
   Calendar, MapPin, ArrowRight, Plus, Users,
-  Clock3, Target, Repeat
+  Clock3, Target, Repeat, Wrench, Zap
 } from 'lucide-react'
 import type { IssueRecord } from '../types'
 import useSWR from 'swr'
 import { fetcher, fetchPrioritiesApi, fetchLocationsApi } from '../services/api'
+import {
+  Tooltip, TooltipTrigger, TooltipContent,
+  HoverCard, HoverCardTrigger, HoverCardContent,
+  Progress, ScrollArea, Separator,
+  Tabs, TabsList, TabsTrigger
+} from './ui'
 
 import { useAuth } from '../context/AuthContext'
 
@@ -148,43 +154,63 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
         </div>
       </div>
 
-      {/* ═══ KPI CARDS ═══ */}
+      {/* ═══ KPI CARDS with Radix Tooltips ═══ */}
       <div className="adm-kpi-row">
-        <div className="adm-kpi accent-red" onClick={() => navigate('/inventory')}>
-          <div className="adm-kpi-icon-circle icon-red"><Package size={22} /></div>
-          <div className="adm-kpi-body">
-            <span className="adm-kpi-label">Total Assets</span>
-            <span className="adm-kpi-number">{assetsData?.length || 0}</span>
-          </div>
-          <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.assetGrowth} size={12} /> {analytics?.assetGrowth || "0%"} from last month</div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link className="adm-kpi accent-red" to="/inventory">
+              <div className="adm-kpi-icon-circle icon-red"><Package size={22} /></div>
+              <div className="adm-kpi-body">
+                <span className="adm-kpi-label">Total Assets</span>
+                <span className="adm-kpi-number">{assetsData?.length || 0}</span>
+              </div>
+              <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.assetGrowth} size={12} /> {analytics?.assetGrowth || "0%"} from last month</div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent className="kpi-tooltip-content"><p>Click to view full inventory &amp; asset registry</p></TooltipContent>
+        </Tooltip>
 
-        <div className="adm-kpi accent-amber" onClick={() => navigate('/issues')}>
-          <div className="adm-kpi-icon-circle icon-amber"><CircleAlert size={22} /></div>
-          <div className="adm-kpi-body">
-            <span className="adm-kpi-label">Active Requests</span>
-            <span className="adm-kpi-number">{activeRequests.length}</span>
-          </div>
-          <div className="adm-kpi-badge trend-critical">{criticalCount} Critical</div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link className="adm-kpi accent-amber" to="/issues">
+              <div className="adm-kpi-icon-circle icon-amber"><CircleAlert size={22} /></div>
+              <div className="adm-kpi-body">
+                <span className="adm-kpi-label">Active Requests</span>
+                <span className="adm-kpi-number">{activeRequests.length}</span>
+              </div>
+              <div className="adm-kpi-badge trend-critical">{criticalCount} Critical</div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent className="kpi-tooltip-content"><p>Click to view all active maintenance requests</p></TooltipContent>
+        </Tooltip>
 
-        <div className="adm-kpi accent-green" onClick={() => navigate('/analytics')}>
-          <div className="adm-kpi-icon-circle icon-green"><CheckCircle2 size={22} /></div>
-          <div className="adm-kpi-body">
-            <span className="adm-kpi-label">Resolved This Month</span>
-            <span className="adm-kpi-number">{analytics?.resolvedThisMonth || 0}</span>
-          </div>
-          <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.resolvedGrowth} size={12} /> {analytics?.resolvedGrowth || "0%"}</div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link className="adm-kpi accent-green" to="/analytics">
+              <div className="adm-kpi-icon-circle icon-green"><CheckCircle2 size={22} /></div>
+              <div className="adm-kpi-body">
+                <span className="adm-kpi-label">Resolved This Month</span>
+                <span className="adm-kpi-number">{analytics?.resolvedThisMonth || 0}</span>
+              </div>
+              <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.resolvedGrowth} size={12} /> {analytics?.resolvedGrowth || "0%"}</div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent className="kpi-tooltip-content"><p>Click to view analytics &amp; resolution performance</p></TooltipContent>
+        </Tooltip>
 
-        <div className="adm-kpi accent-blue" onClick={() => navigate('/analytics')}>
-          <div className="adm-kpi-icon-circle icon-blue"><Timer size={22} /></div>
-          <div className="adm-kpi-body">
-            <span className="adm-kpi-label">Avg Resolution</span>
-            <span className="adm-kpi-number">{analytics?.avgResolution || "0h"}</span>
-          </div>
-          <div className="adm-kpi-badge trend-up">Target &lt; 4h</div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link className="adm-kpi accent-blue" to="/analytics">
+              <div className="adm-kpi-icon-circle icon-blue"><Timer size={22} /></div>
+              <div className="adm-kpi-body">
+                <span className="adm-kpi-label">Avg Resolution</span>
+                <span className="adm-kpi-number">{analytics?.avgResolution || "0h"}</span>
+              </div>
+              <div className="adm-kpi-badge trend-up">Target &lt; 4h</div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent className="kpi-tooltip-content"><p>Average time to resolve campus maintenance issues</p></TooltipContent>
+        </Tooltip>
       </div>
 
       {/* ═══ ANALYTICS + SIDEBAR ═══ */}
@@ -196,13 +222,15 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
               <h3 className="adm-card-title">Maintenance Trends</h3>
               <p className="adm-card-sub">Request activity and resolution performance.</p>
             </div>
-            <div className="adm-pill-group">
-              {(['7d', '30d', '6m', '1y'] as const).map(p => (
-                <button key={p} className={`adm-pill ${chartPeriod === p ? 'active' : ''}`} onClick={() => setChartPeriod(p)}>
-                  {p === '7d' ? '7D' : p === '30d' ? '30D' : p === '6m' ? '6M' : '1Y'}
-                </button>
-              ))}
-            </div>
+            <Tabs value={chartPeriod} onValueChange={(v) => setChartPeriod(v as typeof chartPeriod)}>
+              <TabsList className="adm-tabs-list">
+                {(['7d', '30d', '6m', '1y'] as const).map(p => (
+                  <TabsTrigger key={p} value={p} className="adm-tab-trigger">
+                    {p === '7d' ? '7D' : p === '30d' ? '30D' : p === '6m' ? '6M' : '1Y'}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
           <div className="adm-chart-body">
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="adm-line-chart">
@@ -273,27 +301,59 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
 
       {/* ═══ TEAM + PROGRESS + DISTRIBUTION ═══ */}
       <div className="adm-triple-row">
-        {/* Team Collaboration */}
+        {/* Team Collaboration — with Radix HoverCards */}
         <div className="adm-card">
           <div className="adm-card-head">
             <div>
               <h3 className="adm-card-title">Team on Duty</h3>
               <p className="adm-card-sub">Active technicians across campus.</p>
             </div>
-            <button className="adm-btn-outline" onClick={() => navigate('/technician')}>+ View Roster</button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="adm-btn-outline" onClick={() => navigate('/technician')}>+ View Roster</button>
+              </TooltipTrigger>
+              <TooltipContent>Open full technician roster</TooltipContent>
+            </Tooltip>
           </div>
           <div className="adm-team-list">
             {techTeam.map((t: any, i: number) => (
-              <div key={i} className="adm-team-row">
-                <div className="adm-team-avatar" style={{ background: t.color }}>{t.name.split(' ').map((n: string) => n[0]).join('')}</div>
-                <div className="adm-team-info">
-                  <span className="adm-team-name">{t.name}</span>
-                  <span className="adm-team-role">{t.role} · {t.jobs} active jobs</span>
-                </div>
-                <span className={`adm-team-status ${t.status === 'On Shift' ? 'online' : 'away'}`}>
-                  <span className="adm-status-dot" /> {t.status}
-                </span>
-              </div>
+              <HoverCard key={i} openDelay={300} closeDelay={200}>
+                <HoverCardTrigger asChild>
+                  <div className="adm-team-row" style={{ cursor: 'pointer' }}>
+                    <div className="adm-team-avatar" style={{ background: t.color }}>{t.name.split(' ').map((n: string) => n[0]).join('')}</div>
+                    <div className="adm-team-info">
+                      <span className="adm-team-name">{t.name}</span>
+                      <span className="adm-team-role">{t.role} · {t.jobs} active jobs</span>
+                    </div>
+                    <span className={`adm-team-status ${t.status === 'On Shift' ? 'online' : 'away'}`}>
+                      <span className="adm-status-dot" /> {t.status}
+                    </span>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent align="center" className="team-hovercard">
+                  <div className="team-hovercard-info">
+                    <div className="team-hovercard-avatar" style={{ background: t.color }}>
+                      {t.name.split(' ').map((n: string) => n[0]).join('')}
+                    </div>
+                    <div className="team-hovercard-details">
+                      <h4>{t.name}</h4>
+                      <span>{t.role}</span>
+                    </div>
+                  </div>
+                  <div className="team-hovercard-stats">
+                    <div className="team-hovercard-stat">
+                      <span className="stat-value">{t.jobs}</span>
+                      <span className="stat-label">Active Jobs</span>
+                    </div>
+                    <div className="team-hovercard-stat">
+                      <span className="stat-value" style={{ color: t.status === 'On Shift' ? 'var(--green-txt)' : 'var(--amber-txt)' }}>
+                        {t.status === 'On Shift' ? '●' : '○'}
+                      </span>
+                      <span className="stat-label">{t.status}</span>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             ))}
           </div>
         </div>
@@ -371,7 +431,12 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             <h3 className="adm-card-title">Active Maintenance Requests</h3>
             <p className="adm-card-sub">Real-time issue pipeline across campus labs.</p>
           </div>
-          <button className="adm-btn-outline" onClick={() => navigate('/issues')}>View All Requests →</button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="adm-btn-outline" onClick={() => navigate('/issues')}>View All Requests →</button>
+            </TooltipTrigger>
+            <TooltipContent>Open full issue tracking view</TooltipContent>
+          </Tooltip>
         </div>
         <div className="adm-table-wrap">
           <table className="adm-table">
@@ -404,7 +469,12 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
                   </td>
                   <td><span className="adm-time-ago">{timeAgo(r.date, r.time)}</span></td>
                   <td style={{ textAlign: 'right' }}>
-                    <button className="adm-action-btn" onClick={() => onSelectIssue(r)}>View <ArrowRight size={12} /></button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="adm-action-btn" onClick={() => onSelectIssue(r)}>View <ArrowRight size={12} /></button>
+                      </TooltipTrigger>
+                      <TooltipContent>View full issue details</TooltipContent>
+                    </Tooltip>
                   </td>
                 </tr>
               ))}
@@ -415,7 +485,7 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
 
       {/* ═══ BOTTOM ROW: PERFORMANCE + PRIORITY + CAMPUS ═══ */}
       <div className="adm-bottom-row">
-        {/* Performance Metrics */}
+        {/* Performance Metrics — with Radix Progress & Tooltips */}
         <div className="adm-card">
           <div className="adm-card-head">
             <div>
@@ -424,30 +494,50 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             </div>
           </div>
           <div className="adm-perf-grid">
-            <div className="adm-perf-item">
-              <div className="adm-perf-icon"><Clock3 size={16} /></div>
-              <span className="adm-perf-label">First Response</span>
-              <span className="adm-perf-value">{analytics?.firstResponse || "0 min"}</span>
-              <span className="adm-perf-trend"><TrendIcon value={analytics?.firstResponseTrend} size={11} /> {analytics?.firstResponseTrend || "0%"}</span>
-            </div>
-            <div className="adm-perf-item">
-              <div className="adm-perf-icon"><Timer size={16} /></div>
-              <span className="adm-perf-label">Avg Resolution</span>
-              <span className="adm-perf-value">{analytics?.avgResolution || "0h"}</span>
-              <span className="adm-perf-trend"><TrendIcon value={analytics?.avgResolutionTrend} size={11} /> {analytics?.avgResolutionTrend || "0%"}</span>
-            </div>
-            <div className="adm-perf-item">
-              <div className="adm-perf-icon"><Target size={16} /></div>
-              <span className="adm-perf-label">SLA Compliance</span>
-              <span className="adm-perf-value">{analytics ? Math.round(analytics.slaCompliance) + '%' : '—'}</span>
-              <div className="adm-perf-bar"><div className="adm-perf-bar-fill" style={{ width: analytics ? `${Math.round(analytics.slaCompliance)}%` : '0%' }} /></div>
-            </div>
-            <div className="adm-perf-item">
-              <div className="adm-perf-icon"><Repeat size={16} /></div>
-              <span className="adm-perf-label">Resolved Issues</span>
-              <span className="adm-perf-value">{analytics?.resolvedIncidents || 0}</span>
-              <span className="adm-perf-trend"><TrendingUp size={11} /> Total</span>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="adm-perf-item">
+                  <div className="adm-perf-icon"><Clock3 size={16} /></div>
+                  <span className="adm-perf-label">First Response</span>
+                  <span className="adm-perf-value">{analytics?.firstResponse || "0 min"}</span>
+                  <span className="adm-perf-trend"><TrendIcon value={analytics?.firstResponseTrend} size={11} /> {analytics?.firstResponseTrend || "0%"}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Average time to first acknowledge an issue</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="adm-perf-item">
+                  <div className="adm-perf-icon"><Timer size={16} /></div>
+                  <span className="adm-perf-label">Avg Resolution</span>
+                  <span className="adm-perf-value">{analytics?.avgResolution || "0h"}</span>
+                  <span className="adm-perf-trend"><TrendIcon value={analytics?.avgResolutionTrend} size={11} /> {analytics?.avgResolutionTrend || "0%"}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Average time from report to resolution</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="adm-perf-item">
+                  <div className="adm-perf-icon"><Target size={16} /></div>
+                  <span className="adm-perf-label">SLA Compliance</span>
+                  <span className="adm-perf-value">{analytics ? Math.round(analytics.slaCompliance) + '%' : '—'}</span>
+                  <Progress value={analytics ? Math.round(analytics.slaCompliance) : 0} style={{ height: '6px', marginTop: '6px' }} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Percentage of issues resolved within SLA targets</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="adm-perf-item">
+                  <div className="adm-perf-icon"><Repeat size={16} /></div>
+                  <span className="adm-perf-label">Resolved Issues</span>
+                  <span className="adm-perf-value">{analytics?.resolvedIncidents || 0}</span>
+                  <span className="adm-perf-trend"><TrendingUp size={11} /> Total</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Total number of issues resolved to date</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -506,7 +596,7 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
         </div>
       </div>
 
-      {/* ═══ QUICK ACTIONS ═══ */}
+      {/* ═══ QUICK ACTIONS — with Radix Tooltips ═══ */}
       <div className="adm-card adm-quick-card">
         <div className="adm-card-head">
           <div>
@@ -515,10 +605,30 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           </div>
         </div>
         <div className="adm-quick-row">
-          <button className="adm-btn-primary" onClick={() => navigate('/report')}><Plus size={16} /> Report an Issue</button>
-          <button className="adm-btn-secondary" onClick={() => navigate('/inventory')}><Package size={16} /> View Inventory</button>
-          <button className="adm-btn-secondary" onClick={() => navigate('/schedule-maintenance')}><Calendar size={16} /> Schedule Maintenance</button>
-          <button className="adm-btn-secondary" onClick={() => navigate('/manage-technicians')}><Users size={16} /> Manage Technicians</button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="adm-btn-primary" onClick={() => navigate('/report')}><Plus size={16} /> Report an Issue</button>
+            </TooltipTrigger>
+            <TooltipContent>Submit a new maintenance request</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="adm-btn-secondary" onClick={() => navigate('/inventory')}><Package size={16} /> View Inventory</button>
+            </TooltipTrigger>
+            <TooltipContent>Browse campus asset inventory</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="adm-btn-secondary" onClick={() => navigate('/schedule-maintenance')}><Calendar size={16} /> Schedule Maintenance</button>
+            </TooltipTrigger>
+            <TooltipContent>Plan preventive maintenance tasks</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="adm-btn-secondary" onClick={() => navigate('/manage-technicians')}><Users size={16} /> Manage Technicians</button>
+            </TooltipTrigger>
+            <TooltipContent>Manage technician assignments &amp; roster</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </main>

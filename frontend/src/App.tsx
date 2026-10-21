@@ -12,11 +12,11 @@ import { Mail, Lock,
   Printer, Check, Sun, Moon, Upload, Video, VideoOff, Sparkles, RefreshCw, AlertTriangle, GraduationCap,
   MapPin, ListChecks, ImagePlus,
   TrendingUp, TrendingDown, Calendar, Activity, Users, Building2, Gauge, ArrowUpRight, Timer, Target, Repeat, Settings,
-  LogOut, Eye, EyeOff, Loader2, UserPlus, LogIn
+  LogOut, Eye, EyeOff, Loader2, UserPlus, LogIn, HelpCircle
   } from 'lucide-react'
-import { SmartRoutingSection, WhatHappensNextSection } from './components/public/UniquesCommunitySections'
+import { SmartRoutingSection, WhatHappensNextSection, ComplaintWorkflowSection } from './components/public/UniquesCommunitySections'
 import { PreventiveMaintenanceSection } from './components/public/PreventiveMaintenanceSection'
-import { StudentDashboard } from './components/student/StudentDashboard'
+import { StudentDashboard } from './components/student/StudentDashboardRedesigned'
 import { TechnicianDashboard } from './components/technician/TechnicianDashboard'
 import { AdminDashboard } from './components/AdminDashboard'
 import { AdminManageTechnicians } from './components/admin/AdminManageTechnicians'
@@ -24,6 +24,7 @@ import { AdminScheduleMaintenance } from './components/admin/AdminScheduleMainte
 import { UserManagementPortal } from './components/admin/UserManagementPortal'
 import { InventoryAssetsManager } from './components/admin/InventoryAssetsManager'
 import Hero3DHub from './components/public/Hero3DHub'
+import { FloatingShapes } from './components/public/FloatingShapes'
 import StarBorder from './components/shared/StarBorder'
 import { Footer } from './components/shared/Footer'
 import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute'
@@ -57,6 +58,8 @@ interface IssueRecord {
   reporter: string
   ticketId?: string
   date: string
+  createdAt?: string
+  resolvedAt?: string
   time?: string
   description?: string
   category?: string
@@ -82,7 +85,8 @@ const allNavLinks: readonly [string, string, typeof GraduationCap, readonly Disp
   ['/technician', 'Technician Queue', Wrench, ['Tech']],
   ['/dashboard', 'Admin Dashboard', LayoutDashboard, ['Admin']],
   ['/issues', 'Issues Tracker', ClipboardList, ['Admin', 'Tech']],
-  ['/report', 'Report via QR', QrCode, ['Admin', 'Student']],
+  ['/report', 'Report an Issue', ClipboardList, ['Admin', 'Student']],
+  ['/help-support', 'Help & Support', Settings, ['Admin', 'Student', 'Tech']],
   ['/inventory', 'Inventory DB', Grid2X2, ['Admin', 'Tech']],
   ['/analytics', 'Analytics', BarChart3, ['Admin']],
   ['/admin/users', 'User Management', Users, ['Admin']],
@@ -292,6 +296,7 @@ function Home({
 
   return (
     <div className="landing-page">
+        <FloatingShapes theme={theme} className="homepage-bg" />
       {/* Ultra Professional Floating Glass Navbar with StarBorder Accent */}
       <StarBorder
         as="div"
@@ -348,8 +353,8 @@ function Home({
 
       {/* Hero Section */}
       <div className="hero-wrapper">
-        <section className="hero-section reveal-on-scroll">
-          <div className="hero-left">
+        <section className="hero-section">
+          <div className="hero-left reveal-fade-up">
             <h1>
               Smart Lab <span className="text-red-highlight">Maintenance</span> &amp; Automation
             </h1>
@@ -374,19 +379,19 @@ function Home({
             </div>
           </div>
 
-          <div className="hero-right-stage">
+          <div className="hero-right-stage reveal-zoom-in delay-2">
             <Hero3DHub />
           </div>
         </section>
       </div>
 
       {/* 6-Card Numbered Feature Grid (inspired by theuniques.in design) */}
-      <section id="usps" className="numbered-cards-section reveal-on-scroll">
+      <section id="usps" className="numbered-cards-section">
         <div className="numbered-bg-vectors" aria-hidden="true">
           <img src="/cyber_waves_vector.svg" className="bg-vector-float tech-waves-numbered" alt="" />
           <img src="/tech_circuit_nodes.svg" className="bg-vector-float tech-nodes-numbered" alt="" />
         </div>
-        <div className="numbered-cards-header">
+        <div className="numbered-cards-header reveal-fade-up">
           <p className="numbered-cards-eyebrow">WHAT WE OFFER</p>
           <h2>Core System <span className="text-red-highlight">Capabilities</span></h2>
           <p className="numbered-cards-sub">Everything your campus needs — from real-time fault reporting to automated asset tracking.</p>
@@ -397,7 +402,7 @@ function Home({
           <div className="numbered-cards-col">
 
             {/* Card 1 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-1" onClick={() => handleProtectedAction('/dashboard')}>
+            <div className="nc-card nc-card-expandable reveal-fade-left delay-1" onClick={() => handleProtectedAction('/dashboard')}>
               <span className="nc-number">1</span>
               <div className="nc-ghost-num">01</div>
               <div className="nc-icon-wrap"><LayoutDashboard size={26} /></div>
@@ -418,7 +423,7 @@ function Home({
             </div>
 
             {/* Card 2 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-2" onClick={() => handleProtectedAction('/issues')}>
+            <div className="nc-card nc-card-expandable reveal-fade-left delay-2" onClick={() => handleProtectedAction('/issues')}>
               <span className="nc-number">2</span>
               <div className="nc-ghost-num">02</div>
               <div className="nc-icon-wrap"><ClipboardList size={26} /></div>
@@ -442,7 +447,7 @@ function Home({
 
           {/* Center card (Card 3 - identical clean styling) */}
           <div className="numbered-cards-center">
-            <div className="nc-card nc-card-expandable reveal-scale delay-3" onClick={() => handleProtectedAction('/report')}>
+            <div className="nc-card nc-card-expandable reveal-zoom-in delay-3" onClick={() => handleProtectedAction('/report')}>
               <span className="nc-number">3</span>
               <div className="nc-ghost-num">03</div>
               <div className="nc-icon-wrap"><Camera size={26} /></div>
@@ -467,7 +472,7 @@ function Home({
           <div className="numbered-cards-col">
 
             {/* Card 4 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-4" onClick={() => handleProtectedAction('/inventory')}>
+            <div className="nc-card nc-card-expandable reveal-fade-right delay-4" onClick={() => handleProtectedAction('/inventory')}>
               <span className="nc-number">4</span>
               <div className="nc-ghost-num">04</div>
               <div className="nc-icon-wrap"><Grid2X2 size={26} /></div>
@@ -488,7 +493,7 @@ function Home({
             </div>
 
             {/* Card 5 */}
-            <div className="nc-card nc-card-expandable reveal-scale delay-5" onClick={() => handleProtectedAction('/analytics')}>
+            <div className="nc-card nc-card-expandable reveal-fade-right delay-5" onClick={() => handleProtectedAction('/analytics')}>
               <span className="nc-number">5</span>
               <div className="nc-ghost-num">05</div>
               <div className="nc-icon-wrap"><BarChart3 size={26} /></div>
@@ -513,107 +518,7 @@ function Home({
       </section>
 
       {/* ── Raise a Complaint — 5-Step Circular Infographic ── */}
-      <section className="how-to-section reveal-on-scroll">
-        <div className="how-to-header">
-          <p className="how-to-eyebrow">YOUR COMPLAINT WORKFLOW</p>
-          <h2>Raise a <span className="text-red-highlight">Complaint</span> in 5 Steps</h2>
-          <p className="how-to-sub">From spotting a fault to getting it fixed — here's exactly how the Unicare pipeline works for you.</p>
-        </div>
-
-        <div className="how-to-steps-v2">
-
-          {/* Step 1 */}
-          <div className="htc-step reveal-scale delay-1">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="10" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="10" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="190" cy="100" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">01</span>
-                <h3 className="htc-step-title">SELECT ISSUE</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Choose what's wrong — AC, Electrical, Plumbing, Furniture, Wi-Fi, or Other.</p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="htc-step reveal-scale delay-2">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-2" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="10" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="190" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="190" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">02</span>
-                <h3 className="htc-step-title">ADD DETAILS</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Describe the problem and upload a photo/video if needed.</p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="htc-step reveal-scale delay-3">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-3" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="190" cy="100" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="10" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">03</span>
-                <h3 className="htc-step-title">ADD LOCATION</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Select your building, floor, room/lab, or exact location.</p>
-          </div>
-
-          {/* Step 4 */}
-          <div className="htc-step reveal-scale delay-4">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-4" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="100" cy="190" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="190" cy="100" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="10" cy="100" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">04</span>
-                <h3 className="htc-step-title">SUBMIT REQUEST</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Review the details and submit your maintenance request.</p>
-          </div>
-
-          {/* Step 5 */}
-          <div className="htc-step reveal-scale delay-5">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle className="htc-ring-arc htc-arc-5" cx="100" cy="100" r="90" />
-                <circle className="htc-glow-dot htc-glow-1" cx="10" cy="100" r="4" />
-                <circle className="htc-glow-dot htc-glow-2" cx="100" cy="190" r="3" />
-                <circle className="htc-glow-dot htc-glow-3" cx="100" cy="10" r="3" />
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">05</span>
-                <h3 className="htc-step-title">TRACK & RESOLVE</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">Get a request ID, track the status, and receive updates until the issue is resolved.</p>
-          </div>
-
-        </div>
-      </section>
+      <ComplaintWorkflowSection />
 
       {/* Smart Issue Routing Section */}
       <div id="smart-routing">
@@ -643,10 +548,44 @@ function Home({
   )
 }
 
-/* ── Scroll Reveal Observer Manager ──────────────────────────── */
+/* ── Scroll Reveal Observer & Progress Bar Manager ──────────────────────────── */
 function ScrollRevealManager() {
   const navigate = useNavigate()
+  const [scrollProgress, setScrollProgress] = useState(0)
 
+  // Track scroll progress and navbar elevation
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+          if (totalHeight > 0) {
+            const current = (window.scrollY / totalHeight) * 100
+            setScrollProgress(Math.min(100, Math.max(0, current)))
+          }
+
+          const navbar = document.querySelector('.floating-navbar-star')
+          if (navbar) {
+            if (window.scrollY > 30) {
+              navbar.classList.add('is-scrolled')
+            } else {
+              navbar.classList.remove('is-scrolled')
+            }
+          }
+
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Observe scroll reveals
   useEffect(() => {
     const observerCallback: IntersectionObserverCallback = (entries) => {
       entries.forEach(entry => {
@@ -658,27 +597,43 @@ function ScrollRevealManager() {
 
     const observerOptions: IntersectionObserverInit = {
       root: null,
-      rootMargin: '0px 0px -40px 0px',
-      threshold: 0.08,
+      rootMargin: '0px 0px -70px 0px',
+      threshold: 0.12,
     }
 
     const observer = new IntersectionObserver(observerCallback, observerOptions)
     
     const observeElements = () => {
-      const elements = document.querySelectorAll('.reveal-on-scroll, .reveal-scale')
+      const elements = document.querySelectorAll(
+        '.reveal-on-scroll, .reveal-scale, .reveal-fade-up, .reveal-fade-left, .reveal-fade-right, .reveal-zoom-in, .reveal-stagger'
+      )
       elements.forEach(el => observer.observe(el))
     }
 
     observeElements()
-    const timer = setTimeout(observeElements, 120)
+    const timer1 = setTimeout(observeElements, 120)
+    const timer2 = setTimeout(observeElements, 500)
+
+    const mutationObserver = new MutationObserver(() => {
+      observeElements()
+    })
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
 
     return () => {
-      clearTimeout(timer)
+      clearTimeout(timer1)
+      clearTimeout(timer2)
       observer.disconnect()
+      mutationObserver.disconnect()
     }
   }, [navigate])
 
-  return null
+  return (
+    <div
+      className="scroll-progress-bar"
+      style={{ width: `${scrollProgress}%` }}
+      aria-hidden="true"
+    />
+  )
 }
 
 /* ── Push Notifications ──────────────────────────────────────── */
@@ -778,6 +733,8 @@ function Portal({ theme, toggleTheme }: {
     assignee: inc.assignedTo?.name || 'Unassigned',
     ticketId: 'UC-' + String(inc._id).slice(-6).toUpperCase(),
     reporter: inc.reportedBy?.name ? inc.reportedBy.name + (inc.reportedBy.rollNo ? ' (' + inc.reportedBy.rollNo + ')' : '') : 'Unknown',
+    createdAt: inc.createdAt,
+    resolvedAt: inc.resolvedAt,
     date: new Date(inc.createdAt).toLocaleDateString(),
     time: new Date(inc.createdAt).toLocaleTimeString(),
     description: inc.description || '',
@@ -800,7 +757,6 @@ function Portal({ theme, toggleTheme }: {
   const [sideOpen, setSideOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<IssueRecord | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const getNotifKey = (pageIndex: number, previousPageData: any) => {
     if (!isAuthenticated) return null
@@ -887,7 +843,8 @@ function Portal({ theme, toggleTheme }: {
             Unicare
           </Link>
           <button 
-            style={{ color: 'var(--txt-muted)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }} 
+            className="sidebar-close-btn"
+            style={{ color: 'var(--txt-muted)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', alignItems: 'center' }} 
             onClick={() => setSideOpen(false)} 
             title="Close Navigation Menu"
             aria-label="Close Sidebar"
@@ -920,7 +877,8 @@ function Portal({ theme, toggleTheme }: {
       <div className={`portal-main ${!sideOpen ? 'full-width' : ''}`}>
         <header className="portal-top">
           <button 
-            style={{ color: 'var(--txt)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+            className="hamburger-toggle"
+            style={{ color: 'var(--txt)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px', alignItems: 'center', justifyContent: 'center' }} 
             onClick={() => setSideOpen(prev => !prev)} 
             title="Toggle Navigation Menu"
             aria-label="Toggle Navigation Sidebar"
@@ -1000,33 +958,29 @@ function Portal({ theme, toggleTheme }: {
               </button>
             </div>
 
-            {/* Functional Notifications Popover */}
+            {/* Notification panel */}
             {isAuthenticated && (
-              <Popover open={notifOpen} onOpenChange={setNotifOpen}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <button 
-                        style={{ position: 'relative', color: 'var(--txt-muted)', padding: '6px', background: 'transparent', border: 'none', cursor: 'pointer' }} 
-                        aria-label="Notifications"
-                      >
-                        <Bell size={18} />
-                        {notifications.filter(n => n.unread).length > 0 && (
-                          <span style={{ position: 'absolute', top: '2px', right: '2px', width: '14px', height: '14px', background: 'var(--red)', borderRadius: '50%', fontSize: '0.65rem', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
-                            {notifications.filter(n => n.unread).length}
-                          </span>
-                        )}
-                      </button>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Notifications</TooltipContent>
-                </Tooltip>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="notif-bell-trigger"
+                    aria-label="Notifications"
+                    title="Notifications"
+                  >
+                    <Bell size={18} />
+                    {notifications.filter(n => n.unread).length > 0 && (
+                      <span className="notif-badge">
+                        {notifications.filter(n => n.unread).length}
+                      </span>
+                    )}
+                  </button>
+                </PopoverTrigger>
 
-                <PopoverContent align="end" style={{ width: '340px', padding: '14px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
-                    <b style={{ fontSize: '0.9rem', color: 'var(--txt)' }}>System Alerts &amp; Activity</b>
+                <PopoverContent align="end" className="notif-hovercard">
+                  <div className="notif-hovercard-header">
+                    <b>System Alerts &amp; Activity</b>
                     <button 
-                      style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      className="notif-mark-all-btn"
                       onClick={() => {
                         mutateNotifications(notificationsPages?.map(page => page.map((n: any) => ({ ...n, unread: false }))), false);
                         markNotificationsReadApi();
@@ -1035,9 +989,9 @@ function Portal({ theme, toggleTheme }: {
                       Mark all read
                     </button>
                   </div>
-                  <ScrollArea style={{ maxHeight: '300px' }}>
+                  <ScrollArea className="notif-hovercard-body">
                     <div 
-                      style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '8px' }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '4px' }}
                       onScroll={(e) => {
                         const target = e.currentTarget;
                         if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10 && !notifValidating) {
@@ -1045,23 +999,32 @@ function Portal({ theme, toggleTheme }: {
                         }
                       }}
                     >
+                      {notifications.length === 0 && !notifValidating && (
+                        <div className="notif-empty">
+                          <Bell size={28} />
+                          No notifications yet
+                        </div>
+                      )}
                       {notifications.map(n => (
-                        <div key={n.id} style={{ padding: '10px', background: n.unread ? 'var(--bg-card-alt)' : 'transparent', borderLeft: n.unread ? '3px solid var(--red)' : '3px solid transparent', borderRadius: '4px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                            <span style={{ color: n.priority === 'Critical' ? 'var(--red-bright)' : 'var(--txt)' }}>{n.title}</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--txt-sub)' }}>{n.time}</span>
+                        <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
+                          <div className="notif-item-header">
+                            <span className={`notif-item-title ${n.priority === 'Critical' ? 'critical' : ''}`}>{n.title}</span>
+                            <span className="notif-item-time">{n.time}</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--txt-muted)' }}>Location: {n.location}</span>
+                          <div className="notif-item-meta">
+                            <span className="notif-item-location">
+                              <MapPin size={11} />
+                              {n.location}
+                            </span>
                             {n.unread && (
                               <button 
+                                className="notif-mark-read-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   mutateNotifications(notificationsPages?.map(page => page.map((no: any) => no.id === n.id ? { ...no, unread: false } : no)), false);
                                   markNotificationReadApi(n.id);
                                 }}
-                                style={{ background: 'transparent', border: 'none', color: 'var(--green-txt)', cursor: 'pointer', padding: '2px' }}
-                                title="Mark read"
+                                title="Mark as read"
                               >
                                 <Check size={14} />
                               </button>
@@ -1069,16 +1032,17 @@ function Portal({ theme, toggleTheme }: {
                           </div>
                         </div>
                       ))}
-                      {notifValidating && <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--txt-muted)', padding: '8px' }}>Loading...</div>}
+                      {notifValidating && <div className="notif-loading">Loading...</div>}
                     </div>
                   </ScrollArea>
-                  <button 
-                    className="btn-dark" 
-                    style={{ width: '100%', marginTop: '12px', padding: '6px', fontSize: '0.78rem' }}
-                    onClick={() => { navigate('/issues'); setNotifOpen(false) }}
-                  >
-                    View All Issues ↗
-                  </button>
+                  <div className="notif-hovercard-footer">
+                    <button 
+                      className="btn-dark" 
+                      onClick={() => navigate('/issues')}
+                    >
+                      View All Issues <ArrowUpRight size={13} />
+                    </button>
+                  </div>
                 </PopoverContent>
               </Popover>
             )}
@@ -1172,6 +1136,11 @@ function Portal({ theme, toggleTheme }: {
           <Route path="/report" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
               <Report onAddRecord={(newR) => setRecords([newR, ...records])} assets={assets} />
+            </ProtectedRoute>
+          } />
+          <Route path="/help-support" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student', 'technician']}>
+              <HelpSupport />
             </ProtectedRoute>
           } />
           <Route path="/inventory" element={
@@ -1309,7 +1278,10 @@ function Issues({ records, onSelectIssue }: { records: IssueRecord[]; onSelectIs
   )
 }
 
-function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
+function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
+  const { user } = useAuth()
+  
+  // Fetch metadata
   const { data: fetchedLocations, error: locationsError } = useSWR('locations', fetchLocationsApi)
   const { data: fetchedCategories, error: categoriesError } = useSWR('categories', fetchCategoriesApi)
   const { data: fetchedPriorities, error: prioritiesError } = useSWR('priorities', fetchPrioritiesApi)
@@ -1320,204 +1292,162 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
   const availableCategories: { value: string; label: string }[] = Array.isArray(fetchedCategories) ? fetchedCategories : []
   const availablePriorities: { value: string; label: string }[] = Array.isArray(fetchedPriorities) ? fetchedPriorities : []
 
+  // Form state
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
   const [priority, setPriority] = useState<'Critical' | 'High' | 'Medium' | 'Low'>('' as any)
-  useEffect(() => { if (!location && availableLocations.length) setLocation(availableLocations[0].value) }, [availableLocations, location])
-  useEffect(() => { if (!category && availableCategories.length) setCategory(availableCategories[0].value) }, [availableCategories, category])
-  useEffect(() => { if (!priority && availablePriorities.length) setPriority(availablePriorities[0].value as any) }, [availablePriorities, priority])
   const [description, setDescription] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (fetchedLocations?.length && location === 'Thinkspace') setLocation(fetchedLocations[0].value)
-  }, [fetchedLocations])
-
-  useEffect(() => {
-    if (fetchedCategories?.length && category === 'AV Equipment') setCategory(fetchedCategories[0].value)
-  }, [fetchedCategories])
-
-  useEffect(() => {
-    if (fetchedPriorities?.length && priority === 'High') setPriority(fetchedPriorities[1]?.value as any || fetchedPriorities[0].value)
-  }, [fetchedPriorities])
-  const [scannedAsset, setScannedAsset] = useState<AssetRecord | null>(null)
-
-  // Camera & Scan states
-  const [isCameraActive, setIsCameraActive] = useState(false)
-  const [scanning, setScanning] = useState(false)
-  const [cameraError, setCameraError] = useState<string | null>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  // Photo upload state
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Web Audio Beep function for scan feedback
-  const playBeep = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(880, ctx.currentTime)
-      gain.gain.setValueAtTime(0.12, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.25)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start()
-      osc.stop(ctx.currentTime + 0.25)
-    } catch (e) {
-      // Audio context fallback
+  // Set default values when metadata loads
+  useEffect(() => { 
+    if (!location && availableLocations.length) setLocation(availableLocations[0].value) 
+  }, [availableLocations, location])
+  
+  useEffect(() => { 
+    if (!category && availableCategories.length) setCategory(availableCategories[0].value) 
+  }, [availableCategories, category])
+  
+  useEffect(() => { 
+    if (!priority && availablePriorities.length) setPriority(availablePriorities[0].value as any) 
+  }, [availablePriorities, priority])
+
+  // Photo upload handlers
+  const validateImage = (file: File): string | null => {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    const maxSize = 5 * 1024 * 1024 // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      return 'Please upload a valid image file (JPG, PNG, or WEBP)'
     }
+
+    if (file.size > maxSize) {
+      return 'File size must be less than 5 MB'
+    }
+
+    return null
   }
 
-  // Pre-fill ticket information from scanned asset
-  const applyAssetDetails = (asset: AssetRecord) => {
-    setScannedAsset(asset)
-    setTitle(`Issue reported on ${asset.name}`)
-    setLocation(`${asset.location}`)
-    setCategory(asset.category)
-    setPriority(asset.status === 'Maintenance' ? 'Critical' : 'High')
-    setDescription(`Automated complaint registered via QR Tag ${asset.id}. Hardware category: ${asset.category}. Location: ${asset.location}.`)
-    playBeep()
+  const handleFileSelect = (file: File) => {
+    const error = validateImage(file)
+    
+    if (error) {
+      setUploadError(error)
+      setSelectedImage(null)
+      setImagePreview(null)
+      return
+    }
+
+    setUploadError(null)
+    setSelectedImage(file)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
-  // Clear / Reset scanned data
-  const handleResetScan = () => {
-    setScannedAsset(null)
-    setTitle('')
-    setLocation(availableLocations[0]?.value || '')
-    setCategory(availableCategories[0]?.value || '')
-    setPriority((availablePriorities[0]?.value || '') as any)
-    setDescription('')
-  }
-
-  // Start Real Web Camera Stream (Laptop & Desktop Compatible)
-  const startCamera = async () => {
-    setCameraError(null)
-    setScanning(true)
-    setIsCameraActive(true)
-
-    try {
-      let stream: MediaStream
-      try {
-        // Default video stream (works on laptop/desktop webcams)
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } })
-      } catch (e1) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        } catch (e2) {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-        }
-      }
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(err => console.warn('Video play error:', err))
-        }
-        await videoRef.current.play().catch(() => {})
-      }
-    } catch (err: any) {
-      console.warn('Camera error:', err)
-      setCameraError('Laptop camera blocked or unavailable. Please grant camera permission in browser URL bar, or click Simulate Scan below!')
-      setIsCameraActive(false)
-      setScanning(false)
-    }
-  }
-
-  // Stop Camera Stream
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream
-      stream.getTracks().forEach(track => track.stop())
-      videoRef.current.srcObject = null
-    }
-    setIsCameraActive(false)
-    setScanning(false)
-  }
-
-  // Barcode Detection API listener while camera is on
-  useEffect(() => {
-    let interval: any
-    if (isCameraActive && videoRef.current && 'BarcodeDetector' in window) {
-      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39'] })
-      interval = setInterval(async () => {
-        if (!videoRef.current) return
-        try {
-          const barcodes = await detector.detect(videoRef.current)
-          if (barcodes.length > 0) {
-            const code = barcodes[0].rawValue
-            const matched = assets.find(a => a.id.toLowerCase() === code.toLowerCase() || code.includes(a.id))
-            if (matched) {
-              applyAssetDetails(matched)
-            } else {
-              setScannedAsset({
-                id: code,
-                name: `Hardware Asset (${code})`,
-                category: availableCategories[0]?.value,
-                location: availableLocations[0]?.value || '',
-                status: 'Active',
-                lastService: new Date().toISOString().split('T')[0],
-                nextDue: '2026-12-31',
-                health: 88
-              })
-              setTitle(`Hardware Issue (${code})`)
-              playBeep()
-            }
-          }
-        } catch (e) {
-          // Frame drop catch
-        }
-      }, 500)
-    }
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [isCameraActive, assets, availableCategories, availableLocations])
-
-  // Cleanup camera stream on unmount
-  useEffect(() => {
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream
-        stream.getTracks().forEach(track => track.stop())
-      }
-    }
-  }, [])
-
-
-  // Handle uploaded QR image file
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
-    alert('QR decoding from image is not yet implemented.')
+    if (file) {
+      handleFileSelect(file)
+    }
   }
 
-  const { user } = useAuth()
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null)
+    setImagePreview(null)
+    setUploadError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const payload = {
-      id: scannedAsset ? scannedAsset.id : undefined,
-      title,
-      location,
-      category,
-      priority,
-      status: 'Open' as const,
-      assignee: 'Unassigned',
-      reporter: user?.name || 'Unknown',
-      date: new Date().toISOString().split('T')[0],
-      description,
-    };
-    
-    const result = await createIssueApi(payload);
-    
-    if (result) {
-      onAddRecord(result);
-      setSubmitted(true);
-    } else {
-      alert("Failed to create the issue. Please try again.");
+    if (!title.trim()) {
+      alert('Please enter an issue title')
+      return
     }
+
+    setIsSubmitting(true)
+    
+    try {
+      const payload = {
+        title: title.trim(),
+        location,
+        category,
+        priority,
+        status: 'Open' as const,
+        assignee: 'Unassigned',
+        reporter: user?.name || 'Unknown Student',
+        date: new Date().toISOString().split('T')[0],
+        description: description.trim() || 'No additional details provided.',
+      }
+      
+      // Note: Image attachment integration would go here
+      // Currently the backend doesn't support image attachments
+      // When implemented, the image would be uploaded to storage
+      // and the URL would be added to the payload
+      
+      const result = await createIssueApi(payload)
+      
+      if (result) {
+        onAddRecord(result)
+        setSubmitted(true)
+      } else {
+        alert("Failed to create the issue. Please try again.")
+      }
+    } catch (error) {
+      console.error('Error submitting complaint:', error)
+      alert("An error occurred while submitting the complaint.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReset = () => {
+    setSubmitted(false)
+    setTitle('')
+    setDescription('')
+    setSelectedImage(null)
+    setImagePreview(null)
+    setUploadError(null)
+    setLocation(availableLocations[0]?.value || '')
+    setCategory(availableCategories[0]?.value || '')
+    setPriority(availablePriorities[0]?.value as any || '')
   }
 
   if (submitted) {
@@ -1530,10 +1460,10 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
             Ticket ID has been assigned and queued for {INSTITUTION_NAME} lab maintenance technicians.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <button className="btn-dark" onClick={() => { setSubmitted(false); handleResetScan(); }}>
+            <button className="btn-dark" onClick={handleReset}>
               <Plus size={15} /> Log Another Ticket
             </button>
-            <Link to="/issues" className="btn-red">View Complaint Ledger</Link>
+            <Link to="/student" className="btn-red">View My Tickets</Link>
           </div>
         </div>
       </Page>
@@ -1542,224 +1472,483 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
 
   return (
     <Page>
-      <div className="page-heading">
-        <div>
-          <p className="kicker">QR-BASED COMPLAINT SYSTEM</p>
-          <h1>Report Lab Complaint</h1>
-          <span>Point camera at any asset tag or select a tag below to auto-fill ticket details.</span>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        {/* Page Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--red-bright)', fontWeight: 700, letterSpacing: '1.2px', marginBottom: '8px' }}>
+            CAMPUS MAINTENANCE
+          </p>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>
+            Report Lab Complaint
+          </h1>
+          <p style={{ fontSize: '1rem', color: 'var(--txt-muted)', lineHeight: '1.6' }}>
+            Report a lab or campus facility issue by describing the problem. Photos are not currently sent with reports.
+          </p>
         </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: '32px' }}>
-        {/* Step 1: Camera & Scanner Controls */}
-        <div className="portal-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--red-bright)', fontWeight: 700, letterSpacing: '1px' }}>
-                STEP 1
-              </span>
-              <h3 style={{ marginTop: '2px' }}>QR Camera Scanner</h3>
-            </div>
-            {scannedAsset && (
-              <span className="badge-status available" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Check size={13} /> Tag Scanned
-              </span>
-            )}
-          </div>
-
-          {/* Scanner Viewfinder Viewport */}
-          <div className={`scanner-viewport ${scannedAsset ? 'success' : ''}`}>
-            <video
-              ref={videoRef}
-              className="scanner-video"
-              autoPlay
-              playsInline
-              muted
-              style={{ display: isCameraActive ? 'block' : 'none' }}
-            />
-
-            {!isCameraActive && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 2, padding: '20px', textAlign: 'center' }}>
-                <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: 'var(--red-subtle)', border: '1px solid var(--red-border)', display: 'grid', placeItems: 'center' }}>
-                  <Camera size={26} color="var(--red-bright)" />
-                </div>
-                <span style={{ fontSize: '0.88rem', color: scannedAsset ? 'var(--green-txt)' : 'var(--txt-muted)', fontWeight: 600 }}>
-                  {scanning ? 'Reading QR code tag...' : scannedAsset ? `Scanned: ${scannedAsset.id} (${scannedAsset.name})` : 'Point camera at asset tag or simulate scan below'}
+        {/* Two Column Layout */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '45% 1fr', 
+            gap: '28px',
+            alignItems: 'start'
+          }}>
+            {/* Left Card: Upload Photo */}
+            <div className="portal-card" style={{ 
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '32px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(245, 34, 45, 0.04)'
+            }}>
+              <div style={{ marginBottom: '24px' }}>
+                <span style={{ 
+                  fontSize: '0.7rem', 
+                  color: 'var(--red-bright)', 
+                  fontWeight: 700, 
+                  letterSpacing: '1px',
+                  display: 'block',
+                  marginBottom: '6px'
+                }}>
+                  STEP 1
                 </span>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '6px' }}>
+                  Preview Issue Photo
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--txt-muted)', lineHeight: '1.5' }}>
+                  Photos are for local preview only and are not sent with your complaint. Attachment upload is not yet supported.
+                </p>
               </div>
-            )}
 
-            {/* Viewfinder Target & Laser Animation Overlay */}
-            <div className="scanner-overlay">
-              <div className="scanner-target-box">
-                <div className="corner-tl"></div>
-                <div className="corner-tr"></div>
-                <div className="corner-bl"></div>
-                <div className="corner-br"></div>
-                {(scanning || isCameraActive) && <div className="scanner-laser"></div>}
-              </div>
-            </div>
-          </div>
-
-          {/* Camera Error / Warning Alert */}
-          {cameraError && (
-            <div style={{ background: 'var(--amber-bg)', border: '1px solid var(--amber-border)', color: 'var(--amber-txt)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-              <span>{cameraError}</span>
-            </div>
-          )}
-
-          {/* Scanned Tag Success Details Card */}
-          {scannedAsset && (
-            <div style={{ background: 'var(--green-bg)', border: '1px solid var(--green-border)', borderRadius: '10px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--green-txt)', fontWeight: 700, letterSpacing: '0.5px' }}>SCANNED TAG IDENTIFIED</span>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--txt)', marginTop: '2px' }}>{scannedAsset.name}</div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--txt-muted)' }}>{scannedAsset.id} · {scannedAsset.location}</span>
-              </div>
-              <button onClick={handleResetScan} style={{ color: 'var(--txt-sub)', padding: '4px', borderRadius: '4px' }} title="Reset Tag">
-                <RefreshCw size={15} />
-              </button>
-            </div>
-          )}
-
-          {/* Camera Controls Buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {isCameraActive ? (
-              <button className="btn-dark" type="button" onClick={stopCamera} style={{ border: '1px solid var(--red-border)', color: 'var(--red-bright)' }}>
-                <VideoOff size={15} /> Stop Camera
-              </button>
-            ) : (
-              <button className="btn-red" type="button" onClick={startCamera}>
-                <Video size={15} /> Start Web Camera
-              </button>
-            )}
-          </div>
-
-          {/* Upload QR Image */}
-          <div>
-            <input type="file" ref={fileInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
-            <button className="btn-dark" type="button" style={{ width: '100%', borderStyle: 'dashed' }} onClick={() => fileInputRef.current?.click()}>
-              <Upload size={15} /> Upload QR Code Image Tag
-            </button>
-          </div>
-
-          {/* Registered Assets Quick-Scan List */}
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', marginTop: '4px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--txt-sub)', display: 'block', marginBottom: '10px', letterSpacing: '0.5px' }}>
-              QUICK SCAN REGISTERED CAMPUS ASSETS:
-            </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {assets.map(asset => (
+              {/* Upload Drop Zone */}
+              {!imagePreview ? (
                 <div
-                  key={asset.id}
-                  className={`quick-asset-tag ${scannedAsset?.id === asset.id ? 'selected' : ''}`}
-                  onClick={() => applyAssetDetails(asset)}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  style={{
+                    background: isDragging ? 'rgba(245, 34, 45, 0.05)' : 'rgba(255, 245, 247, 0.6)',
+                    border: `2px dashed ${isDragging ? 'var(--red-bright)' : 'rgba(245, 34, 45, 0.2)'}`,
+                    borderRadius: '16px',
+                    padding: '48px 24px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    marginBottom: '24px'
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <QrCode size={16} color={scannedAsset?.id === asset.id ? 'var(--green-txt)' : 'var(--red-bright)'} />
-                    <div>
-                      <b style={{ color: scannedAsset?.id === asset.id ? 'var(--green-txt)' : '#ffffff' }}>{asset.id}</b> · {asset.name}
+                  <div style={{
+                    width: '72px',
+                    height: '72px',
+                    margin: '0 auto 20px',
+                    background: 'linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(255, 192, 203, 0.1) 100%)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <ImagePlus size={32} color="var(--red-bright)" />
+                  </div>
+                  
+                  <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--txt)', marginBottom: '8px' }}>
+                    Drag and drop your photo here
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--txt-muted)', marginBottom: '16px' }}>
+                    or browse files from your device
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--txt-sub)', marginBottom: '20px' }}>
+                    JPG, PNG or WEBP · Max 5 MB
+                  </p>
+                  
+                  <button
+                    type="button"
+                    className="btn-red"
+                    style={{ 
+                      padding: '12px 28px',
+                      fontSize: '0.9rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      fileInputRef.current?.click()
+                    }}
+                  >
+                    <Upload size={18} />
+                    Preview Photo
+                  </button>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleFileInputChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              ) : (
+                <div style={{ 
+                  marginBottom: '24px',
+                  background: 'var(--bg-card)',
+                  border: '2px solid var(--border)',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  position: 'relative'
+                }}>
+                  <img 
+                    src={imagePreview} 
+                    alt="Issue preview" 
+                    style={{ 
+                      width: '100%', 
+                      height: 'auto',
+                      borderRadius: '12px',
+                      maxHeight: '300px',
+                      objectFit: 'contain'
+                    }} 
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    style={{
+                      position: 'absolute',
+                      top: '24px',
+                      right: '24px',
+                      background: 'var(--red-bright)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(245, 34, 45, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title="Remove image"
+                  >
+                    <X size={20} />
+                  </button>
+                  <div style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--txt-muted)', textAlign: 'center' }}>
+                    {selectedImage?.name} — local preview only, not included in your complaint
+                  </div>
+                </div>
+              )}
+
+              {uploadError && (
+                <div style={{
+                  background: 'rgba(245, 34, 45, 0.1)',
+                  border: '1px solid rgba(245, 34, 45, 0.2)',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '0.85rem',
+                  color: 'var(--red-bright)'
+                }}>
+                  <AlertTriangle size={18} />
+                  {uploadError}
+                </div>
+              )}
+
+              {/* Photo Tips */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>
+                  Photo tips
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {[
+                    { icon: '✓', text: 'Capture the damaged part clearly' },
+                    { icon: '✓', text: 'Include the surrounding equipment when useful' },
+                    { icon: '✓', text: 'Avoid including faces or personal information' }
+                  ].map((tip, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: 'var(--txt-muted)' }}>
+                      <span style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        background: 'rgba(82, 196, 26, 0.1)', 
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.7rem',
+                        color: 'var(--green-txt)',
+                        fontWeight: 700,
+                        flexShrink: 0
+                      }}>
+                        {tip.icon}
+                      </span>
+                      {tip.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Separator */}
+              <div style={{ height: '1px', background: 'rgba(0, 0, 0, 0.06)', margin: '24px 0' }} />
+
+              {/* Optional Photo Notice */}
+              <div style={{
+                background: 'rgba(255, 245, 247, 0.8)',
+                border: '1px solid rgba(245, 34, 45, 0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                gap: '12px'
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  background: 'rgba(245, 34, 45, 0.1)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Zap size={18} color="var(--red-bright)" />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '4px' }}>
+                    No photo available?
+                  </h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--txt-muted)', lineHeight: '1.5' }}>
+                    You can still report the issue by completing the complaint details.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: Ticket Information */}
+            <div className="portal-card" style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '32px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02)'
+            }}>
+              <div style={{ marginBottom: '28px' }}>
+                <span style={{ 
+                  fontSize: '0.7rem', 
+                  color: 'var(--red-bright)', 
+                  fontWeight: 700, 
+                  letterSpacing: '1px',
+                  display: 'block',
+                  marginBottom: '6px'
+                }}>
+                  STEP 2
+                </span>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--txt)' }}>
+                  Ticket Information
+                </h3>
+              </div>
+
+              {metaLoading && (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--txt-muted)' }}>
+                  <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
+                  <p style={{ marginTop: '8px' }}>Loading form options…</p>
+                </div>
+              )}
+              
+              {metaError && (
+                <div style={{ 
+                  padding: '16px', 
+                  background: 'rgba(245, 34, 45, 0.1)', 
+                  border: '1px solid rgba(245, 34, 45, 0.2)',
+                  borderRadius: '10px',
+                  color: 'var(--red-bright)',
+                  marginBottom: '20px'
+                }}>
+                  Failed to load form options. Please retry later.
+                </div>
+              )}
+
+              {!metaLoading && !metaError && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Issue Title */}
+                  <div className="reg-field">
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                      Issue Title <span style={{ color: 'var(--red-bright)' }}>*</span>
+                    </label>
+                    <input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. Projector HDMI port damaged"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'var(--bg)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        fontSize: '0.95rem',
+                        color: 'var(--txt)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    />
+                  </div>
+
+                  {/* Location and Category Row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="reg-field">
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                        Location / Lab Room
+                      </label>
+                      <Select value={location} onValueChange={setLocation}>
+                        <SelectTrigger style={{ height: '46px' }}>
+                          <SelectValue placeholder="Select location..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableLocations.map(loc => (
+                            <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="reg-field">
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                        Issue Category
+                      </label>
+                      <Select value={category} onValueChange={setCategory}>
+                        <SelectTrigger style={{ height: '46px' }}>
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableCategories.map(cat => (
+                            <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--txt-sub)' }}>{asset.location}</span>
+
+                  {/* Priority and Reporter Row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="reg-field">
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                        Priority Level
+                      </label>
+                      <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
+                        <SelectTrigger style={{ height: '46px' }}>
+                          <SelectValue placeholder="Select priority..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePriorities.map(p => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="reg-field">
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                        Reported By
+                      </label>
+                      <input
+                        value={`${user?.name || 'Student User'} (student)`}
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          background: 'var(--bg-card-alt)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '10px',
+                          fontSize: '0.95rem',
+                          color: 'var(--txt-muted)',
+                          cursor: 'not-allowed',
+                          opacity: 0.7
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="reg-field">
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                      Describe the Issue
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe symptoms, error codes, or hardware condition..."
+                      rows={5}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'var(--bg)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        fontSize: '0.95rem',
+                        color: 'var(--txt)',
+                        resize: 'vertical',
+                        minHeight: '120px',
+                        lineHeight: '1.6',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="btn-red"
+                    disabled={isSubmitting}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      marginTop: '8px',
+                      opacity: isSubmitting ? 0.6 : 1,
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <CircleAlert size={20} />
+                        Dispatch Ticket to Tech Queue
+                      </>
+                    )}
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Step 2: Ticket Form */}
-        <form className="portal-card" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--red-bright)', fontWeight: 700, letterSpacing: '1px' }}>
-              STEP 2
-            </span>
-            <h3 style={{ marginTop: '2px' }}>Ticket Information</h3>
-            {scannedAsset && (
-              <p style={{ color: 'var(--green-txt)', fontSize: '0.82rem', marginTop: '4px', fontWeight: 600 }}>
-                ✓ Fields auto-populated from Scanned Tag #{scannedAsset.id}
-              </p>
-            )}
-          </div>
-
-          <div className="reg-field">
-            <label>Complaint Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Projector HDMI port damaged" required />
-          </div>
-
-          {metaLoading && <p>Loading form options…</p>}
-          {metaError && <p role="alert">Failed to load form options. Please retry later.</p>}
-          <div className="form-grid-2">
-            <div className="reg-field">
-              <label>Location / Room</label>
-              <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLocations.map(loc => (
-                    <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="reg-field">
-              <label>Category</label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCategories.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="form-grid-2">
-            <div className="reg-field">
-              <label>Priority Level</label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePriorities.map(p => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="reg-field">
-              <label>Reporter Name</label>
-              <input value={`${user?.name || 'Unknown'} (${user?.role || 'User'})`} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
-            </div>
-          </div>
-
-          <div className="reg-field">
-            <label>Detailed Issue Description</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Describe symptoms, error codes, or hardware condition..."
-              style={{ background: 'var(--bg-black)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', color: 'var(--txt)', fontSize: '0.9rem', resize: 'vertical' }}
-            />
-          </div>
-
-          <button className="btn-red" type="submit" style={{ marginTop: '8px', padding: '14px' }}>
-            <CheckCircle2 size={18} /> Dispatch Ticket to Tech Queue
-          </button>
         </form>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 1024px) {
+          form > div {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </Page>
   )
 }
+      
 
 function Inventory() {
   const { data: assets = [] } = useSWR<AssetRecord[]>('/assets', fetcher)
@@ -1807,6 +1996,171 @@ function Inventory() {
       </div>
 
       {activeQRAsset && <AssetQRModal asset={activeQRAsset} onClose={() => setActiveQRAsset(null)} />}
+    </Page>
+  )
+}
+
+/* ── Help & Support Page ───────────────────────────────────── */
+function HelpSupport() {
+  const [activeCategory, setActiveCategory] = useState<string>('FAQs')
+
+  const categories = [
+    { id: 'FAQs', label: 'FAQs', icon: HelpCircle },
+    { id: 'SLAs', label: 'SLAs & Guidelines', icon: Clock3 },
+    { id: 'Contact', label: 'Contact Support', icon: Mail },
+  ]
+
+  const faqs = [
+    {
+      question: 'How do I report an issue?',
+      answer: 'Navigate to "Report an Issue" from the sidebar menu. Fill in the required details including location, category, and description. You can preview a photo in the photo card, but attaching photos to submitted reports is not yet supported.'
+    },
+    {
+      question: 'What are the response time SLAs?',
+      answer: 'Critical issues: 1-2 hours, High priority: 4-8 hours, Medium priority: 1-2 days, Low priority: 3-5 days. Response times may vary based on technician availability.'
+    },
+    {
+      question: 'How can I track my reported issues?',
+      answer: 'All your reported issues are visible in your dashboard under "My Active Tickets". You can filter by status and search by ticket ID or title.'
+    },
+    {
+      question: 'What should I do if a technician is unresponsive?',
+      answer: 'If a technician is not responding within the SLA timeframe, you can escalate the issue through "Report a Technician" or contact the admin directly.'
+    },
+  ]
+
+  const guidelines = [
+    {
+      title: 'Critical Priority',
+      time: '1-2 hours',
+      description: 'System down, safety hazards, complete lab unavailability'
+    },
+    {
+      title: 'High Priority',
+      time: '4-8 hours',
+      description: 'Major equipment failure, significant disruption to lab activities'
+    },
+    {
+      title: 'Medium Priority',
+      time: '1-2 days',
+      description: 'Partial equipment malfunction, moderate impact on operations'
+    },
+    {
+      title: 'Low Priority',
+      time: '3-5 days',
+      description: 'Minor issues, cosmetic problems, feature requests'
+    },
+  ]
+
+  return (
+    <Page>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--txt)' }}>
+          <Settings size={32} color="var(--red-bright)" />
+          Help & Support
+        </h1>
+        <p style={{ fontSize: '1rem', color: 'var(--txt-muted)', marginBottom: '32px' }}>
+          Find answers to common questions and learn about our service level agreements.
+        </p>
+
+        {/* Category Tabs */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '2px solid var(--border)', paddingBottom: '0' }}>
+          {categories.map(cat => {
+            const Icon = cat.icon
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                style={{
+                  padding: '12px 20px',
+                  background: activeCategory === cat.id ? 'var(--red-bright)' : 'transparent',
+                  color: activeCategory === cat.id ? 'white' : 'var(--txt-muted)',
+                  border: 'none',
+                  borderRadius: '8px 8px 0 0',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.2s',
+                  marginBottom: '-2px',
+                  borderBottom: activeCategory === cat.id ? '2px solid var(--red-bright)' : 'none'
+                }}
+              >
+                <Icon size={18} />
+                {cat.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Content Area */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px' }}>
+          {activeCategory === 'FAQs' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '8px' }}>Frequently Asked Questions</h2>
+              {faqs.map((faq, idx) => (
+                <details key={idx} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+                  <summary style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--txt)', cursor: 'pointer', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {faq.question}
+                    <Plus size={20} style={{ flexShrink: 0 }} />
+                  </summary>
+                  <p style={{ marginTop: '12px', color: 'var(--txt-muted)', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                    {faq.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          )}
+
+          {activeCategory === 'SLAs' && (
+            <div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '16px' }}>Service Level Agreements</h2>
+              <p style={{ color: 'var(--txt-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
+                Our response times are based on issue priority. Technicians will be assigned and respond according to these guidelines:
+              </p>
+              <div style={{ display: 'grid', gap: '16px' }}>
+                {guidelines.map((item, idx) => (
+                  <div key={idx} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '4px' }}>{item.title}</h3>
+                      <p style={{ color: 'var(--txt-muted)', fontSize: '0.9rem' }}>{item.description}</p>
+                    </div>
+                    <div style={{ background: 'var(--red-bright)', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+                      {item.time}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeCategory === 'Contact' && (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <Mail size={64} color="var(--red-bright)" style={{ margin: '0 auto 20px' }} />
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>Contact Support Team</h2>
+              <p style={{ color: 'var(--txt-muted)', marginBottom: '32px', lineHeight: '1.6', maxWidth: '600px', margin: '0 auto 32px' }}>
+                Need immediate assistance? Reach out to our support team via email or visit the admin office during business hours.
+              </p>
+              <div style={{ display: 'grid', gap: '16px', maxWidth: '500px', margin: '0 auto' }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Email Support</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}>support@unicare.edu</div>
+                </div>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Office Hours</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}>Monday - Friday: 9:00 AM - 5:00 PM</div>
+                </div>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Location</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}>Admin Block, Room 204</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </Page>
   )
 }
@@ -1994,5 +2348,4 @@ function AuthModal({
     </Dialog>
   )
 }
-
 
