@@ -19,6 +19,7 @@ export interface IIncident extends Document {
   activityLogs: IActivityLog[];
   createdAt: Date;
   updatedAt: Date;
+  resolvedAt?: Date;
 }
 
 const activityLogSchema = new Schema<IActivityLog>({
@@ -45,6 +46,7 @@ const incidentSchema = new Schema<IIncident>(
     description: { type: String, required: true },
     mediaUrls: [{ type: String }],
     activityLogs: [activityLogSchema],
+    resolvedAt: { type: Date },
   },
   { timestamps: true }
 );

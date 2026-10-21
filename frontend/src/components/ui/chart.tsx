@@ -111,8 +111,8 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  Pick<RechartsPrimitive.ContentType, "active" | "payload" | "label"> & {
+}: RechartsPrimitive.TooltipContentProps & React.ComponentProps<"div"> & {
+    labelClassName?: string
     hideLabel?: boolean
     hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
@@ -179,14 +179,14 @@ function ChartTooltipContent({
 
           return (
             <div
-              key={item.dataKey}
+              key={`${typeof item.dataKey === "string" || typeof item.dataKey === "number" ? item.dataKey : item.name || "value"}-${index}`}
               className={cn(
                 "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                 indicator === "dot" && "items-center"
               )}
             >
               {formatter && item?.value !== undefined && item.name ? (
-                formatter(item.value, item.name, item, index, item.payload)
+                formatter(item.value, item.name, item, index, payload)
               ) : (
                 <>
                   {itemConfig?.icon ? (
@@ -244,8 +244,8 @@ function ChartTooltipContent({
 function ChartLegend({
   className,
   ...props
-}: React.ComponentProps<"div"> & Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign">) {
-  const { payload, verticalAlign, ...rest } = props as any
+}: React.ComponentProps<"div"> & Pick<RechartsPrimitive.DefaultLegendContentProps, "payload" | "verticalAlign">) {
+  const { payload, verticalAlign, ...rest } = props
   
   if (!payload?.length) {
     return null
@@ -260,8 +260,8 @@ function ChartLegend({
       )}
       {...rest}
     >
-      {payload.map((item: any) => (
-        <div key={item.value} className="flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground">
+      {payload.map((item, index) => (
+        <div key={`${typeof item.dataKey === "string" || typeof item.dataKey === "number" ? item.dataKey : item.value || "value"}-${index}`} className="flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground">
           <div
             className="h-2 w-2 shrink-0 rounded-[2px]"
             style={{ backgroundColor: item.color }}
@@ -280,7 +280,7 @@ function ChartLegendContent({
   verticalAlign = "bottom",
   nameKey,
 }: React.ComponentProps<"div"> &
-  Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+  Pick<RechartsPrimitive.DefaultLegendContentProps, "payload" | "verticalAlign"> & {
     hideIcon?: boolean
     nameKey?: string
   }) {
@@ -298,13 +298,13 @@ function ChartLegendContent({
         className
       )}
     >
-      {payload.map((item) => {
+      {payload.map((item, index) => {
         const key = `${nameKey || item.dataKey || "value"}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)
 
         return (
           <div
-            key={item.value}
+            key={`${typeof item.dataKey === "string" || typeof item.dataKey === "number" ? item.dataKey : item.value || "value"}-${index}`}
             className={cn(
               "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
             )}
@@ -373,5 +373,3 @@ export {
   ChartStyle,
   useChart,
 }
-
-export type { ChartConfig }

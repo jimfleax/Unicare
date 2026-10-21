@@ -44,8 +44,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
   TooltipProvider, Tooltip, TooltipTrigger, TooltipContent,
   ScrollArea,
-  Avatar, AvatarFallback, AvatarImage,
-  HoverCard, HoverCardTrigger, HoverCardContent
+  Avatar, AvatarFallback, AvatarImage
 } from './components/ui'
 
 /* ── Types ─────────────────────────────────────────────────── */
@@ -59,6 +58,8 @@ interface IssueRecord {
   reporter: string
   ticketId?: string
   date: string
+  createdAt?: string
+  resolvedAt?: string
   time?: string
   description?: string
   category?: string
@@ -85,7 +86,6 @@ const allNavLinks: readonly [string, string, typeof GraduationCap, readonly Disp
   ['/dashboard', 'Admin Dashboard', LayoutDashboard, ['Admin']],
   ['/issues', 'Issues Tracker', ClipboardList, ['Admin', 'Tech']],
   ['/report', 'Report an Issue', ClipboardList, ['Admin', 'Student']],
-  ['/report-technician', 'Report a Technician', ShieldCheck, ['Admin', 'Student']],
   ['/help-support', 'Help & Support', Settings, ['Admin', 'Student', 'Tech']],
   ['/inventory', 'Inventory DB', Grid2X2, ['Admin', 'Tech']],
   ['/analytics', 'Analytics', BarChart3, ['Admin']],
@@ -733,6 +733,8 @@ function Portal({ theme, toggleTheme }: {
     assignee: inc.assignedTo?.name || 'Unassigned',
     ticketId: 'UC-' + String(inc._id).slice(-6).toUpperCase(),
     reporter: inc.reportedBy?.name ? inc.reportedBy.name + (inc.reportedBy.rollNo ? ' (' + inc.reportedBy.rollNo + ')' : '') : 'Unknown',
+    createdAt: inc.createdAt,
+    resolvedAt: inc.resolvedAt,
     date: new Date(inc.createdAt).toLocaleDateString(),
     time: new Date(inc.createdAt).toLocaleTimeString(),
     description: inc.description || '',
@@ -755,7 +757,6 @@ function Portal({ theme, toggleTheme }: {
   const [sideOpen, setSideOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<IssueRecord | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  // notifOpen removed — notifications now use HoverCard (hover-triggered)
   const [profileOpen, setProfileOpen] = useState(false)
   const getNotifKey = (pageIndex: number, previousPageData: any) => {
     if (!isAuthenticated) return null
@@ -957,10 +958,10 @@ function Portal({ theme, toggleTheme }: {
               </button>
             </div>
 
-            {/* Notification HoverCard — opens on hover, closes on cursor leave */}
+            {/* Notification panel */}
             {isAuthenticated && (
-              <HoverCard openDelay={150} closeDelay={400}>
-                <HoverCardTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button 
                     className="notif-bell-trigger"
                     aria-label="Notifications"
@@ -973,9 +974,9 @@ function Portal({ theme, toggleTheme }: {
                       </span>
                     )}
                   </button>
-                </HoverCardTrigger>
+                </PopoverTrigger>
 
-                <HoverCardContent align="end" className="notif-hovercard">
+                <PopoverContent align="end" className="notif-hovercard">
                   <div className="notif-hovercard-header">
                     <b>System Alerts &amp; Activity</b>
                     <button 
@@ -1042,8 +1043,8 @@ function Portal({ theme, toggleTheme }: {
                       View All Issues <ArrowUpRight size={13} />
                     </button>
                   </div>
-                </HoverCardContent>
-              </HoverCard>
+                </PopoverContent>
+              </Popover>
             )}
 
             {/* User Profile Menu — shows real user info from AuthContext */}
@@ -1135,11 +1136,6 @@ function Portal({ theme, toggleTheme }: {
           <Route path="/report" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
               <Report onAddRecord={(newR) => setRecords([newR, ...records])} assets={assets} />
-            </ProtectedRoute>
-          } />
-          <Route path="/report-technician" element={
-            <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
-              <ReportTechnician />
             </ProtectedRoute>
           } />
           <Route path="/help-support" element={
@@ -1282,7 +1278,7 @@ function Issues({ records, onSelectIssue }: { records: IssueRecord[]; onSelectIs
   )
 }
 
-function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
+function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
   const { user } = useAuth()
   
   // Fetch metadata
@@ -1486,7 +1482,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
             Report Lab Complaint
           </h1>
           <p style={{ fontSize: '1rem', color: 'var(--txt-muted)', lineHeight: '1.6' }}>
-            Report a lab or campus facility issue by describing the problem and uploading a photo to help our technical team identify it.
+            Report a lab or campus facility issue by describing the problem. Photos are not currently sent with reports.
           </p>
         </div>
 
@@ -1500,8 +1496,8 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
           }}>
             {/* Left Card: Upload Photo */}
             <div className="portal-card" style={{ 
-              background: 'linear-gradient(135deg, rgba(255, 245, 247, 0.4) 0%, white 100%)',
-              border: '1px solid rgba(245, 34, 45, 0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '20px',
               padding: '32px',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(245, 34, 45, 0.04)'
@@ -1518,10 +1514,10 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
                   STEP 1
                 </span>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '6px' }}>
-                  Upload Issue Photo
+                  Preview Issue Photo
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--txt-muted)', lineHeight: '1.5' }}>
-                  Add a photo of the damaged equipment or the issue you're experiencing.
+                  Photos are for local preview only and are not sent with your complaint. Attachment upload is not yet supported.
                 </p>
               </div>
 
@@ -1582,7 +1578,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
                     }}
                   >
                     <Upload size={18} />
-                    Upload Photo
+                    Preview Photo
                   </button>
                   
                   <input
@@ -1596,8 +1592,8 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
               ) : (
                 <div style={{ 
                   marginBottom: '24px',
-                  background: 'white',
-                  border: '2px solid rgba(245, 34, 45, 0.15)',
+                  background: 'var(--bg-card)',
+                  border: '2px solid var(--border)',
                   borderRadius: '16px',
                   padding: '16px',
                   position: 'relative'
@@ -1638,7 +1634,7 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
                     <X size={20} />
                   </button>
                   <div style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--txt-muted)', textAlign: 'center' }}>
-                    {selectedImage?.name}
+                    {selectedImage?.name} — local preview only, not included in your complaint
                   </div>
                 </div>
               )}
@@ -1731,8 +1727,8 @@ function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) =>
 
             {/* Right Card: Ticket Information */}
             <div className="portal-card" style={{
-              background: 'white',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
               borderRadius: '20px',
               padding: '32px',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02)'
@@ -2004,128 +2000,6 @@ function Inventory() {
   )
 }
 
-/* ── Report a Technician Page ───────────────────────────────────── */
-function ReportTechnician() {
-  const [technicianName, setTechnicianName] = useState('')
-  const [issueType, setIssueType] = useState('Service Quality')
-  const [description, setDescription] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-
-  const issueTypes = ['Service Quality', 'Misconduct', 'Delayed Response', 'Unprofessional Behavior', 'Other']
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!technicianName.trim() || !description.trim()) {
-      alert('Please fill in all required fields')
-      return
-    }
-
-    // Here you would normally send this to your backend
-    console.log('Reporting technician:', { technicianName, issueType, description })
-    setSubmitted(true)
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSubmitted(false)
-      setTechnicianName('')
-      setDescription('')
-      setIssueType('Service Quality')
-    }, 3000)
-  }
-
-  return (
-    <Page>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--txt)' }}>
-          <ShieldCheck size={32} color="var(--red-bright)" />
-          Report a Technician
-        </h1>
-        <p style={{ fontSize: '1rem', color: 'var(--txt-muted)', marginBottom: '32px' }}>
-          Report service issues or misconduct by technicians. Your feedback helps us maintain quality standards.
-        </p>
-
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px' }}>
-          {submitted ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <CheckCircle2 size={64} color="var(--green-txt)" style={{ margin: '0 auto 20px' }} />
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>Report Submitted</h3>
-              <p style={{ color: 'var(--txt-muted)' }}>Thank you for your feedback. We will review this report and take appropriate action.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
-                  Technician Name <span style={{ color: 'var(--red-bright)' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={technicianName}
-                  onChange={(e) => setTechnicianName(e.target.value)}
-                  placeholder="Enter technician's name or ID"
-                  style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--txt)' }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
-                  Issue Type <span style={{ color: 'var(--red-bright)' }}>*</span>
-                </label>
-                <select
-                  value={issueType}
-                  onChange={(e) => setIssueType(e.target.value)}
-                  style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--txt)' }}
-                >
-                  {issueTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
-                  Description <span style={{ color: 'var(--red-bright)' }}>*</span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Please provide detailed information about the issue..."
-                  rows={6}
-                  style={{ width: '100%', padding: '12px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--txt)', resize: 'vertical' }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTechnicianName('')
-                    setDescription('')
-                    setIssueType('Service Quality')
-                  }}
-                  className="btn-dark"
-                  style={{ padding: '12px 24px' }}
-                >
-                  Clear Form
-                </button>
-                <button
-                  type="submit"
-                  className="btn-red"
-                  style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <ShieldCheck size={18} />
-                  Submit Report
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
-    </Page>
-  )
-}
-
 /* ── Help & Support Page ───────────────────────────────────── */
 function HelpSupport() {
   const [activeCategory, setActiveCategory] = useState<string>('FAQs')
@@ -2139,7 +2013,7 @@ function HelpSupport() {
   const faqs = [
     {
       question: 'How do I report an issue?',
-      answer: 'Navigate to "Report an Issue" from the sidebar menu. Fill in the required details including location, category, and description. You can also scan QR codes on equipment for faster reporting.'
+      answer: 'Navigate to "Report an Issue" from the sidebar menu. Fill in the required details including location, category, and description. You can preview a photo in the photo card, but attaching photos to submitted reports is not yet supported.'
     },
     {
       question: 'What are the response time SLAs?',
@@ -2474,5 +2348,4 @@ function AuthModal({
     </Dialog>
   )
 }
-
 

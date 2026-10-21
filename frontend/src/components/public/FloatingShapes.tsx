@@ -18,7 +18,14 @@ export const FloatingShapes: React.FC<FloatingShapesProps> = ({ theme, className
     const container = containerRef.current
     if (!container) return
 
-    let rafId: number
+    const shapes = Array.from(container.querySelectorAll<HTMLElement | SVGElement>('.fs-shape')).map(el => ({
+      el,
+      transform: el.style.transform,
+      depth: parseFloat(el.dataset.depth || '1'),
+    }))
+    const hover = window.matchMedia('(hover: hover)')
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let rafId: number | null = null
     let targetX = 0
     let targetY = 0
     let currentX = 0
@@ -29,34 +36,51 @@ export const FloatingShapes: React.FC<FloatingShapesProps> = ({ theme, className
       const cy = window.innerHeight / 2
       targetX = (e.clientX - cx) / cx
       targetY = (e.clientY - cy) / cy
+      if (rafId === null) rafId = requestAnimationFrame(tick)
     }
 
     const tick = () => {
       currentX += (targetX - currentX) * 0.04
       currentY += (targetY - currentY) * 0.04
 
-      const shapes = container.querySelectorAll<HTMLElement>('.fs-shape')
-      shapes.forEach((el) => {
-        const depth = parseFloat(el.dataset.depth || '1')
+      const settled = Math.abs(targetX - currentX) < 0.001 && Math.abs(targetY - currentY) < 0.001
+      if (settled) {
+        currentX = targetX
+        currentY = targetY
+      }
+
+      shapes.forEach(({ el, transform, depth }) => {
         const tx = currentX * depth * 18
         const ty = currentY * depth * 18
-        el.style.transform = `translate(${tx}px, ${ty}px)`
+        el.style.transform = `${transform} translate(${tx}px, ${ty}px)`
       })
 
-      rafId = requestAnimationFrame(tick)
+      rafId = settled ? null : requestAnimationFrame(tick)
     }
 
-    const mq = window.matchMedia('(hover: hover)')
-    if (mq.matches) {
-      window.addEventListener('mousemove', handleMouseMove, { passive: true })
-      rafId = requestAnimationFrame(tick)
+    const updateMotion = () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      if (hover.matches && !reducedMotion.matches) {
+        window.addEventListener('mousemove', handleMouseMove, { passive: true })
+      } else {
+        if (rafId !== null) cancelAnimationFrame(rafId)
+        rafId = null
+        targetX = targetY = currentX = currentY = 0
+        shapes.forEach(({ el, transform }) => { el.style.transform = transform })
+      }
     }
+    updateMotion()
+    hover.addEventListener('change', updateMotion)
+    reducedMotion.addEventListener('change', updateMotion)
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
-      cancelAnimationFrame(rafId)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      hover.removeEventListener('change', updateMotion)
+      reducedMotion.removeEventListener('change', updateMotion)
+      shapes.forEach(({ el, transform }) => { el.style.transform = transform })
     }
-  }, [])
+  }, [theme, className])
 
   const isDark = theme === 'dark'
 

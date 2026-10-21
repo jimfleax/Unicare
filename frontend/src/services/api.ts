@@ -21,6 +21,7 @@ export interface IssueRecord {
   reporter: string;
   ticketId?: string;
   date: string;
+  createdAt?: string;
   time?: string;
   description?: string;
   category?: string;

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Package, CircleAlert, CheckCircle2, Timer, TrendingUp, TrendingDown,
   Calendar, MapPin, ArrowRight, Plus, Users,
@@ -158,56 +158,56 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
       <div className="adm-kpi-row">
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="adm-kpi accent-red" onClick={() => navigate('/inventory')}>
+            <Link className="adm-kpi accent-red" to="/inventory">
               <div className="adm-kpi-icon-circle icon-red"><Package size={22} /></div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Total Assets</span>
                 <span className="adm-kpi-number">{assetsData?.length || 0}</span>
               </div>
               <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.assetGrowth} size={12} /> {analytics?.assetGrowth || "0%"} from last month</div>
-            </div>
+            </Link>
           </TooltipTrigger>
           <TooltipContent className="kpi-tooltip-content"><p>Click to view full inventory &amp; asset registry</p></TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="adm-kpi accent-amber" onClick={() => navigate('/issues')}>
+            <Link className="adm-kpi accent-amber" to="/issues">
               <div className="adm-kpi-icon-circle icon-amber"><CircleAlert size={22} /></div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Active Requests</span>
                 <span className="adm-kpi-number">{activeRequests.length}</span>
               </div>
               <div className="adm-kpi-badge trend-critical">{criticalCount} Critical</div>
-            </div>
+            </Link>
           </TooltipTrigger>
           <TooltipContent className="kpi-tooltip-content"><p>Click to view all active maintenance requests</p></TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="adm-kpi accent-green" onClick={() => navigate('/analytics')}>
+            <Link className="adm-kpi accent-green" to="/analytics">
               <div className="adm-kpi-icon-circle icon-green"><CheckCircle2 size={22} /></div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Resolved This Month</span>
                 <span className="adm-kpi-number">{analytics?.resolvedThisMonth || 0}</span>
               </div>
               <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.resolvedGrowth} size={12} /> {analytics?.resolvedGrowth || "0%"}</div>
-            </div>
+            </Link>
           </TooltipTrigger>
           <TooltipContent className="kpi-tooltip-content"><p>Click to view analytics &amp; resolution performance</p></TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="adm-kpi accent-blue" onClick={() => navigate('/analytics')}>
+            <Link className="adm-kpi accent-blue" to="/analytics">
               <div className="adm-kpi-icon-circle icon-blue"><Timer size={22} /></div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Avg Resolution</span>
                 <span className="adm-kpi-number">{analytics?.avgResolution || "0h"}</span>
               </div>
               <div className="adm-kpi-badge trend-up">Target &lt; 4h</div>
-            </div>
+            </Link>
           </TooltipTrigger>
           <TooltipContent className="kpi-tooltip-content"><p>Average time to resolve campus maintenance issues</p></TooltipContent>
         </Tooltip>

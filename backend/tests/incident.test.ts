@@ -91,8 +91,7 @@ describe('Incident Endpoints', () => {
   });
 
   describe('PATCH /api/incidents/:id/status', () => {
-    it('should update the incident status', async () => {
-      expect.assertions(2);
+    it('should persist resolution time, preserve it on repeat requests, and clear it when reopened', async () => {
       const incident = await Incident.create({
         assetId: asset._id,
         description: 'Test incident',
@@ -109,6 +108,24 @@ describe('Incident Endpoints', () => {
       
       expect(res.status).toBe(200);
       expect(res.body.data.incident.status).toBe('Resolved');
+      const resolvedAt = res.body.data.incident.resolvedAt;
+      expect(Number.isFinite(Date.parse(resolvedAt))).toBe(true);
+      expect((await Incident.findById(incident._id))?.resolvedAt?.toISOString()).toBe(resolvedAt);
+
+      const repeated = await request(app)
+        .patch(`/api/incidents/${incident._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'Resolved' });
+      expect(repeated.status).toBe(200);
+      expect(repeated.body.data.incident.resolvedAt).toBe(resolvedAt);
+
+      const reopened = await request(app)
+        .patch(`/api/incidents/${incident._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'In Progress' });
+      expect(reopened.status).toBe(200);
+      expect(reopened.body.data.incident.resolvedAt).toBeUndefined();
+      expect((await Incident.findById(incident._id))?.resolvedAt).toBeUndefined();
     });
   });
   describe('POST /api/incidents/:id/logs', () => {

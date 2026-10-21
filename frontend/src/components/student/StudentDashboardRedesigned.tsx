@@ -34,6 +34,13 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     return localStorage.getItem('ucare-student-avatar') || null
   })
 
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      event.currentTarget.click()
+    }
+  }
+
   const currentUser = authUser || { name: 'Student', email: 'student@example.com' }
   const { data: studentProfileData } = useSWR('/metadata/student-profile', fetchStudentProfileApi)
   
@@ -94,8 +101,8 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     if (resolvedTickets.length > 0) {
       const resolutionTimes = resolvedTickets
         .map(ticket => {
-          if (!ticket.date || !ticket.resolvedAt) return null
-          const reported = new Date(ticket.date).getTime()
+          if (!ticket.createdAt || !ticket.resolvedAt) return null
+          const reported = new Date(ticket.createdAt).getTime()
           const resolved = new Date(ticket.resolvedAt).getTime()
           return (resolved - reported) / (1000 * 60 * 60 * 24) // days
         })
@@ -109,8 +116,9 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     // Group tickets by month
     const ticketsByMonth: Record<string, number> = {}
     myAllTickets.forEach(ticket => {
-      if (ticket.date) {
-        const date = new Date(ticket.date)
+      if (ticket.createdAt) {
+        const date = new Date(ticket.createdAt)
+        if (!Number.isFinite(date.getTime())) return
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         ticketsByMonth[monthKey] = (ticketsByMonth[monthKey] || 0) + 1
       }
@@ -120,7 +128,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-6) // Last 6 months
       .map(([month, count]) => {
-        const [year, monthNum] = month.split('-')
+        const [, monthNum] = month.split('-')
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         return {
           month: monthNames[parseInt(monthNum) - 1],
@@ -295,6 +303,10 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
           return (
             <div
               key={idx}
+              role="button"
+              tabIndex={0}
+              onKeyDown={handleCardKeyDown}
+              aria-pressed={isSelected}
               className={`metric-card-premium ${isSelected ? 'selected' : ''}`}
               onClick={() => { setFilterStatus(metric.filter as any); setActiveTab('overview') }}
               style={{ color: metric.accentColor }}
@@ -412,6 +424,9 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                   <div
                     key={ticket.id || idx}
                     className="ticket-card-premium"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={handleCardKeyDown}
                     onClick={() => onSelectIssue(ticket)}
                   >
                     <div className="ticket-header-premium">
@@ -436,7 +451,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                       </span>
                       <span className="ticket-meta-item">
                         <Clock3 size={14} />
-                        {new Date(ticket.date).toLocaleDateString()}
+                        {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ticket.date}
                       </span>
                     </div>
 
@@ -713,11 +728,14 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
 
                 <div className="tickets-list-premium">
                   {myAllTickets
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .sort((a, b) => (Date.parse(b.createdAt || '') || 0) - (Date.parse(a.createdAt || '') || 0))
                     .map((ticket, idx) => (
                       <div
                         key={ticket.id || idx}
                         className="ticket-card-premium"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={handleCardKeyDown}
                         onClick={() => onSelectIssue(ticket)}
                       >
                         <div className="ticket-header-premium">
@@ -742,7 +760,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                           </span>
                           <span className="ticket-meta-item">
                             <Calendar size={14} />
-                            {new Date(ticket.date).toLocaleDateString()}
+                            {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ticket.date}
                           </span>
                         </div>
 
