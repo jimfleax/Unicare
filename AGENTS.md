@@ -11,3 +11,4 @@ Uses the default five canonical triage labels. See `docs/agents/triage-labels.md
 ### Domain docs
 
 Single-context documentation layout at the repo root. See `docs/agents/domain.md`.
+~
