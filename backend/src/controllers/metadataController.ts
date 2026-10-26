@@ -48,6 +48,20 @@ export const getLocations = catchAsync(async (_req: AuthRequest, res: Response, 
 });
 
 export const getCategories = catchAsync(async (_req: AuthRequest, res: Response, _next: NextFunction) => {
+  await seedMetadata();
+  
+  // Check if we have category metadata
+  const categoryMetas = await Metadata.find({ type: 'category' }).lean();
+  
+  if (categoryMetas.length > 0) {
+    res.status(200).json({
+      success: true,
+      data: categoryMetas.map(c => ({ value: c.value, label: c.label }))
+    });
+    return;
+  }
+  
+  // Fallback to dynamic categories from assets
   const cats = await distinctMerged('category');
   res.status(200).json({ success: true, data: cats.map(toOption) });
 });
@@ -108,15 +122,29 @@ export const seedFaqs = async (): Promise<void> => {
 export const seedMetadata = async (): Promise<void> => {
   if ((await Metadata.estimatedDocumentCount()) > 0) return;
   const defaults = [
+    // Priorities
     { type: 'priority', value: 'Critical', label: 'Critical', color: 'var(--red)' },
     { type: 'priority', value: 'High', label: 'High', color: 'var(--amber-border)' },
     { type: 'priority', value: 'Medium', label: 'Medium', color: 'var(--txt-sub)' },
     { type: 'priority', value: 'Low', label: 'Low', color: 'var(--border-bright)' },
-    // A few default locations
-    { type: 'location', value: 'Main Library', label: 'Main Library', color: 'var(--red)' },
-    { type: 'location', value: 'Science Block', label: 'Science Block', color: '#3b82f6' },
-    { type: 'location', value: 'Admin Building', label: 'Admin Building', color: 'var(--amber-border)' },
-    { type: 'location', value: 'Sports Complex', label: 'Sports Complex', color: 'var(--green-border)' },
+    // Locations
+    { type: 'location', value: 'Launchspace', label: 'Launchspace', color: 'var(--red)' },
+    { type: 'location', value: 'Createspace', label: 'Createspace', color: '#3b82f6' },
+    { type: 'location', value: 'Thinkspace', label: 'Thinkspace', color: 'var(--amber-border)' },
+    { type: 'location', value: 'Waiting area', label: 'Waiting area', color: 'var(--green-border)' },
+    { type: 'location', value: 'Girls Washroom', label: 'Girls Washroom', color: '#ec4899' },
+    { type: 'location', value: 'Boys Washroom', label: 'Boys Washroom', color: '#6366f1' },
+    { type: 'location', value: 'Uzone Park', label: 'Uzone Park', color: '#22c55e' },
+    // Categories
+    { type: 'category', value: 'Electricity', label: 'Electricity', color: '' },
+    { type: 'category', value: 'WiFi', label: 'WiFi', color: '' },
+    { type: 'category', value: 'AC', label: 'AC', color: '' },
+    { type: 'category', value: 'Sockets', label: 'Sockets', color: '' },
+    { type: 'category', value: 'Furniture', label: 'Furniture', color: '' },
+    { type: 'category', value: 'Computer', label: 'Computer', color: '' },
+    { type: 'category', value: 'Plumbing', label: 'Plumbing', color: '' },
+    { type: 'category', value: 'Lighting', label: 'Lighting', color: '' },
+    { type: 'category', value: 'Other', label: 'Other', color: '' },
   ];
   await Metadata.insertMany(defaults);
 };

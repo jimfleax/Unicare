@@ -3,7 +3,8 @@ import './StudentDashboardPremium.css'
 import useSWR from 'swr'
 import {
   Plus, AlertTriangle, CheckCircle2, Clock3, Search, Filter,
-  FileText, X, History, TrendingUp, Calendar, BarChart3, Monitor, QrCode
+  FileText, X, History, TrendingUp, Calendar, BarChart3, Monitor, QrCode,
+  MapPin, Tag, BarChart2, Laptop, Send, Trash2
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import type { IssueRecord } from '../../services/api'
@@ -65,6 +66,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
   const [priority, setPriority] = useState('')
   const [assetId, setAssetId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showValidation, setShowValidation] = useState(false)
   
   const { data: locations = [] } = useSWR('/metadata/locations', fetchLocationsApi)
   const { data: categories = [] } = useSWR('/metadata/categories', fetchCategoriesApi)
@@ -172,6 +174,10 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
 
   const handleSubmitIncident = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Show validation errors
+    setShowValidation(true)
+    
     if (!title.trim() || !location || !category) {
       alert('Please fill required fields: Title, Location, Category')
       return
@@ -202,6 +208,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
       setCategory('')
       setPriority('')
       setAssetId('')
+      setShowValidation(false)
       
       // Switch to overview
       setActiveTab('overview')
@@ -470,127 +477,144 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
         {activeTab === 'report' && (
           <div role="tabpanel" id="report-panel" aria-labelledby="report-tab">
             <div className="report-form-premium">
-            <div className="report-form-header">
-              <QrCode size={24} />
-              <div>
-                <h3>Log New Incident Report</h3>
-                <p>Fill out the details below to submit a maintenance request</p>
+              <div className="report-form-header">
+                <div className="report-header-content">
+                  <h3>Log New Incident Report</h3>
+                  <p>Fill out the details below to submit a maintenance request</p>
+                </div>
               </div>
+
+              <form onSubmit={handleSubmitIncident}>
+                <div className="form-grid-premium">
+                  <div className="form-field-premium">
+                    <label className="form-label-premium">
+                      Incident Title <span className="required-star">*</span>
+                    </label>
+                    <div className="form-input-wrapper">
+                      <FileText className="form-field-icon" size={20} />
+                      <input
+                        type="text"
+                        className={`form-input-premium with-icon ${showValidation && !title.trim() ? 'form-error' : ''}`}
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="e.g., Monitor not working at Station 12"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-field-premium">
+                    <label className="form-label-premium">
+                      Location / Lab Room <span className="required-star">*</span>
+                    </label>
+                    <div className="form-input-wrapper">
+                      <MapPin className="form-field-icon" size={20} />
+                      <select
+                        className={`form-select-premium with-icon ${showValidation && !location ? 'form-error' : ''}`}
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        required
+                      >
+                        <option value="">Select lab location</option>
+                        {locations.map((loc) => (
+                          <option key={loc.value} value={loc.value}>{loc.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-field-premium">
+                    <label className="form-label-premium">
+                      Category <span className="required-star">*</span>
+                    </label>
+                    <div className="form-input-wrapper">
+                      <Tag className="form-field-icon" size={20} />
+                      <select
+                        className={`form-select-premium with-icon ${showValidation && !category ? 'form-error' : ''}`}
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        required
+                      >
+                        <option value="">Select issue category</option>
+                        {categories.map((cat) => (
+                          <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-field-premium">
+                    <label className="form-label-premium">Priority Level</label>
+                    <div className="form-input-wrapper">
+                      <BarChart2 className="form-field-icon" size={20} />
+                      <select
+                        className="form-select-premium with-icon"
+                        value={priority}
+                        onChange={e => setPriority(e.target.value)}
+                      >
+                        <option value="">Select priority (optional)</option>
+                        {priorities.map((pri) => (
+                          <option key={pri.value} value={pri.value}>{pri.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-field-premium form-field-full">
+                    <label className="form-label-premium">Asset ID / Workstation No.</label>
+                    <div className="form-input-wrapper">
+                      <Laptop className="form-field-icon" size={20} />
+                      <input
+                        type="text"
+                        className="form-input-premium with-icon"
+                        value={assetId}
+                        onChange={e => setAssetId(e.target.value)}
+                        placeholder="e.g., WS-101, MON-23 (optional)"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-field-premium form-field-full">
+                    <label className="form-label-premium">Detailed Description</label>
+                    <textarea
+                      className="form-textarea-premium"
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      placeholder="Provide additional details about the issue..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-actions-premium">
+                  <button
+                    type="button"
+                    className="btn-secondary-premium"
+                    onClick={() => {
+                      setTitle('')
+                      setDescription('')
+                      setLocation('')
+                      setCategory('')
+                      setPriority('')
+                      setAssetId('')
+                      setShowValidation(false)
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 size={18} />
+                    Clear Form
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit-premium"
+                    disabled={isSubmitting}
+                  >
+                    <Send size={18} />
+                    {isSubmitting ? 'Submitting...' : 'Submit Incident Report'}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleSubmitIncident}>
-              <div className="form-grid-premium">
-                <div className="form-field-premium">
-                  <label className="form-label-premium">
-                    Incident Title <span className="required-star">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input-premium"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="e.g., Monitor not working at Station 12"
-                    required
-                  />
-                </div>
-
-                <div className="form-field-premium">
-                  <label className="form-label-premium">
-                    Location / Lab Room <span className="required-star">*</span>
-                  </label>
-                  <select
-                    className="form-select-premium"
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    required
-                  >
-                    <option value="">Select lab location</option>
-                    {locations.map((loc) => (
-                      <option key={loc.value} value={loc.value}>{loc.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-field-premium">
-                  <label className="form-label-premium">
-                    Category <span className="required-star">*</span>
-                  </label>
-                  <select
-                    className="form-select-premium"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    required
-                  >
-                    <option value="">Select issue category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-field-premium">
-                  <label className="form-label-premium">Priority Level</label>
-                  <select
-                    className="form-select-premium"
-                    value={priority}
-                    onChange={e => setPriority(e.target.value)}
-                  >
-                    <option value="">Select priority (optional)</option>
-                    {priorities.map((pri) => (
-                      <option key={pri.value} value={pri.value}>{pri.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-field-premium">
-                  <label className="form-label-premium">Asset ID / Workstation No.</label>
-                  <input
-                    type="text"
-                    className="form-input-premium"
-                    value={assetId}
-                    onChange={e => setAssetId(e.target.value)}
-                    placeholder="e.g., WS-101, MON-23 (optional)"
-                  />
-                </div>
-
-                <div className="form-field-premium form-field-full">
-                  <label className="form-label-premium">Detailed Description</label>
-                  <textarea
-                    className="form-textarea-premium"
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    placeholder="Provide additional details about the issue..."
-                    rows={4}
-                  />
-                </div>
-              </div>
-
-              <div className="form-actions-premium">
-                <button
-                  type="button"
-                  className="btn-secondary-premium"
-                  onClick={() => {
-                    setTitle('')
-                    setDescription('')
-                    setLocation('')
-                    setCategory('')
-                    setPriority('')
-                    setAssetId('')
-                  }}
-                  disabled={isSubmitting}
-                >
-                  Clear Form
-                </button>
-                <button
-                  type="submit"
-                  className="btn-submit-premium"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Incident Report'}
-                </button>
-              </div>
-            </form>
-          </div>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { SystemStatus } from './components/shared/SystemStatus'
+// Updated: 15:42
 import {
   BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate,
 } from 'react-router-dom'
@@ -1278,15 +1279,63 @@ function Issues({ records, onSelectIssue }: { records: IssueRecord[]; onSelectIs
   )
 }
 
-function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
-  const { user } = useAuth()
+function Report({ onAddRecord, assets }: { onAddRecord: (record: IssueRecord) => void, assets: AssetRecord[] }) {
+  const { user, isAuthenticated } = useAuth()
   
-  // Fetch metadata
-  const { data: fetchedLocations, error: locationsError } = useSWR('locations', fetchLocationsApi)
-  const { data: fetchedCategories, error: categoriesError } = useSWR('categories', fetchCategoriesApi)
-  const { data: fetchedPriorities, error: prioritiesError } = useSWR('priorities', fetchPrioritiesApi)
+  // Debug: log auth state and token
+  useEffect(() => {
+    const token = getStoredToken()
+    console.log('🔐 Auth State:', { isAuthenticated, hasUser: !!user, hasToken: !!token })
+    if (token) {
+      console.log('🔑 Token exists (first 20 chars):', token.substring(0, 20) + '...')
+    }
+  }, [isAuthenticated, user])
+  
+  // Fetch metadata with proper error handling
+  const { data: fetchedLocations, error: locationsError, mutate: mutateLocations, isValidating: locationsValidating } = useSWR(
+    isAuthenticated ? '/metadata/locations' : null,
+    fetchLocationsApi,
+    { revalidateOnFocus: false, shouldRetryOnError: true, errorRetryCount: 2 }
+  )
+  const { data: fetchedCategories, error: categoriesError, mutate: mutateCategories, isValidating: categoriesValidating } = useSWR(
+    isAuthenticated ? '/metadata/categories' : null,
+    fetchCategoriesApi,
+    { revalidateOnFocus: false, shouldRetryOnError: true, errorRetryCount: 2 }
+  )
+  const { data: fetchedPriorities, error: prioritiesError, mutate: mutatePriorities, isValidating: prioritiesValidating } = useSWR(
+    isAuthenticated ? '/metadata/priorities' : null,
+    fetchPrioritiesApi,
+    { revalidateOnFocus: false, shouldRetryOnError: true, errorRetryCount: 2 }
+  )
+  
+  // Debug: log fetch results
+  useEffect(() => {
+    if (locationsError || categoriesError || prioritiesError) {
+      console.error('❌ Metadata fetch errors:', {
+        locations: locationsError?.message,
+        categories: categoriesError?.message,
+        priorities: prioritiesError?.message
+      })
+    }
+    if (fetchedLocations || fetchedCategories || fetchedPriorities) {
+      console.log('✅ Metadata loaded:', {
+        locations: fetchedLocations?.length,
+        categories: fetchedCategories?.length,
+        priorities: fetchedPriorities?.length
+      })
+    }
+  }, [locationsError, categoriesError, prioritiesError, fetchedLocations, fetchedCategories, fetchedPriorities])
+  
   const metaError = locationsError || categoriesError || prioritiesError
   const metaLoading = !metaError && (!fetchedLocations || !fetchedCategories || !fetchedPriorities)
+  
+  // Retry function
+  const retryMetadata = () => {
+    console.log('🔄 Retrying metadata fetch...')
+    mutateLocations()
+    mutateCategories()
+    mutatePriorities()
+  }
 
   const availableLocations: { value: string; label: string; color: string }[] = Array.isArray(fetchedLocations) ? fetchedLocations : []
   const availableCategories: { value: string; label: string }[] = Array.isArray(fetchedCategories) ? fetchedCategories : []
@@ -1495,12 +1544,9 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
             alignItems: 'start'
           }}>
             {/* Left Card: Upload Photo */}
-            <div className="portal-card" style={{ 
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
+            <div className="report-upload-card portal-card" style={{ 
               borderRadius: '20px',
-              padding: '32px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(245, 34, 45, 0.04)'
+              padding: '28px'
             }}>
               <div style={{ marginBottom: '24px' }}>
                 <span style={{ 
@@ -1524,41 +1570,40 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
               {/* Upload Drop Zone */}
               {!imagePreview ? (
                 <div
+                  className="report-upload-zone"
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
                   style={{
-                    background: isDragging ? 'rgba(245, 34, 45, 0.05)' : 'rgba(255, 245, 247, 0.6)',
-                    border: `2px dashed ${isDragging ? 'var(--red-bright)' : 'rgba(245, 34, 45, 0.2)'}`,
-                    borderRadius: '16px',
-                    padding: '48px 24px',
+                    background: isDragging ? 'rgba(220, 38, 38, 0.08)' : 'var(--bg-card-alt)',
+                    border: `2px dashed ${isDragging ? 'var(--red-bright)' : 'var(--border)'}`,
+                    borderRadius: '12px',
+                    padding: '44px 24px',
                     textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    marginBottom: '24px'
+                    marginBottom: '20px'
                   }}
-                  onClick={() => fileInputRef.current?.click()}
                 >
                   <div style={{
-                    width: '72px',
-                    height: '72px',
+                    width: '64px',
+                    height: '64px',
                     margin: '0 auto 20px',
-                    background: 'linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(255, 192, 203, 0.1) 100%)',
+                    background: 'var(--red-subtle)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    color: 'var(--red-bright)'
                   }}>
-                    <ImagePlus size={32} color="var(--red-bright)" />
+                    <ImagePlus size={32} strokeWidth={1.5} />
                   </div>
                   
-                  <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--txt)', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--txt)', marginBottom: '12px' }}>
                     Drag and drop your photo here
                   </p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--txt-muted)', marginBottom: '16px' }}>
-                    or browse files from your device
-                  </p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--txt-sub)', marginBottom: '20px' }}>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--txt-sub)', marginBottom: '24px' }}>
                     JPG, PNG or WEBP · Max 5 MB
                   </p>
                   
@@ -1566,8 +1611,8 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                     type="button"
                     className="btn-red"
                     style={{ 
-                      padding: '12px 28px',
-                      fontSize: '0.9rem',
+                      padding: '11px 24px',
+                      fontSize: '0.875rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px'
@@ -1577,8 +1622,8 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                       fileInputRef.current?.click()
                     }}
                   >
-                    <Upload size={18} />
-                    Preview Photo
+                    <Upload size={16} />
+                    Upload Photo
                   </button>
                   
                   <input
@@ -1590,11 +1635,11 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                   />
                 </div>
               ) : (
-                <div style={{ 
-                  marginBottom: '24px',
-                  background: 'var(--bg-card)',
-                  border: '2px solid var(--border)',
-                  borderRadius: '16px',
+                <div className="report-image-preview" style={{ 
+                  marginBottom: '20px',
+                  background: 'var(--bg-card-alt)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
                   padding: '16px',
                   position: 'relative'
                 }}>
@@ -1658,67 +1703,51 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
               )}
 
               {/* Photo Tips */}
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>
+              <div className="photo-tips" style={{ marginBottom: '20px' }}>
+                <h4 className="tips-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--txt)', marginBottom: '12px' }}>
                   Photo tips
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="tips-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {[
-                    { icon: '✓', text: 'Capture the damaged part clearly' },
-                    { icon: '✓', text: 'Include the surrounding equipment when useful' },
-                    { icon: '✓', text: 'Avoid including faces or personal information' }
+                    'Capture the damaged part clearly',
+                    'Include the surrounding equipment when useful',
+                    'Avoid including faces or personal information'
                   ].map((tip, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: 'var(--txt-muted)' }}>
-                      <span style={{ 
-                        width: '20px', 
-                        height: '20px', 
-                        background: 'rgba(82, 196, 26, 0.1)', 
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.7rem',
-                        color: 'var(--green-txt)',
-                        fontWeight: 700,
-                        flexShrink: 0
-                      }}>
-                        {tip.icon}
-                      </span>
-                      {tip.text}
+                    <div key={idx} className="tip-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8125rem', color: 'var(--txt-muted)' }}>
+                      <Check size={14} style={{ flexShrink: 0, color: 'var(--green-txt)' }} />
+                      {tip}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Separator */}
-              <div style={{ height: '1px', background: 'rgba(0, 0, 0, 0.06)', margin: '24px 0' }} />
-
-              {/* Optional Photo Notice */}
-              <div style={{
-                background: 'rgba(255, 245, 247, 0.8)',
-                border: '1px solid rgba(245, 34, 45, 0.1)',
-                borderRadius: '12px',
-                padding: '16px',
+              {/* No Photo Available Info */}
+              <div className="no-photo-info" style={{
                 display: 'flex',
-                gap: '12px'
+                gap: '12px',
+                padding: '14px 16px',
+                background: 'var(--bg-card-alt)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px'
               }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  background: 'rgba(245, 34, 45, 0.1)',
+                <div className="info-icon" style={{
+                  flexShrink: 0,
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
+                  background: 'var(--red-subtle)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
+                  color: 'var(--red-bright)'
                 }}>
-                  <Zap size={18} color="var(--red-bright)" />
+                  <Zap size={16} />
                 </div>
-                <div>
-                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '4px' }}>
+                <div className="info-content">
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--txt)', margin: '0 0 4px 0' }}>
                     No photo available?
                   </h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--txt-muted)', lineHeight: '1.5' }}>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--txt-muted)', margin: 0, lineHeight: '1.4' }}>
                     You can still report the issue by completing the complaint details.
                   </p>
                 </div>
@@ -1726,12 +1755,9 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
             </div>
 
             {/* Right Card: Ticket Information */}
-            <div className="portal-card" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
+            <div className="report-form-card portal-card" style={{
               borderRadius: '20px',
-              padding: '32px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02)'
+              padding: '28px'
             }}>
               <div style={{ marginBottom: '28px' }}>
                 <span style={{ 
@@ -1756,16 +1782,71 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                 </div>
               )}
               
-              {metaError && (
+              {!isAuthenticated && (
+                <div style={{ 
+                  padding: '24px', 
+                  background: 'rgba(250, 173, 20, 0.1)',
+                  border: '1px solid rgba(250, 173, 20, 0.3)',
+                  borderRadius: '12px',
+                  marginBottom: '20px',
+                  color: '#FAAD14',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <AlertTriangle size={20} />
+                  <div>Please log in to report an issue.</div>
+                </div>
+              )}
+              
+              {isAuthenticated && metaError && (
                 <div style={{ 
                   padding: '16px', 
                   background: 'rgba(245, 34, 45, 0.1)', 
                   border: '1px solid rgba(245, 34, 45, 0.2)',
                   borderRadius: '10px',
                   color: 'var(--red-bright)',
-                  marginBottom: '20px'
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
                 }}>
-                  Failed to load form options. Please retry later.
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>Failed to load form options</div>
+                      <div style={{ fontSize: '13px', opacity: 0.9 }}>
+                        {locationsError && <div>• Locations: {locationsError.message}</div>}
+                        {categoriesError && <div>• Categories: {categoriesError.message}</div>}
+                        {prioritiesError && <div>• Priorities: {prioritiesError.message}</div>}
+                      </div>
+                      <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>
+                        Make sure the backend is running and you're logged in properly.
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={retryMetadata}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'var(--red-bright)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      alignSelf: 'flex-start',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <RefreshCw size={14} />
+                    Retry Loading
+                  </button>
                 </div>
               )}
 
@@ -1898,12 +1979,12 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="btn-red"
+                    className="btn-submit-report btn-red"
                     disabled={isSubmitting}
                     style={{
                       width: '100%',
-                      padding: '16px',
-                      fontSize: '1rem',
+                      padding: '14px',
+                      fontSize: '0.9375rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
@@ -1916,12 +1997,12 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                        <Loader2 size={18} className="spinner" />
                         Submitting...
                       </>
                     ) : (
                       <>
-                        <CircleAlert size={20} />
+                        <CircleAlert size={18} />
                         Dispatch Ticket to Tech Queue
                       </>
                     )}

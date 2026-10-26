@@ -313,11 +313,18 @@ export async function fetchInventoryApi(): Promise<SparePart[] | null> {
 
 async function fetchMetadata<T>(name: string): Promise<T> {
   const res = await fetch(`${API_BASE}/metadata/${name}`, { headers: getAuthHeaders() });
-  if (!res.ok) throw new Error(`Failed to load ${name} (${res.status})`);
+  console.log(`📡 Fetching /metadata/${name}:`, res.status, res.statusText);
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    console.error(`❌ /metadata/${name} failed:`, errorBody);
+    throw new Error(`Failed to load ${name} (${res.status}): ${errorBody.message || res.statusText}`);
+  }
   const body = await res.json();
   if (!body || !body.success || body.data === undefined || body.data === null) {
+    console.error(`❌ /metadata/${name} invalid response:`, body);
     throw new Error(`Failed to load ${name}`);
   }
+  console.log(`✅ /metadata/${name} success:`, body.data.length || 'loaded');
   return body.data as T;
 }
 

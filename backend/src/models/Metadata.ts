@@ -11,7 +11,7 @@ const metadataSchema = new Schema<IMetadata>({
   type: { type: String, required: true },
   value: { type: String, required: true },
   label: { type: String, required: true },
-  color: { type: String, required: true }
+  color: { type: String, required: false, default: '' }
 });
 
 export default mongoose.model<IMetadata>('Metadata', metadataSchema);
