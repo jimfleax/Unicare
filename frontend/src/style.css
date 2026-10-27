@@ -10974,3 +10974,55 @@ html[data-theme="dark"] .rdx-popover-content {
     font-size: 1.125rem;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES FOR REPORT PAGE
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] .report-upload-card,
+[data-theme="light"] .report-form-card {
+  background: #ffffff;
+  border-color: rgba(220, 38, 38, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .report-upload-zone {
+  background: #f8fafc;
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+[data-theme="light"] .report-upload-zone:hover {
+  background: #f1f5f9;
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+[data-theme="light"] .upload-icon-container {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+[data-theme="light"] .no-photo-info {
+  background: #f8fafc;
+  border-color: rgba(220, 38, 38, 0.15);
+}
+
+[data-theme="light"] .info-icon {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+[data-theme="light"] .report-image-preview {
+  background: #f8fafc;
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+[data-theme="light"] .report-form-card input,
+[data-theme="light"] .report-form-card textarea {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .report-form-card input:focus,
+[data-theme="light"] .report-form-card textarea:focus {
+  background: #ffffff;
+  border-color: var(--red);
+}

@@ -18,7 +18,7 @@ import { Mail, Lock,
 import { SmartRoutingSection, WhatHappensNextSection, ComplaintWorkflowSection } from './components/public/UniquesCommunitySections'
 import { PreventiveMaintenanceSection } from './components/public/PreventiveMaintenanceSection'
 import { StudentDashboard } from './components/student/StudentDashboardRedesigned'
-import { TechnicianDashboard } from './components/technician/TechnicianDashboard'
+import { TechnicianDashboard } from './components/technician/TechnicianDashboardRedesigned'
 import { AdminDashboard } from './components/AdminDashboard'
 import { AdminManageTechnicians } from './components/admin/AdminManageTechnicians'
 import { AdminScheduleMaintenance } from './components/admin/AdminScheduleMaintenance'
@@ -87,6 +87,7 @@ const allNavLinks: readonly [string, string, typeof GraduationCap, readonly Disp
   ['/dashboard', 'Admin Dashboard', LayoutDashboard, ['Admin']],
   ['/issues', 'Issues Tracker', ClipboardList, ['Admin', 'Tech']],
   ['/report', 'Report an Issue', ClipboardList, ['Admin', 'Student']],
+  ['/report-technician', 'Report a Technician', ShieldCheck, ['Admin', 'Student']],
   ['/help-support', 'Help & Support', Settings, ['Admin', 'Student', 'Tech']],
   ['/inventory', 'Inventory DB', Grid2X2, ['Admin', 'Tech']],
   ['/analytics', 'Analytics', BarChart3, ['Admin']],
@@ -859,7 +860,7 @@ function Portal({ theme, toggleTheme }: {
             .filter(([, , , roles]) => (roles as readonly string[]).includes(role))
             .map(([to, label, Icon]) => (
             <NavLink key={to} to={to as string} onClick={() => setSideOpen(false)}>
-              <Icon size={17} />
+              {Icon && <Icon size={17} />}
               <span>{label}</span>
             </NavLink>
           ))}
@@ -1137,6 +1138,11 @@ function Portal({ theme, toggleTheme }: {
           <Route path="/report" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
               <Report onAddRecord={(newR) => setRecords([newR, ...records])} assets={assets} />
+            </ProtectedRoute>
+          } />
+          <Route path="/report-technician" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
+              <ReportTechnician />
             </ProtectedRoute>
           } />
           <Route path="/help-support" element={
@@ -2093,20 +2099,20 @@ function HelpSupport() {
 
   const faqs = [
     {
-      question: 'How do I report an issue?',
-      answer: 'Navigate to "Report an Issue" from the sidebar menu. Fill in the required details including location, category, and description. You can preview a photo in the photo card, but attaching photos to submitted reports is not yet supported.'
+      question: 'How do I <span style="color: var(--red-bright); font-weight: 600;">report</span> an issue?',
+      answer: 'Navigate to "<span style="color: var(--red-bright); font-weight: 600;">Report</span> an Issue" from the sidebar menu. Fill in the required details including location, category, and description. You can preview a photo in the photo card, but attaching photos to submitted <span style="color: var(--red-bright); font-weight: 600;">reports</span> is not yet supported.'
     },
     {
-      question: 'What are the response time SLAs?',
-      answer: 'Critical issues: 1-2 hours, High priority: 4-8 hours, Medium priority: 1-2 days, Low priority: 3-5 days. Response times may vary based on technician availability.'
+      question: 'What are the <span style="color: var(--red-bright); font-weight: 600;">response</span> time SLAs?',
+      answer: 'Critical issues: <span style="color: var(--red-bright); font-weight: 600;">1-2 hours</span>, High priority: <span style="color: var(--red-bright); font-weight: 600;">4-8 hours</span>, Medium priority: <span style="color: var(--red-bright); font-weight: 600;">1-2 days</span>, Low priority: <span style="color: var(--red-bright); font-weight: 600;">3-5 days</span>. <span style="color: var(--red-bright); font-weight: 600;">Response</span> times may vary based on technician availability.'
     },
     {
-      question: 'How can I track my reported issues?',
-      answer: 'All your reported issues are visible in your dashboard under "My Active Tickets". You can filter by status and search by ticket ID or title.'
+      question: 'How can I <span style="color: var(--red-bright); font-weight: 600;">track</span> my reported issues?',
+      answer: 'All your reported issues are visible in your dashboard under <span style="color: var(--red-bright); font-weight: 600;">"My Active Tickets"</span>. You can filter by status and search by ticket ID or title.'
     },
     {
-      question: 'What should I do if a technician is unresponsive?',
-      answer: 'If a technician is not responding within the SLA timeframe, you can escalate the issue through "Report a Technician" or contact the admin directly.'
+      question: 'What should I do if a technician is <span style="color: var(--red-bright); font-weight: 600;">unresponsive</span>?',
+      answer: 'If a technician is not responding within the <span style="color: var(--red-bright); font-weight: 600;">SLA timeframe</span>, you can escalate the issue through <span style="color: var(--red-bright); font-weight: 600;">"Report a Technician"</span> or contact the admin directly.'
     },
   ]
 
@@ -2136,12 +2142,11 @@ function HelpSupport() {
   return (
     <Page>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--txt)' }}>
-          <Settings size={32} color="var(--red-bright)" />
-          Help & Support
+        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', color: 'var(--txt)' }}>
+          Help & <span style={{ color: 'var(--red-bright)' }}>Support</span>
         </h1>
         <p style={{ fontSize: '1rem', color: 'var(--txt-muted)', marginBottom: '32px' }}>
-          Find answers to common questions and learn about our service level agreements.
+          Find answers to common <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>questions</span> and learn about our <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>service level agreements</span>.
         </p>
 
         {/* Category Tabs */}
@@ -2180,15 +2185,14 @@ function HelpSupport() {
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px' }}>
           {activeCategory === 'FAQs' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '8px' }}>Frequently Asked Questions</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '8px' }}><span style={{ color: 'var(--red-bright)' }}>Frequently</span> Asked Questions</h2>
               {faqs.map((faq, idx) => (
                 <details key={idx} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
                   <summary style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--txt)', cursor: 'pointer', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {faq.question}
+                    <span dangerouslySetInnerHTML={{ __html: faq.question }} />
                     <Plus size={20} style={{ flexShrink: 0 }} />
                   </summary>
-                  <p style={{ marginTop: '12px', color: 'var(--txt-muted)', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                    {faq.answer}
+                  <p style={{ marginTop: '12px', color: 'var(--txt-muted)', lineHeight: '1.6', fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: faq.answer }}>
                   </p>
                 </details>
               ))}
@@ -2199,7 +2203,7 @@ function HelpSupport() {
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '16px' }}>Service Level Agreements</h2>
               <p style={{ color: 'var(--txt-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
-                Our response times are based on issue priority. Technicians will be assigned and respond according to these guidelines:
+                Our <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>response times</span> are based on <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>issue priority</span>. Technicians will be assigned and respond according to these guidelines:
               </p>
               <div style={{ display: 'grid', gap: '16px' }}>
                 {guidelines.map((item, idx) => (
@@ -2220,18 +2224,18 @@ function HelpSupport() {
           {activeCategory === 'Contact' && (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
               <Mail size={64} color="var(--red-bright)" style={{ margin: '0 auto 20px' }} />
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>Contact Support Team</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '12px' }}>Contact <span style={{ color: 'var(--red-bright)' }}>Support Team</span></h2>
               <p style={{ color: 'var(--txt-muted)', marginBottom: '32px', lineHeight: '1.6', maxWidth: '600px', margin: '0 auto 32px' }}>
-                Need immediate assistance? Reach out to our support team via email or visit the admin office during business hours.
+                Need <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>immediate assistance</span>? Reach out to our support team via <span style={{ color: 'var(--red-bright)', fontWeight: 600 }}>email</span> or visit the admin office during business hours.
               </p>
               <div style={{ display: 'grid', gap: '16px', maxWidth: '500px', margin: '0 auto' }}>
                 <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Email Support</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}>support@unicare.edu</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--red-bright)' }}>support@unicare.edu</div>
                 </div>
                 <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Office Hours</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}>Monday - Friday: 9:00 AM - 5:00 PM</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--txt)' }}><span style={{ color: 'var(--red-bright)' }}>Monday - Friday:</span> 9:00 AM - 5:00 PM</div>
                 </div>
                 <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'left' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt-muted)', marginBottom: '8px' }}>Location</div>
@@ -2240,6 +2244,234 @@ function HelpSupport() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </Page>
+  )
+}
+
+/* ── Report a Technician Page ───────────────────────────────────── */
+function ReportTechnician() {
+  const [technicianName, setTechnicianName] = useState('')
+  const [issueType, setIssueType] = useState('Service Quality')
+  const [description, setDescription] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  const issueTypes = ['Service Quality', 'Misconduct', 'Response Time', 'Other']
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!technicianName.trim() || !description.trim()) return
+    
+    // Here you would send the report to backend
+    console.log('Technician Report:', { technicianName, issueType, description })
+    setSubmitted(true)
+    
+    // Reset after 3 seconds
+    setTimeout(() => {
+      setSubmitted(false)
+      setTechnicianName('')
+      setDescription('')
+    }, 3000)
+  }
+
+  return (
+    <Page>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        {/* Page Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <p style={{ 
+            fontSize: '0.7rem', 
+            color: 'var(--red-bright)', 
+            fontWeight: 700, 
+            letterSpacing: '1.2px',
+            marginBottom: '8px'
+          }}>
+            CAMPUS MAINTENANCE
+          </p>
+          <h1 style={{ 
+            fontSize: '2rem', 
+            fontWeight: 700, 
+            color: 'var(--txt)', 
+            marginBottom: '8px'
+          }}>
+            Report a Technician
+          </h1>
+          <p style={{ fontSize: '0.95rem', color: 'var(--txt-muted)', lineHeight: '1.6' }}>
+            Report service issues or misconduct by technicians. Your feedback helps us maintain quality standards.
+          </p>
+        </div>
+
+        {/* Form Card */}
+        <div className="portal-card" style={{ padding: '32px' }}>
+          {submitted ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 20px',
+                background: 'var(--green-bg)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Check size={32} color="var(--green-txt)" />
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '8px' }}>
+                Report Submitted Successfully
+              </h3>
+              <p style={{ color: 'var(--txt-muted)', fontSize: '0.95rem' }}>
+                Thank you for your feedback. The admin team will review your report.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              {/* Technician Name */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 600, 
+                  fontSize: '0.875rem', 
+                  color: 'var(--txt)' 
+                }}>
+                  Technician Name <span style={{ color: 'var(--red-bright)' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={technicianName}
+                  onChange={(e) => setTechnicianName(e.target.value)}
+                  placeholder="Enter technician's name or ID"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    color: 'var(--txt)',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Issue Type */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 600, 
+                  fontSize: '0.875rem', 
+                  color: 'var(--txt)' 
+                }}>
+                  Issue Type <span style={{ color: 'var(--red-bright)' }}>*</span>
+                </label>
+                <Select value={issueType} onValueChange={setIssueType}>
+                  <SelectTrigger style={{ height: '46px' }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {issueTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Description */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 600, 
+                  fontSize: '0.875rem', 
+                  color: 'var(--txt)' 
+                }}>
+                  Describe the Issue <span style={{ color: 'var(--red-bright)' }}>*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Provide details about the incident or issue..."
+                  required
+                  rows={6}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    color: 'var(--txt)',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                    lineHeight: '1.5'
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTechnicianName('')
+                    setDescription('')
+                    setIssueType('Service Quality')
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    background: 'transparent',
+                    color: 'var(--txt-muted)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  Clear Form
+                </button>
+                <button
+                  type="submit"
+                  className="btn-red"
+                  style={{
+                    padding: '12px 28px',
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <ShieldCheck size={18} />
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Info Notice */}
+        <div style={{
+          marginTop: '24px',
+          padding: '16px 20px',
+          background: 'var(--bg-card-alt)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '8px',
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'flex-start'
+        }}>
+          <AlertTriangle size={18} color="var(--amber-txt)" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ fontSize: '0.8125rem', color: 'var(--txt-muted)', lineHeight: '1.5' }}>
+            <strong style={{ color: 'var(--txt)' }}>Note:</strong> All reports are confidential and will be reviewed by the admin team. 
+            False or malicious reports may result in disciplinary action.
+          </div>
         </div>
       </div>
     </Page>
