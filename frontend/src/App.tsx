@@ -23,8 +23,7 @@ import { AdminManageTechnicians } from './components/admin/AdminManageTechnician
 import { AdminScheduleMaintenance } from './components/admin/AdminScheduleMaintenance'
 import { UserManagementPortal } from './components/admin/UserManagementPortal'
 import { InventoryAssetsManager } from './components/admin/InventoryAssetsManager'
-import Hero3DHub from './components/public/Hero3DHub'
-import { FloatingShapes } from './components/public/FloatingShapes'
+import { InteractiveBackground } from './components/public/InteractiveBackground'
 import StarBorder from './components/shared/StarBorder'
 import { Footer } from './components/shared/Footer'
 import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute'
@@ -294,9 +293,10 @@ function Home({
     }
   }
 
+
   return (
     <div className="landing-page">
-        <FloatingShapes theme={theme} className="homepage-bg" />
+      <InteractiveBackground theme={theme} />
       {/* Ultra Professional Floating Glass Navbar with StarBorder Accent */}
       <StarBorder
         as="div"
@@ -374,23 +374,37 @@ function Home({
                 className="btn-dark"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
               >
-                <QrCode size={16} /> Report via QR
+                <span>Report</span> <ArrowUpRight size={16} />
               </button>
             </div>
-          </div>
 
-          <div className="hero-right-stage reveal-zoom-in delay-2">
-            <Hero3DHub />
+            <div className="hero-stats-strip">
+              <div className="hero-stat-item">
+                <span className="hero-stat-val">99.8%</span>
+                <span className="hero-stat-lbl">System Uptime</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="hero-stat-item">
+                <span className="hero-stat-val">&lt; 15 min</span>
+                <span className="hero-stat-lbl">Dispatch Speed</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="hero-stat-item">
+                <span className="hero-stat-val">100%</span>
+                <span className="hero-stat-lbl">Automated Routing</span>
+              </div>
+              <div className="hero-stat-divider" />
+              <div className="hero-stat-item">
+                <span className="hero-stat-val">Direct SLA</span>
+                <span className="hero-stat-lbl">Resolution Tracking</span>
+              </div>
+            </div>
           </div>
         </section>
       </div>
 
       {/* 6-Card Numbered Feature Grid (inspired by theuniques.in design) */}
       <section id="usps" className="numbered-cards-section">
-        <div className="numbered-bg-vectors" aria-hidden="true">
-          <img src="/cyber_waves_vector.svg" className="bg-vector-float tech-waves-numbered" alt="" />
-          <img src="/tech_circuit_nodes.svg" className="bg-vector-float tech-nodes-numbered" alt="" />
-        </div>
         <div className="numbered-cards-header reveal-fade-up">
           <p className="numbered-cards-eyebrow">WHAT WE OFFER</p>
           <h2>Core System <span className="text-red-highlight">Capabilities</span></h2>
@@ -518,7 +532,9 @@ function Home({
       </section>
 
       {/* ── Raise a Complaint — 5-Step Circular Infographic ── */}
-      <ComplaintWorkflowSection />
+      <div>
+        <ComplaintWorkflowSection />
+      </div>
 
       {/* Smart Issue Routing Section */}
       <div id="smart-routing">
@@ -531,7 +547,9 @@ function Home({
       </div>
 
       {/* ── PREVENTIVE MAINTENANCE SECTION (Matching Reference Infographic) ── */}
-      <PreventiveMaintenanceSection />
+      <div>
+        <PreventiveMaintenanceSection theme={theme} />
+      </div>
 
       <Footer onOpenAuth={() => handleOpenAuth()} />
 

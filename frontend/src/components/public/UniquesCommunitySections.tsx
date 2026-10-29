@@ -5,11 +5,23 @@ import {
 } from 'lucide-react'
 
 export function SmartRoutingSection() {
-  const [activeStage, setActiveStage] = useState<number | null>(null)
+  const [hoveredStage, setHoveredStage] = useState<number | null>(null)
+  const [centerStage, setCenterStage] = useState<number | null>(null)
   const [visibleStages, setVisibleStages] = useState<Record<number, boolean>>({})
+  const [passedStages, setPassedStages] = useState<Record<number, boolean>>({})
   const [isConclusionVisible, setIsConclusionVisible] = useState(false)
+
+  const timelineRef = useRef<HTMLDivElement | null>(null)
+  const progressLineRef = useRef<HTMLDivElement | null>(null)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
   const conclusionRef = useRef<HTMLDivElement | null>(null)
+
+  // Fast layout cache to avoid calling getBoundingClientRect repeatedly in scroll listener
+  const rowMetricsRef = useRef<{ top: number; center: number }[]>([])
+  const conclusionTopRef = useRef<number>(0)
+  const currentCenterRef = useRef<number | null>(null)
+  const visibleStagesRef = useRef<Record<number, boolean>>({})
+  const passedStagesRef = useRef<Record<number, boolean>>({})
 
   const stages = [
     {
@@ -42,60 +54,121 @@ export function SmartRoutingSection() {
     },
   ]
 
-  // Independent scroll reveal observer for each stage box
+  // ── High Performance Scroll-Linked Line & Center Auto-Hover ──
   useEffect(() => {
-    // Initial check in case user is already scrolled to this section
-    const checkInitial = () => {
-      rowRefs.current.forEach((el, idx) => {
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          if (rect.top <= window.innerHeight * 0.9) {
-            setVisibleStages((prev) => ({ ...prev, [idx]: true }))
-          }
+    let rafId: number
+
+    // Measure layout metrics once and on resize (zero reflow during scrolling)
+    const measureLayout = () => {
+      if (!timelineRef.current) return
+      rowMetricsRef.current = rowRefs.current.map((el) => {
+        if (!el) return { top: 0, center: 0 }
+        return {
+          top: el.offsetTop,
+          center: el.offsetTop + el.offsetHeight * 0.5,
         }
       })
       if (conclusionRef.current) {
-        const rect = conclusionRef.current.getBoundingClientRect()
-        if (rect.top <= window.innerHeight * 0.9) {
+        conclusionTopRef.current = conclusionRef.current.offsetTop
+      }
+    }
+
+    measureLayout()
+
+    const updateScroll = () => {
+      const timeline = timelineRef.current
+      if (!timeline) return
+
+      const timelineRect = timeline.getBoundingClientRect()
+      const timelineHeight = timelineRect.height
+      const screenH = window.innerHeight
+      const triggerY = screenH * 0.55
+
+      // How far down has the trigger penetrated?
+      const rawProgress = triggerY - timelineRect.top
+      const progressHeight = Math.max(0, Math.min(timelineHeight, rawProgress))
+
+      // Direct style update for 120fps hardware-accelerated smoothness
+      if (progressLineRef.current) {
+        progressLineRef.current.style.height = `${progressHeight}px`
+      }
+
+      // 1. Sequential Card Reveals (One by one)
+      let visibleChanged = false
+      let passedChanged = false
+
+      rowMetricsRef.current.forEach((metric, idx) => {
+        // As the line reaches near the row top, reveal it
+        if (progressHeight >= metric.top - 50 || (timelineRect.top + metric.top) <= screenH * 0.88) {
+          if (!visibleStagesRef.current[idx]) {
+            visibleStagesRef.current[idx] = true
+            visibleChanged = true
+          }
+        }
+
+        // Passed status
+        if (progressHeight >= metric.center - 10) {
+          if (!passedStagesRef.current[idx]) {
+            passedStagesRef.current[idx] = true
+            passedChanged = true
+          }
+        }
+      })
+
+      if (visibleChanged) {
+        setVisibleStages({ ...visibleStagesRef.current })
+      }
+      if (passedChanged) {
+        setPassedStages({ ...passedStagesRef.current })
+      }
+
+      // Check conclusion box
+      if (conclusionTopRef.current > 0) {
+        if (progressHeight >= conclusionTopRef.current - 60 || (timelineRect.top + conclusionTopRef.current) <= screenH * 0.88) {
           setIsConclusionVisible(true)
         }
       }
-    }
 
-    checkInitial()
+      // 2. Automatically hover the card in the center of the viewport
+      let closestIdx: number | null = null
+      let closestDist = Infinity
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const stageIdx = entry.target.getAttribute('data-stage-index')
-            if (stageIdx !== null) {
-              const idx = Number(stageIdx)
-              setVisibleStages((prev) => ({ ...prev, [idx]: true }))
-              observer.unobserve(entry.target)
-            } else if (entry.target === conclusionRef.current) {
-              setIsConclusionVisible(true)
-              observer.unobserve(entry.target)
-            }
-          }
-        })
-      },
-      {
-        root: null,
-        rootMargin: '0px 0px -40px 0px',
-        threshold: 0.15,
+      rowMetricsRef.current.forEach((metric, idx) => {
+        const rowScreenCenter = timelineRect.top + metric.center
+        const dist = Math.abs(rowScreenCenter - screenH * 0.5)
+        if (dist < screenH * 0.38 && dist < closestDist) {
+          closestDist = dist
+          closestIdx = idx
+        }
+      })
+
+      // Only trigger React state change if center card actually changed
+      if (currentCenterRef.current !== closestIdx) {
+        currentCenterRef.current = closestIdx
+        setCenterStage(closestIdx)
       }
-    )
-
-    rowRefs.current.forEach((el) => {
-      if (el) observer.observe(el)
-    })
-
-    if (conclusionRef.current) {
-      observer.observe(conclusionRef.current)
     }
 
-    return () => observer.disconnect()
+    const onScroll = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(updateScroll)
+    }
+
+    const onResize = () => {
+      measureLayout()
+      onScroll()
+    }
+
+    updateScroll()
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onResize, { passive: true })
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+    }
   }, [])
 
   return (
@@ -104,6 +177,7 @@ export function SmartRoutingSection() {
 
         {/* Header */}
         <div className="smart-routing-header reveal-fade-up">
+          <p className="smart-routing-eyebrow">AUTOMATED DISPATCH ENGINE</p>
           <h2 className="smart-routing-title">Smart <span className="text-red-highlight">Routing</span></h2>
           <p className="smart-routing-subtitle">
             THE RIGHT ISSUE. <span className="text-red-highlight">THE RIGHT PERSON.</span>
@@ -113,15 +187,21 @@ export function SmartRoutingSection() {
           </p>
         </div>
 
-        {/* Vertical Timeline */}
-        <div className="sr-timeline">
-          {/* Central vertical line */}
-          <div className="sr-timeline-line" />
+        {/* Vertical Timeline Process */}
+        <div ref={timelineRef} className="sr-timeline">
+          {/* Continuous Glowing Progress Spine (Behind elements) */}
+          <div className="sr-timeline-line-wrap" aria-hidden="true">
+            <div className="sr-timeline-track" />
+            <div ref={progressLineRef} className="sr-timeline-progress" />
+          </div>
 
           {stages.map((stage, idx) => {
             const Icon = stage.icon
-            const isActive = activeStage === idx
+            const isHovered = hoveredStage === idx
+            const isAutoHovered = hoveredStage === null && centerStage === idx
+            const isActive = isHovered || isAutoHovered
             const isVisible = !!visibleStages[idx]
+            const isPassed = !!passedStages[idx]
             const isEven = idx % 2 === 0 // even = right content, odd = left content
 
             return (
@@ -129,13 +209,14 @@ export function SmartRoutingSection() {
                 key={stage.num}
                 ref={(el) => { rowRefs.current[idx] = el }}
                 data-stage-index={idx}
-                className={`sr-timeline-row ${isEven ? 'sr-row-right sr-anim-right' : 'sr-row-left sr-anim-left'} ${isVisible ? 'is-visible' : ''} ${isActive ? 'sr-row-active' : ''}`}
-                onMouseEnter={() => setActiveStage(idx)}
-                onMouseLeave={() => setActiveStage(null)}
-                onTouchStart={() => setActiveStage(idx)}
+                className={`sr-timeline-row ${isEven ? 'sr-row-right sr-anim-right' : 'sr-row-left sr-anim-left'} ${isVisible ? 'is-visible' : ''} ${isActive ? 'sr-row-active' : ''} ${isPassed ? 'sr-row-passed' : ''}`}
+                onMouseEnter={() => setHoveredStage(idx)}
+                onMouseLeave={() => setHoveredStage(null)}
+                onTouchStart={() => setHoveredStage(idx)}
               >
                 {/* Content card */}
                 <div className="sr-timeline-card">
+                  <div className="sr-card-indicator" />
                   <div className="sr-card-label">{stage.label}</div>
                   <h3 className="sr-card-question">{stage.question}</h3>
                   <p className="sr-card-desc">{stage.desc}</p>
@@ -143,7 +224,7 @@ export function SmartRoutingSection() {
 
                 {/* Center connector: circle with icon + number */}
                 <div className="sr-timeline-center">
-                  <div className={`sr-timeline-node ${isActive ? 'sr-node-active' : ''}`}>
+                  <div className={`sr-timeline-node ${isActive ? 'sr-node-active' : ''} ${isPassed ? 'sr-node-passed' : ''}`}>
                     <Icon size={22} />
                   </div>
                 </div>
@@ -156,13 +237,7 @@ export function SmartRoutingSection() {
             )
           })}
 
-          {/* Conclusion connector */}
-          <div className="sr-timeline-conclusion-connector">
-            <div className="sr-conclusion-dot" />
-            <div className="sr-conclusion-arrow" />
-          </div>
-
-          {/* Conclusion box – not part of the process */}
+          {/* Conclusion box – terminal step */}
           <div 
             ref={conclusionRef}
             className={`sr-timeline-conclusion ${isConclusionVisible ? 'is-visible' : ''}`}
@@ -344,11 +419,227 @@ export function SmartRoutingSection() {
   )
 }
 
+interface StepData {
+  num: string
+  title: string
+  desc: string
+  arcClass: string
+  dots: Array<{ cx: number; cy: number; r: number; cls: string }>
+}
+
+function WorkflowStepCard({
+  step,
+  index,
+  hoveredIndex,
+  onHover,
+  onLeave,
+}: {
+  step: StepData
+  index: number
+  hoveredIndex: number | null
+  onHover: (idx: number) => void
+  onLeave: () => void
+}) {
+  const rotatorRef = useRef<SVGGElement | null>(null)
+  const angleRef = useRef<number>(0)
+  const rafRef = useRef<number | null>(null)
+  const isHoveredRef = useRef<boolean>(false)
+
+  // Clean up animation frames on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
+
+  const startClockwiseHover = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+    }
+    let lastTime = performance.now()
+    const ROTATION_SPEED = 85 // degrees per second, smooth & elegant
+
+    const tickHover = (now: number) => {
+      if (!isHoveredRef.current) return
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1)
+      lastTime = now
+
+      angleRef.current += dt * ROTATION_SPEED
+      if (rotatorRef.current) {
+        rotatorRef.current.setAttribute(
+          'transform',
+          `rotate(${angleRef.current.toFixed(2)} 100 100)`
+        )
+      }
+
+      rafRef.current = requestAnimationFrame(tickHover)
+    }
+
+    rafRef.current = requestAnimationFrame(tickHover)
+  }
+
+  const startClockwiseReturn = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+    }
+
+    const currentAngle = angleRef.current
+    const mod = ((currentAngle % 360) + 360) % 360
+
+    // If already virtually at initial orientation, snap cleanly to 0
+    if (mod < 0.5 || 360 - mod < 0.5) {
+      angleRef.current = 0
+      if (rotatorRef.current) {
+        rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+      }
+      return
+    }
+
+    // Always rotate CLOCKWISE to the next multiple of 360 (never backwards / anticlockwise)
+    let remainingDegrees = 360 - mod
+    // If too close to target, add 360deg so momentum has enough space to coast down with organic grace
+    if (remainingDegrees < 75) {
+      remainingDegrees += 360
+    }
+
+    // Naturally calibrated duration for a calm, organic spin-down (850ms - 1280ms)
+    const returnDuration = Math.max(820, Math.min(1300, (remainingDegrees / 360) * 520 + 680))
+    const startTime = performance.now()
+
+    const tickReturn = (now: number) => {
+      // If user re-hovers while returning, seamlessly resume hover spin
+      if (isHoveredRef.current) {
+        startClockwiseHover()
+        return
+      }
+
+      const elapsed = now - startTime
+      const t = Math.min(1, elapsed / returnDuration)
+      // Organic sinusoidal ease-out deceleration (smooth momentum coast-down)
+      const eased = Math.sin((t * Math.PI) / 2)
+
+      const nextAngle = currentAngle + remainingDegrees * eased
+      angleRef.current = nextAngle
+
+      if (rotatorRef.current) {
+        rotatorRef.current.setAttribute(
+          'transform',
+          `rotate(${nextAngle.toFixed(2)} 100 100)`
+        )
+      }
+
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tickReturn)
+      } else {
+        // Return complete: 360deg is identical to 0deg, normalize seamlessly
+        angleRef.current = 0
+        if (rotatorRef.current) {
+          rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+        }
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tickReturn)
+  }
+
+  const handleMouseEnter = () => {
+    isHoveredRef.current = true
+    onHover(index)
+    startClockwiseHover()
+  }
+
+  const handleMouseLeave = () => {
+    isHoveredRef.current = false
+    onLeave()
+    startClockwiseReturn()
+  }
+
+  // Calculate dynamic transform for smooth expansion & outward shift of other cards
+  let cardTransform: string | undefined = undefined
+  let cardZIndex: number | undefined = undefined
+  let stateClass = ''
+
+  if (hoveredIndex !== null) {
+    if (hoveredIndex === index) {
+      stateClass = 'is-hovered'
+      cardTransform = 'translateY(-12px) scale(1.09)'
+      cardZIndex = 12
+    } else if (index < hoveredIndex) {
+      stateClass = 'shift-left'
+      const dist = hoveredIndex - index
+      const shiftX = -(22 + (dist - 1) * 4)
+      cardTransform = `translateX(${shiftX}px)`
+      cardZIndex = 1
+    } else {
+      stateClass = 'shift-right'
+      const dist = index - hoveredIndex
+      const shiftX = 22 + (dist - 1) * 4
+      cardTransform = `translateX(${shiftX}px)`
+      cardZIndex = 1
+    }
+  }
+
+  return (
+    <div
+      className={`htc-step ${stateClass}`}
+      style={{
+        transform: cardTransform,
+        zIndex: cardZIndex,
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="htc-ring-wrap">
+        {/* Ambient atmospheric radial glow that softly melts into the dark background */}
+        <div className="htc-ambient-glow" aria-hidden="true" />
+
+        <svg
+          className="htc-ring-svg"
+          viewBox="0 0 200 200"
+          style={{ overflow: 'visible' }}
+        >
+          <circle className="htc-ring-track" cx="100" cy="100" r="90" />
+          <g
+            ref={rotatorRef}
+            className="htc-ring-rotator"
+            transform="rotate(0 100 100)"
+          >
+            <circle
+              className={`htc-ring-arc ${step.arcClass}`}
+              cx="100"
+              cy="100"
+              r="90"
+            />
+            {step.dots.map((dot, dIdx) => (
+              <circle
+                key={dIdx}
+                className={`htc-glow-dot ${dot.cls}`}
+                cx={dot.cx}
+                cy={dot.cy}
+                r={dot.r}
+              />
+            ))}
+          </g>
+        </svg>
+        <div className="htc-inner-content">
+          <span className="htc-step-num">{step.num}</span>
+          <h3 className="htc-step-title">{step.title}</h3>
+        </div>
+      </div>
+      <p className="htc-step-desc">{step.desc}</p>
+    </div>
+  )
+}
+
 export function ComplaintWorkflowSection() {
   const [isVisible, setIsVisible] = useState(false)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const sectionRef = useRef<HTMLElement | null>(null)
 
-  const steps = [
+  const steps: StepData[] = [
     {
       num: '01',
       title: 'SELECT ISSUE',
@@ -422,17 +713,16 @@ export function ComplaintWorkflowSection() {
       (entries) => {
         if (entries[0].isIntersecting) {
           setIsVisible(true)
+          observer.disconnect()
         }
       },
       { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
     )
 
     observer.observe(el)
-    window.addEventListener('scroll', check, { passive: true })
 
     return () => {
       observer.disconnect()
-      window.removeEventListener('scroll', check)
     }
   }, [])
 
@@ -448,35 +738,19 @@ export function ComplaintWorkflowSection() {
         </p>
       </div>
 
-      <div className={`how-to-steps-v2 ${isVisible ? 'is-visible' : ''}`}>
-        {steps.map((step) => (
-          <div key={step.num} className="htc-step">
-            <div className="htc-ring-wrap">
-              <svg className="htc-ring-svg" viewBox="0 0 200 200">
-                <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-                <circle
-                  className={`htc-ring-arc ${step.arcClass}`}
-                  cx="100"
-                  cy="100"
-                  r="90"
-                />
-                {step.dots.map((dot, dIdx) => (
-                  <circle
-                    key={dIdx}
-                    className={`htc-glow-dot ${dot.cls}`}
-                    cx={dot.cx}
-                    cy={dot.cy}
-                    r={dot.r}
-                  />
-                ))}
-              </svg>
-              <div className="htc-inner-content">
-                <span className="htc-step-num">{step.num}</span>
-                <h3 className="htc-step-title">{step.title}</h3>
-              </div>
-            </div>
-            <p className="htc-step-desc">{step.desc}</p>
-          </div>
+      <div
+        className={`how-to-steps-v2 ${isVisible ? 'is-visible' : ''}`}
+        onMouseLeave={() => setHoveredIndex(null)}
+      >
+        {steps.map((step, idx) => (
+          <WorkflowStepCard
+            key={step.num}
+            step={step}
+            index={idx}
+            hoveredIndex={hoveredIndex}
+            onHover={setHoveredIndex}
+            onLeave={() => setHoveredIndex(null)}
+          />
         ))}
       </div>
     </section>
