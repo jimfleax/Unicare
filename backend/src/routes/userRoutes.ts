@@ -1,11 +1,12 @@
 import express from 'express';
-import { getTechnicians, updateMyStatus, createTechnician, updateTechnician, deleteTechnician, getAllUsers, createUser, updateUser, deleteUser } from '../controllers/userController';
+import { getTechnicians, updateMyStatus, updateMyAvatar, createTechnician, updateTechnician, deleteTechnician, getAllUsers, createUser, updateUser, deleteUser } from '../controllers/userController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 router.get('/technicians', getTechnicians);
 router.patch('/me/status', protect, updateMyStatus);
+router.patch('/me/avatar', protect, updateMyAvatar);
 
 // Admin only routes for managing technicians
 router.post('/technicians', protect, authorize('admin', 'lab_admin'), createTechnician);

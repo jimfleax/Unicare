@@ -29,6 +29,10 @@ export const errorHandler = (err: CustomError, req: Request, res: Response, _nex
     const message = Object.values(err.errors).map((val: { message: string }) => val.message).join(', ');
     error = new AppError(message, 400);
   }
+
+  if (err.name === 'MulterError') {
+    error = new AppError(err.message, 400);
+  }
   
   console.error('[Error Handler]:', err.stack || err.message);
   

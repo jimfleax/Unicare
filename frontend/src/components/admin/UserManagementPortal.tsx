@@ -21,6 +21,7 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
+  TooltipProvider,
   Tooltip,
   TooltipTrigger,
   TooltipContent
@@ -123,7 +124,8 @@ export const UserManagementPortal: React.FC = () => {
   };
 
   return (
-    <div className="adm-container">
+    <TooltipProvider>
+      <div className="adm-container">
       <h1 className="adm-header">User Management</h1>
       
       <div className="adm-actions-row">
@@ -305,5 +307,6 @@ export const UserManagementPortal: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 };

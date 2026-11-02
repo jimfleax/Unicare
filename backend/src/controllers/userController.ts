@@ -43,6 +43,27 @@ export const updateMyStatus = catchAsync(async (req: AuthRequest, res: Response)
   });
 });
 
+export const updateMyAvatar = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { avatarUrl } = req.body;
+  const user = req.user;
+
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Not authenticated' });
+  }
+
+  if (!avatarUrl) {
+    return res.status(400).json({ success: false, error: 'avatarUrl is required' });
+  }
+
+  user.avatarUrl = avatarUrl;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
+});
+
 export const createTechnician = catchAsync(async (req: Request, res: Response) => {
   const { name, email, password, title, specialty, phone, avatarColor } = req.body;
   const user = await User.create({

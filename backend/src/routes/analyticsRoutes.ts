@@ -5,7 +5,7 @@ import * as analyticsController from '../controllers/analyticsController';
 const router = express.Router();
 
 router.use(protect);
-router.use(authorize('admin'));
+router.use(authorize('admin', 'lab_admin'));
 
 router.get('/', analyticsController.getAnalytics);
 router.get('/trends', analyticsController.getTrends);

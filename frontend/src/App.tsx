@@ -30,7 +30,12 @@ import { ProtectedRoute, getDefaultDashboard } from './components/ProtectedRoute
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import type { DisplayRole } from './context/AuthContext'
-import { fetchIssuesFromApi, createIssueApi, addRepairLogApi, markNotificationsReadApi, markNotificationReadApi, updateIncidentStatusApi, fetchLocationsApi, fetchCategoriesApi, fetchPrioritiesApi, fetchStatusesApi, getStoredToken } from './services/api'
+import {
+  fetchIssuesFromApi, createIssueApi, addRepairLogApi, markNotificationsReadApi,
+  markNotificationReadApi, updateIncidentStatusApi, fetchLocationsApi, fetchCategoriesApi,
+  fetchPrioritiesApi, fetchStatusesApi, getStoredToken, uploadImageApi,
+  submitTechnicianReportApi, fetchTechniciansApi
+} from './services/api'
 import { INSTITUTION_NAME } from './config/branding'
 
 import useSWR from 'swr'
@@ -62,6 +67,7 @@ interface IssueRecord {
   time?: string
   description?: string
   category?: string
+  mediaUrls?: string[]
   activityLogs?: any[]
 }
 
@@ -85,6 +91,7 @@ const allNavLinks: readonly [string, string, typeof GraduationCap, readonly Disp
   ['/dashboard', 'Admin Dashboard', LayoutDashboard, ['Admin']],
   ['/issues', 'Issues Tracker', ClipboardList, ['Admin', 'Tech']],
   ['/report', 'Report an Issue', ClipboardList, ['Admin', 'Student']],
+  ['/report-technician', 'Report a Technician', ShieldCheck, ['Admin', 'Student']],
   ['/help-support', 'Help & Support', Settings, ['Admin', 'Student', 'Tech']],
   ['/inventory', 'Inventory DB', Grid2X2, ['Admin', 'Tech']],
   ['/analytics', 'Analytics', BarChart3, ['Admin']],
@@ -211,6 +218,26 @@ function IssueDetailModal({ issue, onClose, onStatusChange }: {
               {issue.description || 'No additional notes provided.'}
             </p>
           </div>
+
+          {((fullIssue?.mediaUrls && fullIssue.mediaUrls.length > 0) || (issue.mediaUrls && issue.mediaUrls.length > 0)) && (
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px', color: 'var(--txt)' }}>Attached Photos</h4>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {(fullIssue?.mediaUrls || issue.mediaUrls || []).map((url: string, idx: number) => {
+                  const resolvedUrl = url.startsWith('http') ? url : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000')}${url}`
+                  return (
+                    <a key={idx} href={resolvedUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                      <img
+                        src={resolvedUrl}
+                        alt={`Attachment ${idx + 1}`}
+                        style={{ width: '120px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)' }}
+                      />
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div style={{ marginBottom: '24px' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px', color: 'var(--txt)' }}>Status Triage</h4>
@@ -757,6 +784,7 @@ function Portal({ theme, toggleTheme }: {
     time: new Date(inc.createdAt).toLocaleTimeString(),
     description: inc.description || '',
     category: inc.assetId?.category || 'General',
+    mediaUrls: inc.mediaUrls || [],
     activityLogs: inc.activityLogs || []
   }))
   const assets: AssetRecord[] = assetsData || []
@@ -1156,6 +1184,11 @@ function Portal({ theme, toggleTheme }: {
               <Report onAddRecord={(newR) => setRecords([newR, ...records])} assets={assets} />
             </ProtectedRoute>
           } />
+          <Route path="/report-technician" element={
+            <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student']}>
+              <ReportTechnician />
+            </ProtectedRoute>
+          } />
           <Route path="/help-support" element={
             <ProtectedRoute allowedRoles={['admin', 'lab_admin', 'student', 'technician']}>
               <HelpSupport />
@@ -1435,12 +1468,15 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
         description: description.trim() || 'No additional details provided.',
       }
       
-      // Note: Image attachment integration would go here
-      // Currently the backend doesn't support image attachments
-      // When implemented, the image would be uploaded to storage
-      // and the URL would be added to the payload
+      let mediaUrls: string[] = []
+      if (selectedImage) {
+        const uploadedUrl = await uploadImageApi(selectedImage, 'incidents')
+        if (uploadedUrl) {
+          mediaUrls.push(uploadedUrl)
+        }
+      }
       
-      const result = await createIssueApi(payload)
+      const result = await createIssueApi({ ...payload, mediaUrls })
       
       if (result) {
         onAddRecord(result)
@@ -2018,6 +2054,197 @@ function Inventory() {
   )
 }
 
+/* ── Report a Technician (Confidential Escalation) ─────────── */
+function ReportTechnician() {
+  const navigate = useNavigate()
+  const { data: technicians = [] } = useSWR('/users/technicians', fetcher)
+  const [selectedTechId, setSelectedTechId] = useState('')
+  const [customTechName, setCustomTechName] = useState('')
+  const [issueType, setIssueType] = useState('Unresponsive / SLA Breach')
+  const [description, setDescription] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const issueTypes = [
+    'Unresponsive / SLA Breach',
+    'Unprofessional Conduct',
+    'Poor Quality Work',
+    'Other'
+  ]
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const chosenTech = (technicians as any[]).find(t => (t.id || t._id) === selectedTechId)
+    const technicianName = chosenTech ? chosenTech.name : customTechName.trim()
+
+    if (!selectedTechId && !customTechName.trim()) {
+      alert('Please specify the technician involved')
+      return
+    }
+
+    if (!description.trim()) {
+      alert('Please provide a detailed description of the incident')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const success = await submitTechnicianReportApi({
+        technicianId: selectedTechId || undefined,
+        technicianName: technicianName || undefined,
+        issueType,
+        description: description.trim()
+      })
+
+      if (success) {
+        setSubmitted(true)
+      } else {
+        alert('Failed to submit report. Please check the details and try again.')
+      }
+    } catch (err) {
+      console.error('Error submitting technician report:', err)
+      alert('An unexpected error occurred while submitting the report.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReset = () => {
+    setSelectedTechId('')
+    setCustomTechName('')
+    setIssueType('Unresponsive / SLA Breach')
+    setDescription('')
+    setSubmitted(false)
+  }
+
+  if (submitted) {
+    return (
+      <Page>
+        <div style={{ maxWidth: '540px', margin: '60px auto', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '40px', borderRadius: '16px', textAlign: 'center' }}>
+          <CheckCircle2 size={56} color="var(--green-txt)" style={{ margin: '0 auto 16px' }} />
+          <h2 style={{ fontSize: '1.6rem', color: 'var(--txt)', marginBottom: '10px' }}>Escalation Dispatched Confidentially</h2>
+          <p style={{ color: 'var(--txt-muted)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '24px' }}>
+            Your report has been securely routed to campus administrators. For discretion and neutrality, technicians do not receive individual complainant details.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button className="btn-dark" onClick={handleReset} style={{ padding: '10px 20px' }}>
+              Submit Another Report
+            </button>
+            <button className="btn-red" onClick={() => navigate('/student')} style={{ padding: '10px 20px' }}>
+              Return to Portal
+            </button>
+          </div>
+        </div>
+      </Page>
+    )
+  }
+
+  return (
+    <Page>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--txt)', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <ShieldCheck size={32} color="var(--red-bright)" />
+            Report a Technician
+          </h1>
+          <p style={{ color: 'var(--txt-muted)', fontSize: '0.95rem' }}>
+            Report unresponsive assigned technicians, SLA breaches, or unprofessional conduct directly and confidentially to Administration.
+          </p>
+        </div>
+
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '32px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                Select Technician <span style={{ color: 'var(--red-bright)' }}>*</span>
+              </label>
+              <select
+                value={selectedTechId}
+                onChange={(e) => setSelectedTechId(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.92rem', color: 'var(--txt)' }}
+              >
+                <option value="">-- Choose from roster or enter below --</option>
+                {(technicians as any[]).map((t) => (
+                  <option key={t.id || t._id} value={t.id || t._id}>
+                    {t.name} {t.specialty ? `(${t.specialty})` : ''} - {t.status || 'Active'}
+                  </option>
+                ))}
+                <option value="custom">Other / Not Listed</option>
+              </select>
+            </div>
+
+            {(!selectedTechId || selectedTechId === 'custom') && (
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                  Technician Name / ID
+                </label>
+                <input
+                  type="text"
+                  value={customTechName}
+                  onChange={(e) => setCustomTechName(e.target.value)}
+                  placeholder="Enter technician name or badge number"
+                  style={{ width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.92rem', color: 'var(--txt)' }}
+                />
+              </div>
+            )}
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                Issue Category <span style={{ color: 'var(--red-bright)' }}>*</span>
+              </label>
+              <select
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.92rem', color: 'var(--txt)' }}
+              >
+                {issueTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>
+                Incident Description &amp; Details <span style={{ color: 'var(--red-bright)' }}>*</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Explain what happened, including relevant dates, lab locations, or ticket numbers..."
+                rows={5}
+                required
+                style={{ width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.92rem', color: 'var(--txt)', resize: 'vertical' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="btn-dark"
+                disabled={isSubmitting}
+                style={{ padding: '10px 20px' }}
+              >
+                Clear Form
+              </button>
+              <button
+                type="submit"
+                className="btn-red"
+                disabled={isSubmitting}
+                style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
+                Submit Confidential Report
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Page>
+  )
+}
+
 /* ── Help & Support Page ───────────────────────────────────── */
 function HelpSupport() {
   const [activeCategory, setActiveCategory] = useState<string>('FAQs')
@@ -2150,6 +2377,16 @@ function HelpSupport() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div style={{ marginTop: '24px', padding: '20px', borderRadius: '12px', background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--txt)', marginBottom: '4px' }}>Technician Unresponsive or SLA Breached?</h3>
+                  <p style={{ color: 'var(--txt-muted)', fontSize: '0.88rem' }}>If scheduled repairs are overdue or neglected, file a confidential report directly to Campus Admin.</p>
+                </div>
+                <Link to="/report-technician" className="btn-red" style={{ padding: '10px 18px', fontSize: '0.88rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={16} /> Report a Technician
+                </Link>
               </div>
             </div>
           )}

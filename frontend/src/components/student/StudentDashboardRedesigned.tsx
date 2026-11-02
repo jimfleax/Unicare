@@ -1,16 +1,18 @@
-import React, { useState, useRef, useMemo } from 'react'
+import React, { useState, useRef, useMemo, useEffect } from 'react'
 import './StudentDashboardPremium.css'
 import useSWR from 'swr'
 import {
   Plus, AlertTriangle, CheckCircle2, Clock3, Search, Filter,
-  FileText, X, History, TrendingUp, Calendar, BarChart3, Monitor, QrCode
+  FileText, X, History, TrendingUp, Calendar, BarChart3, Monitor, QrCode,
+  ImagePlus, Camera, Upload
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import type { IssueRecord } from '../../services/api'
 import {
   createIssueApi, fetcher,
   fetchLocationsApi, fetchCategoriesApi, fetchPrioritiesApi,
-  fetchFaqsApi, fetchStudentProfileApi
+  fetchFaqsApi, fetchStudentProfileApi,
+  uploadImageApi, updateMyAvatarApi
 } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -34,15 +36,24 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     return localStorage.getItem('ucare-student-avatar') || null
   })
 
+  const currentUser = authUser || { name: 'Student', email: 'student@example.com' }
+  const { data: studentProfileData } = useSWR('/metadata/student-profile', fetchStudentProfileApi)
+  
+  // Sync avatar from remote profile if available
+  useEffect(() => {
+    if (studentProfileData?.avatarUrl) {
+      setProfilePic(studentProfileData.avatarUrl)
+    } else if (authUser?.avatarUrl) {
+      setProfilePic(authUser.avatarUrl)
+    }
+  }, [studentProfileData?.avatarUrl, authUser?.avatarUrl])
+
   const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       event.currentTarget.click()
     }
   }
-
-  const currentUser = authUser || { name: 'Student', email: 'student@example.com' }
-  const { data: studentProfileData } = useSWR('/metadata/student-profile', fetchStudentProfileApi)
   
   const student = {
     name: currentUser.name || 'Student User',
@@ -53,6 +64,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
   }
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const reportFileInputRef = useRef<HTMLInputElement>(null)
   const [filterStatus, setFilterStatus] = useState<'All' | 'Open' | 'In Progress' | 'Resolved'>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'overview' | 'report' | 'history'>('overview')
@@ -65,6 +77,9 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
   const [priority, setPriority] = useState('')
   const [assetId, setAssetId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   
   const { data: locations = [] } = useSWR('/metadata/locations', fetchLocationsApi)
   const { data: categories = [] } = useSWR('/metadata/categories', fetchCategoriesApi)
@@ -158,9 +173,39 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     }
   }, [myAllTickets, totalCount])
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = (file: File) => {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      setPhotoError('Please upload a valid image file (JPG, PNG, or WEBP)')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('File size must be less than 5 MB')
+      return
+    }
+    setPhotoError(null)
+    setSelectedPhoto(file)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setPhotoPreview(event.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemovePhoto = () => {
+    setSelectedPhoto(null)
+    setPhotoPreview(null)
+    setPhotoError(null)
+    if (reportFileInputRef.current) {
+      reportFileInputRef.current.value = ''
+    }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Optimistic local preview
     const reader = new FileReader()
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string
@@ -168,6 +213,18 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
       localStorage.setItem('ucare-student-avatar', dataUrl)
     }
     reader.readAsDataURL(file)
+
+    // Upload to modular storage & update user record in database
+    try {
+      const uploadedUrl = await uploadImageApi(file, 'avatars')
+      if (uploadedUrl) {
+        setProfilePic(uploadedUrl)
+        localStorage.setItem('ucare-student-avatar', uploadedUrl)
+        await updateMyAvatarApi(uploadedUrl)
+      }
+    } catch (err) {
+      console.warn('Failed to persist avatar to server:', err)
+    }
   }
 
   const handleSubmitIncident = async (e: React.FormEvent) => {
@@ -179,6 +236,14 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
 
     setIsSubmitting(true)
     try {
+      let mediaUrls: string[] = []
+      if (selectedPhoto) {
+        const uploadedUrl = await uploadImageApi(selectedPhoto, 'incidents')
+        if (uploadedUrl) {
+          mediaUrls.push(uploadedUrl)
+        }
+      }
+
       const newIssue = await createIssueApi({
         title: title.trim(),
         description: description.trim() || 'No additional details provided.',
@@ -186,7 +251,8 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
         location,
         priority: (priority || 'Medium') as 'Critical' | 'High' | 'Medium' | 'Low',
         id: assetId || undefined,
-        reporter: `${student.name} (${student.rollNo})`
+        reporter: `${student.name} (${student.rollNo})`,
+        mediaUrls,
       })
       
       if (!newIssue) {
@@ -202,6 +268,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
       setCategory('')
       setPriority('')
       setAssetId('')
+      handleRemovePhoto()
       
       // Switch to overview
       setActiveTab('overview')
@@ -563,6 +630,56 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                     rows={4}
                   />
                 </div>
+
+                <div className="form-field-premium form-field-full">
+                  <label className="form-label-premium">Photo Attachment (Optional)</label>
+                  <input
+                    type="file"
+                    ref={reportFileInputRef}
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) handlePhotoSelect(file)
+                    }}
+                  />
+                  {photoPreview ? (
+                    <div style={{ position: 'relative', display: 'inline-block', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      <img src={photoPreview} alt="Issue preview" style={{ maxHeight: '180px', width: 'auto', display: 'block' }} />
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        aria-label="Remove photo"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => reportFileInputRef.current?.click()}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reportFileInputRef.current?.click() } }}
+                      style={{
+                        border: '2px dashed var(--border)',
+                        borderRadius: '10px',
+                        padding: '24px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        background: 'var(--bg)',
+                        transition: 'border-color 0.2s',
+                      }}
+                    >
+                      <ImagePlus size={32} color="var(--txt-muted)" style={{ margin: '0 auto 8px' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--txt)' }}>Click to upload an image of the issue</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--txt-muted)', marginTop: '4px' }}>PNG, JPG, or WEBP up to 5MB</div>
+                    </div>
+                  )}
+                  {photoError && (
+                    <div style={{ color: 'var(--red-bright)', fontSize: '0.82rem', marginTop: '6px' }}>{photoError}</div>
+                  )}
+                </div>
               </div>
 
               <div className="form-actions-premium">
@@ -576,6 +693,7 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
                     setCategory('')
                     setPriority('')
                     setAssetId('')
+                    handleRemovePhoto()
                   }}
                   disabled={isSubmitting}
                 >

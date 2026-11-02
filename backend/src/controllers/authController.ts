@@ -148,7 +148,7 @@ export const googleLogin = catchAsync(async (req: Request, res: Response, next: 
 // 👤 GET CURRENT USER PROFILE
 // GET /api/auth/me
 export const getMe = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
-  const authReq = req as Request & { user?: { _id: unknown; name: string; email: string; role: string } };
+  const authReq = req as Request & { user?: any };
   res.json({
     success: true,
     data: {
@@ -156,7 +156,10 @@ export const getMe = catchAsync(async (req: Request, res: Response, _next: NextF
         _id: authReq.user?._id,
         name: authReq.user?.name,
         email: authReq.user?.email,
-        role: authReq.user?.role
+        role: authReq.user?.role,
+        avatarUrl: authReq.user?.avatarUrl || '',
+        avatarColor: authReq.user?.avatarColor,
+        carePoints: authReq.user?.carePoints,
       }
     }
   });

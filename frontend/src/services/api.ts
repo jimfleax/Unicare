@@ -26,6 +26,7 @@ export interface IssueRecord {
   description?: string;
   category?: string;
   resolvedAt?: string;
+  mediaUrls?: string[];
   activityLogs?: Array<{
     _id?: string;
     message: string;
@@ -43,6 +44,7 @@ export interface AuthResponse {
       name: string;
       email: string;
       role: 'student' | 'technician' | 'admin' | 'lab_admin';
+      avatarUrl?: string;
     };
     token: string;
   };
@@ -54,6 +56,7 @@ export interface MeResponse {
     name: string;
     email: string;
     role: 'student' | 'technician' | 'admin' | 'lab_admin';
+    avatarUrl?: string;
   };
 }
 
@@ -158,7 +161,8 @@ export async function createIssueApi(issue: Partial<IssueRecord>): Promise<Issue
       location: issue.location,
       category: issue.category,
       priority: issue.priority || 'Medium',
-      tagId: issue.id
+      tagId: issue.id,
+      mediaUrls: issue.mediaUrls || []
     };
     const res = await fetch(`${API_BASE}/incidents`, {
       method: 'POST',
@@ -326,7 +330,7 @@ export const fetchCategoriesApi = (): Promise<{value: string, label: string}[]> 
 export const fetchPrioritiesApi = (): Promise<{value: string, label: string, color: string}[]> => fetchMetadata('priorities');
 export const fetchStatusesApi = (): Promise<string[]> => fetchMetadata<string[]>('statuses');
 export const fetchFaqsApi = (): Promise<{question: string, answer: string}[]> => fetchMetadata('faqs');
-export const fetchStudentProfileApi = (): Promise<{batch: string, batchCode: string, branch: string, rollNo: string}> => fetchMetadata('student-profile');
+export const fetchStudentProfileApi = (): Promise<{batch: string, batchCode: string, branch: string, rollNo: string, avatarUrl?: string}> => fetchMetadata('student-profile');
 export async function markNotificationsReadApi(): Promise<boolean> { try { const res = await fetch(`${API_BASE}/notifications/mark-read`, { method: "PUT", headers: getAuthHeaders() }); return res.ok; } catch { return false; } }
 export async function markNotificationReadApi(id: string): Promise<boolean> { try { const res = await fetch(`${API_BASE}/notifications/${id}/mark-read`, { method: "PUT", headers: getAuthHeaders() }); return res.ok; } catch { return false; } }
 
@@ -433,6 +437,136 @@ export async function updateTechnicianStatusApi(status: string): Promise<boolean
     return res.ok;
   } catch (error) {
     console.error("Failed to update technician status", error);
+    return false;
+  }
+}
+
+/* ── Media & Upload API ────────────────────────────────────── */
+export async function uploadImageApi(file: File, folder = 'general'): Promise<string | null> {
+  try {
+    const token = getStoredToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.success && json.data?.url) {
+      const rawUrl: string = json.data.url;
+      // If relative URL (/uploads/...), prefix with host
+      const host = API_BASE.replace(/\/api\/?$/, '');
+      return rawUrl.startsWith('http') ? rawUrl : `${host}${rawUrl}`;
+    }
+    return null;
+  } catch (e) {
+    console.error('Failed to upload image:', e);
+    return null;
+  }
+}
+
+/* ── User Avatar API ───────────────────────────────────────── */
+export async function updateMyAvatarApi(avatarUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/me/avatar`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ avatarUrl }),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error('Failed to update avatar', error);
+    return false;
+  }
+}
+
+/* ── Alerts API ────────────────────────────────────────────── */
+export async function fetchAlertsApi(): Promise<any[]> {
+  try {
+    const res = await fetch(`${API_BASE}/alerts`, { headers: getAuthHeaders() });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.success && Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createAlertApi(data: { title: string; loc: string; date?: string; type?: string }): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/alerts`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteAlertApi(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/alerts/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Technician Reports API ────────────────────────────────── */
+export interface TechnicianReportPayload {
+  technicianId?: string;
+  technicianName?: string;
+  incidentId?: string;
+  issueType: string;
+  description: string;
+}
+
+export async function submitTechnicianReportApi(payload: TechnicianReportPayload): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/technician-reports`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error('Failed to submit technician report', error);
+    return false;
+  }
+}
+
+export async function fetchTechnicianReportsApi(): Promise<any[]> {
+  try {
+    const res = await fetch(`${API_BASE}/technician-reports`, { headers: getAuthHeaders() });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.success && Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateTechnicianReportStatusApi(id: string, status: string, adminNotes?: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/technician-reports/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status, adminNotes }),
+    });
+    return res.ok;
+  } catch {
     return false;
   }
 }

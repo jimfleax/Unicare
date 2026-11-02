@@ -10,6 +10,7 @@ describe('Incident Endpoints', () => {
   let user: IUser;
   let admin: IUser;
   let adminToken: string;
+  let labAdminToken: string;
   let asset: IAsset;
 
   beforeEach(async () => {
@@ -31,6 +32,13 @@ describe('Incident Endpoints', () => {
       role: 'admin'
     });
     adminToken = generateToken(admin._id.toString());
+    const labAdmin = await User.create({
+      name: 'Test Lab Admin',
+      email: 'labadmin@example.com',
+      password: 'password123',
+      role: 'lab_admin'
+    });
+    labAdminToken = generateToken(labAdmin._id.toString());
 
     asset = await Asset.create({
       tagId: 'TEST-123',
@@ -126,6 +134,24 @@ describe('Incident Endpoints', () => {
       expect(reopened.status).toBe(200);
       expect(reopened.body.data.incident.resolvedAt).toBeUndefined();
       expect((await Incident.findById(incident._id))?.resolvedAt).toBeUndefined();
+    });
+
+    it('should allow lab_admin to update incident status', async () => {
+      const incident = await Incident.create({
+        assetId: asset._id,
+        description: 'Lab incident',
+        priority: 'High',
+        reportedBy: user._id,
+        status: 'Open'
+      });
+
+      const res = await request(app)
+        .patch(`/api/incidents/${incident._id}/status`)
+        .set('Authorization', `Bearer ${labAdminToken}`)
+        .send({ status: 'In Progress' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.incident.status).toBe('In Progress');
     });
   });
   describe('POST /api/incidents/:id/logs', () => {

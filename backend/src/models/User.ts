@@ -4,13 +4,14 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password?: string;
-  role: 'student' | 'technician' | 'admin';
+  role: 'student' | 'technician' | 'admin' | 'lab_admin';
   carePoints: number;
   title?: string;
   specialty?: string;
   status?: 'On Shift' | 'In Field' | 'On Call' | 'Off Duty';
   phone?: string;
   avatarColor?: string;
+  avatarUrl?: string;
   batch?: string;
   batchCode?: string;
   branch?: string;
@@ -28,7 +29,7 @@ const userSchema = new Schema<IUser>(
     password: { type: String },
     role: {
       type: String,
-      enum: ['student', 'technician', 'admin'],
+      enum: ['student', 'technician', 'admin', 'lab_admin'],
       default: 'student',
     },
     carePoints: { type: Number, default: 0 },
@@ -41,6 +42,7 @@ const userSchema = new Schema<IUser>(
     },
     phone: { type: String },
     avatarColor: { type: String },
+    avatarUrl: { type: String },
     batch: { type: String },
     batchCode: { type: String },
     branch: { type: String },

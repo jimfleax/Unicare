@@ -87,6 +87,7 @@ export const getStudentProfile = catchAsync(async (req: AuthRequest, res: Respon
       batchCode: u.batchCode || '',
       branch: u.branch || '',
       rollNo: u.rollNo || '',
+      avatarUrl: u.avatarUrl || '',
     },
   });
 });

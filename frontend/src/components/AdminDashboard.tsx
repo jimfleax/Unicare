@@ -58,7 +58,7 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
   const totalCategoryCount = categoryData.reduce((s, c) => s + c.count, 0)
 
   // Chart data
-  const chartData: { labels: string[], reported: number[], resolved: number[] } = trendsData?.data || {
+  const chartData: { labels: string[], reported: number[], resolved: number[] } = (trendsData?.labels ? trendsData : trendsData?.data) || {
     '7d': { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], reported: [5, 8, 6, 9, 7, 3, 4], resolved: [4, 6, 7, 5, 8, 3, 5] },
     '30d': { labels: ['W1', 'W2', 'W3', 'W4'], reported: [18, 24, 21, 19], resolved: [15, 20, 22, 18] },
     '6m': { labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'], reported: [42, 51, 47, 63, 58, 71], resolved: [38, 48, 45, 58, 55, 68] },

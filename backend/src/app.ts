@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
@@ -13,6 +14,9 @@ import inventoryRoutes from './routes/inventoryRoutes';
 import requisitionRoutes from './routes/requisitionRoutes';
 import metadataRoutes from './routes/metadataRoutes';
 import maintenanceRoutes from './routes/maintenanceRoutes';
+import uploadRoutes from './routes/uploadRoutes';
+import alertRoutes from './routes/alertRoutes';
+import technicianReportRoutes from './routes/technicianReportRoutes';
 
 dotenv.config();
 
@@ -34,6 +38,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Serve uploaded media files statically
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 // API Routes that don't require database connection
 app.use('/api', healthRoutes);
@@ -62,6 +69,9 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/requisitions', requisitionRoutes);
 app.use('/api/metadata', metadataRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/technician-reports', technicianReportRoutes);
 
 // Error Handler Middleware
 import { errorHandler } from './middleware/errorHandler';

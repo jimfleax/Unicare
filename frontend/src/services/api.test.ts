@@ -286,3 +286,221 @@ describe('subscribeToPushNotificationsApi', () => {
     expect(result).toBe(false);
   });
 });
+
+import {
+  uploadImageApi,
+  updateMyAvatarApi,
+  fetchAlertsApi,
+  createAlertApi,
+  deleteAlertApi,
+  submitTechnicianReportApi,
+  fetchTechnicianReportsApi,
+  updateTechnicianReportStatusApi,
+} from './api';
+
+describe('uploadImageApi', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should upload image and return formatted url when response is relative', async () => {
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, data: { url: '/uploads/incidents/test.png' } }),
+    });
+
+    const result = await uploadImageApi(fakeFile, 'incidents');
+    expect(result).toMatch(/http:\/\/localhost:5000\/uploads\/incidents\/test\.png/);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/upload'),
+      expect.objectContaining({ method: 'POST' })
+    );
+  });
+
+  it('should return absolute url directly when already starting with http', async () => {
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, data: { url: 'https://res.cloudinary.com/demo/image/upload/sample.jpg' } }),
+    });
+
+    const result = await uploadImageApi(fakeFile, 'incidents');
+    expect(result).toBe('https://res.cloudinary.com/demo/image/upload/sample.jpg');
+  });
+
+  it('should return null when upload response is not ok', async () => {
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: false });
+
+    const result = await uploadImageApi(fakeFile);
+    expect(result).toBeNull();
+  });
+
+  it('should return null on network error', async () => {
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    (globalThis.fetch as any).mockRejectedValueOnce(new Error('Network failure'));
+
+    const result = await uploadImageApi(fakeFile);
+    expect(result).toBeNull();
+  });
+});
+
+describe('updateMyAvatarApi', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should return true when avatar is updated successfully', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: true });
+
+    const result = await updateMyAvatarApi('/uploads/avatars/new.png');
+    expect(result).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/users/me/avatar'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ avatarUrl: '/uploads/avatars/new.png' }),
+      })
+    );
+  });
+
+  it('should return false when avatar update returns non-ok response', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: false });
+
+    const result = await updateMyAvatarApi('/uploads/avatars/new.png');
+    expect(result).toBe(false);
+  });
+
+  it('should return false on network error', async () => {
+    (globalThis.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+    const result = await updateMyAvatarApi('/uploads/avatars/new.png');
+    expect(result).toBe(false);
+  });
+});
+
+describe('fetchAlertsApi', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should return array of alerts when response is successful', async () => {
+    const mockAlerts = [{ _id: '1', title: 'Power outage', loc: 'Lab A', date: 'Today', type: 'alert' }];
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, data: mockAlerts }),
+    });
+
+    const result = await fetchAlertsApi();
+    expect(result).toEqual(mockAlerts);
+  });
+
+  it('should return empty array when response is not ok or error thrown', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: false });
+
+    const result = await fetchAlertsApi();
+    expect(result).toEqual([]);
+  });
+});
+
+describe('createAlertApi and deleteAlertApi', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('createAlertApi should post alert and return true on success', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: true });
+
+    const result = await createAlertApi({ title: 'Scheduled drill', loc: 'Building B' });
+    expect(result).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/alerts'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ title: 'Scheduled drill', loc: 'Building B' }),
+      })
+    );
+  });
+
+  it('deleteAlertApi should delete alert and return true on success', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: true });
+
+    const result = await deleteAlertApi('alert123');
+    expect(result).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/alerts/alert123'),
+      expect.objectContaining({ method: 'DELETE' })
+    );
+  });
+});
+
+describe('Technician Reports API', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('submitTechnicianReportApi should post payload and return true on success', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: true });
+
+    const payload = {
+      technicianId: 'tech123',
+      issueType: 'Unresponsive / SLA Breach',
+      description: 'Did not respond within 48h',
+    };
+    const result = await submitTechnicianReportApi(payload);
+    expect(result).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/technician-reports'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+    );
+  });
+
+  it('fetchTechnicianReportsApi should return reports array', async () => {
+    const mockReports = [{ _id: 'r1', issueType: 'Poor Quality Work', description: 'Loose wiring' }];
+    (globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, data: mockReports }),
+    });
+
+    const result = await fetchTechnicianReportsApi();
+    expect(result).toEqual(mockReports);
+  });
+
+  it('updateTechnicianReportStatusApi should patch status and return true', async () => {
+    (globalThis.fetch as any).mockResolvedValueOnce({ ok: true });
+
+    const result = await updateTechnicianReportStatusApi('r1', 'Resolved', 'Issue handled');
+    expect(result).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/technician-reports/r1'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'Resolved', adminNotes: 'Issue handled' }),
+      })
+    );
+  });
+});

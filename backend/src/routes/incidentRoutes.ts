@@ -10,9 +10,9 @@ router.post('/', incidentController.createIncident);
 router.get('/', incidentController.getIncidents);
 router.get('/:id', incidentController.getIncidentById);
 
-router.patch('/:id/status', authorize('technician', 'admin'), incidentController.updateIncidentStatus);
-router.patch('/:id', authorize('technician', 'admin'), incidentController.updateIncidentStatus);
-router.post('/:id/activity', authorize('technician', 'admin'), incidentController.addActivityLog);
-router.post('/:id/logs', authorize('technician', 'admin'), incidentController.addActivityLog);
+router.patch('/:id/status', authorize('technician', 'admin', 'lab_admin'), incidentController.updateIncidentStatus);
+router.patch('/:id', authorize('technician', 'admin', 'lab_admin'), incidentController.updateIncidentStatus);
+router.post('/:id/activity', authorize('technician', 'admin', 'lab_admin'), incidentController.addActivityLog);
+router.post('/:id/logs', authorize('technician', 'admin', 'lab_admin'), incidentController.addActivityLog);
 
 export default router;

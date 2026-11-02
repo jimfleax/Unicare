@@ -53,7 +53,7 @@ router.put('/:id/mark-read', catchAsync(async (req: AuthRequest, res: Response, 
   res.status(200).json({ success: true, data: notification });
 }));
 
-router.post('/subscribe', authorize('technician', 'admin'), catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/subscribe', authorize('technician', 'admin', 'lab_admin'), catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { endpoint, keys } = req.body;
   if (!endpoint || !keys) {
     return next(new AppError('Invalid subscription payload', 400));

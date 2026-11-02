@@ -99,6 +99,10 @@ describe('UserManagementPortal', () => {
 
     fireEvent.click(screen.getAllByRole('button').find(b => b.classList.contains('text-red')) as HTMLElement);
 
+    // Confirm in the Radix AlertDialog
+    const confirmBtn = screen.getByRole('button', { name: /Delete Account/i });
+    fireEvent.click(confirmBtn);
+
     await waitFor(() => {
       expect(mockApi.delete).toHaveBeenCalledWith('/users/1');
       expect(mockMutate).toHaveBeenCalled();

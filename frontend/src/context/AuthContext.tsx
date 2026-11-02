@@ -7,6 +7,7 @@ export interface AuthUser {
   name: string
   email: string
   role: 'student' | 'technician' | 'admin' | 'lab_admin'
+  avatarUrl?: string
   token: string
 }
 
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: result.user.name,
             email: result.user.email,
             role: result.user.role,
+            avatarUrl: result.user.avatarUrl,
             token: stored.token,
           }
           setUser(restored)

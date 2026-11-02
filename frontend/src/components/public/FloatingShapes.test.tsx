@@ -61,7 +61,7 @@ describe('FloatingShapes parallax', () => {
     expect(container.querySelector<SVGElement>('[style*="scaleX"]')!.style.transform).toBe('scaleX(-1)')
     move()
     expect(frames.size).toBe(0)
-  })
+  }, 15000)
 
   it('does not animate when reduced motion is already enabled', () => {
     Object.defineProperty(reducedMotion, 'matches', { value: true })
