@@ -1,11 +1,20 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, within, act, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 import { StudentDashboard } from './StudentDashboardRedesigned'
 import type { IssueRecord } from '../../services/api'
+import * as api from '../../services/api'
 
 vi.mock('swr', () => ({ default: () => ({ data: [] }) }))
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { name: 'Test Student' } }) }))
+vi.mock('../../services/api', async () => {
+  const actual = await vi.importActual<typeof import('../../services/api')>('../../services/api')
+  return {
+    ...actual,
+    uploadImageApi: vi.fn(),
+    updateMyAvatarApi: vi.fn(),
+  }
+})
 vi.mock('recharts', async () => {
   const actual = await vi.importActual<typeof import('recharts')>('recharts')
   return {
@@ -49,5 +58,177 @@ describe('StudentDashboard ticket interactions and dates', () => {
     ticket = screen.getByRole('button', { name: /Newer complaint/ })
     fireEvent.keyDown(ticket, { key: ' ' })
     expect(onSelectIssue).toHaveBeenLastCalledWith(tickets[1])
+  })
+
+  describe('Photo FileReader and removal behavior', () => {
+    it('cancels pending read on removal/clear and ignores onload results after removal', () => {
+      let createdReaders: any[] = []
+      const originalFileReader = window.FileReader
+
+      class MockFileReader {
+        onload: ((ev: any) => void) | null = null
+        abort = vi.fn()
+        readAsDataURL = vi.fn()
+        constructor() {
+          createdReaders.push(this)
+        }
+      }
+      window.FileReader = MockFileReader as any
+
+      try {
+        const { container } = render(<StudentDashboard records={tickets} onAddRecord={vi.fn()} onSelectIssue={vi.fn()} />)
+        fireEvent.click(screen.getByRole('tab', { name: /Log Incident/i }))
+
+        const fileInput = container.querySelector('input[type="file"][accept*="jpeg"]') as HTMLInputElement
+        expect(fileInput).toBeTruthy()
+
+        const file = new File(['dummy'], 'photo.png', { type: 'image/png' })
+        fireEvent.change(fileInput, { target: { files: [file] } })
+
+        expect(createdReaders.length).toBe(1)
+        const reader = createdReaders[0]
+        expect(reader.readAsDataURL).toHaveBeenCalledWith(file)
+
+        // Clear form while read is still pending
+        fireEvent.click(screen.getByRole('button', { name: /Clear Form/i }))
+        expect(reader.abort).toHaveBeenCalled()
+
+        // When the pending reader completes after removal, preview must not be restored
+        act(() => {
+          reader.onload?.({ target: { result: 'data:image/png;base64,abc' } })
+        })
+        expect(screen.queryByAltText('Issue preview')).not.toBeInTheDocument()
+      } finally {
+        window.FileReader = originalFileReader
+      }
+    })
+
+    it('cancels pending read when a new photo is selected before the first finishes', () => {
+      let createdReaders: any[] = []
+      const originalFileReader = window.FileReader
+
+      class MockFileReader {
+        onload: ((ev: any) => void) | null = null
+        abort = vi.fn()
+        readAsDataURL = vi.fn()
+        constructor() {
+          createdReaders.push(this)
+        }
+      }
+      window.FileReader = MockFileReader as any
+
+      try {
+        const { container } = render(<StudentDashboard records={tickets} onAddRecord={vi.fn()} onSelectIssue={vi.fn()} />)
+        fireEvent.click(screen.getByRole('tab', { name: /Log Incident/i }))
+
+        const fileInput = container.querySelector('input[type="file"][accept*="jpeg"]') as HTMLInputElement
+        const file1 = new File(['photo1'], 'photo1.png', { type: 'image/png' })
+        const file2 = new File(['photo2'], 'photo2.png', { type: 'image/png' })
+
+        fireEvent.change(fileInput, { target: { files: [file1] } })
+        expect(createdReaders.length).toBe(1)
+        const reader1 = createdReaders[0]
+
+        // Select second file before reader1 completes
+        fireEvent.change(fileInput, { target: { files: [file2] } })
+        expect(reader1.abort).toHaveBeenCalled()
+        expect(createdReaders.length).toBe(2)
+        const reader2 = createdReaders[1]
+
+        // If reader1 completes now, it should be ignored
+        act(() => {
+          reader1.onload?.({ target: { result: 'data:image/png;base64,photo1' } })
+        })
+        expect(screen.queryByAltText('Issue preview')).not.toBeInTheDocument()
+
+        // When reader2 completes, it should show photo2
+        act(() => {
+          reader2.onload?.({ target: { result: 'data:image/png;base64,photo2' } })
+        })
+        const preview = screen.getByAltText('Issue preview') as HTMLImageElement
+        expect(preview.src).toContain('photo2')
+      } finally {
+        window.FileReader = originalFileReader
+      }
+    })
+  })
+
+  describe('Avatar upload flow and caching', () => {
+    beforeEach(() => {
+      localStorage.clear()
+      vi.spyOn(window, 'alert').mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('persists uploaded avatar in localStorage only after updateMyAvatarApi succeeds', async () => {
+      vi.mocked(api.uploadImageApi).mockResolvedValue('https://storage.example.com/avatar.png')
+      vi.mocked(api.updateMyAvatarApi).mockResolvedValue(true)
+
+      const { container } = render(<StudentDashboard records={tickets} onAddRecord={vi.fn()} onSelectIssue={vi.fn()} />)
+      const avatarInput = container.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement
+      expect(avatarInput).toBeTruthy()
+
+      const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+      await act(async () => {
+        fireEvent.change(avatarInput, { target: { files: [file] } })
+      })
+
+      await waitFor(() => {
+        expect(api.uploadImageApi).toHaveBeenCalledWith(file, 'avatars')
+        expect(api.updateMyAvatarApi).toHaveBeenCalledWith('https://storage.example.com/avatar.png')
+      })
+
+      expect(localStorage.getItem('ucare-student-avatar')).toBe('https://storage.example.com/avatar.png')
+      const avatarImg = screen.getByAltText('Test Student') as HTMLImageElement
+      expect(avatarImg.src).toBe('https://storage.example.com/avatar.png')
+    })
+
+    it('does not cache in localStorage, restores previous avatar, and alerts if updateMyAvatarApi fails', async () => {
+      localStorage.setItem('ucare-student-avatar', 'https://storage.example.com/original-avatar.png')
+      vi.mocked(api.uploadImageApi).mockResolvedValue('https://storage.example.com/failed-upload.png')
+      vi.mocked(api.updateMyAvatarApi).mockResolvedValue(false)
+
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+      const { container } = render(<StudentDashboard records={tickets} onAddRecord={vi.fn()} onSelectIssue={vi.fn()} />)
+      const avatarInput = container.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement
+
+      const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+      await act(async () => {
+        fireEvent.change(avatarInput, { target: { files: [file] } })
+      })
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith('Failed to update avatar. Please try again.')
+      })
+
+      // localStorage should NOT have the new failed URL
+      expect(localStorage.getItem('ucare-student-avatar')).toBe('https://storage.example.com/original-avatar.png')
+      const avatarImg = screen.getByAltText('Test Student') as HTMLImageElement
+      expect(avatarImg.src).toBe('https://storage.example.com/original-avatar.png')
+    })
+
+    it('does not cache in localStorage, restores previous avatar, and alerts if uploadImageApi fails', async () => {
+      vi.mocked(api.uploadImageApi).mockResolvedValue(null)
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+      const { container } = render(<StudentDashboard records={tickets} onAddRecord={vi.fn()} onSelectIssue={vi.fn()} />)
+      const avatarInput = container.querySelector('input[type="file"][accept="image/*"]') as HTMLInputElement
+
+      const file = new File(['avatar'], 'avatar.png', { type: 'image/png' })
+      await act(async () => {
+        fireEvent.change(avatarInput, { target: { files: [file] } })
+      })
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith('Failed to update avatar. Please try again.')
+      })
+
+      expect(localStorage.getItem('ucare-student-avatar')).toBeNull()
+      expect(screen.queryByAltText('Test Student')).not.toBeInTheDocument()
+    })
   })
 })

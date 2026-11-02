@@ -116,6 +116,49 @@ describe('Alert Endpoints', () => {
       expect(titles.some((t: string) => t.includes('Critical Alert: Main Server Rack'))).toBe(true);
       expect(titles.some((t: string) => t.includes('Quarterly UPS Battery Check'))).toBe(true);
     });
+
+    it('should not let past scheduled maintenance crowd out upcoming maintenance in the 5-item limit', async () => {
+      const asset = await Asset.create({
+        tagId: 'AST-100',
+        name: 'Cooling Unit',
+        location: 'Lab 1',
+        category: 'HVAC',
+      });
+      const adminUser = await User.findOne({ role: 'admin' });
+
+      // Create 5 past maintenance schedules (overdue)
+      for (let i = 1; i <= 5; i++) {
+        const pastDate = new Date();
+        pastDate.setDate(pastDate.getDate() - (10 + i));
+        await MaintenanceSchedule.create({
+          assetId: asset._id,
+          assignedTo: adminUser!._id,
+          description: `Past Maintenance #${i}`,
+          scheduledDate: pastDate,
+          status: 'Pending',
+        });
+      }
+
+      // Create a future maintenance schedule
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 3);
+      await MaintenanceSchedule.create({
+        assetId: asset._id,
+        assignedTo: adminUser!._id,
+        description: 'Future Calibration Schedule',
+        scheduledDate: futureDate,
+        status: 'Pending',
+      });
+
+      const res = await request(app)
+        .get('/api/alerts')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      const upcoming = res.body.data.find((a: any) => a.title.includes('Future Calibration Schedule'));
+      expect(upcoming).toBeDefined();
+      expect(upcoming.source).toBe('maintenance');
+    });
   });
 
   describe('POST /api/alerts and DELETE /api/alerts/:id', () => {

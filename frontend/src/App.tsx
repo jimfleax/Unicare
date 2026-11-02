@@ -1471,9 +1471,11 @@ function Report({ onAddRecord }: { onAddRecord: (record: IssueRecord) => void, a
       let mediaUrls: string[] = []
       if (selectedImage) {
         const uploadedUrl = await uploadImageApi(selectedImage, 'incidents')
-        if (uploadedUrl) {
-          mediaUrls.push(uploadedUrl)
+        if (!uploadedUrl) {
+          alert('Failed to upload image. Please try again.')
+          return
         }
+        mediaUrls.push(uploadedUrl)
       }
       
       const result = await createIssueApi({ ...payload, mediaUrls })
@@ -2075,10 +2077,12 @@ function ReportTechnician() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const chosenTech = (technicians as any[]).find(t => (t.id || t._id) === selectedTechId)
-    const technicianName = chosenTech ? chosenTech.name : customTechName.trim()
+    const isRosterTech = Boolean(selectedTechId && selectedTechId !== 'custom')
+    const chosenTech = isRosterTech
+      ? (technicians as any[]).find(t => (t.id || t._id) === selectedTechId)
+      : undefined
 
-    if (!selectedTechId && !customTechName.trim()) {
+    if (!chosenTech && !customTechName.trim()) {
       alert('Please specify the technician involved')
       return
     }
@@ -2088,10 +2092,13 @@ function ReportTechnician() {
       return
     }
 
+    const technicianName = chosenTech ? chosenTech.name : customTechName.trim()
+    const technicianId = chosenTech ? (chosenTech.id || chosenTech._id) : undefined
+
     setIsSubmitting(true)
     try {
       const success = await submitTechnicianReportApi({
-        technicianId: selectedTechId || undefined,
+        technicianId,
         technicianName: technicianName || undefined,
         issueType,
         description: description.trim()

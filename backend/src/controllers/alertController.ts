@@ -10,8 +10,14 @@ export const getAlerts = catchAsync(async (_req: AuthRequest, res: Response, _ne
   // 1. Fetch manual broadcast alerts
   const manualAlerts = await Alert.find({ active: true }).sort('-createdAt').lean();
 
-  // 2. Synthesize alerts from upcoming maintenance schedules
-  const upcomingMaintenance = await MaintenanceSchedule.find({ status: { $ne: 'Completed' } })
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // 2. Synthesize alerts from upcoming maintenance schedules (today or future)
+  const upcomingMaintenance = await MaintenanceSchedule.find({
+    status: { $nin: ['Completed', 'Cancelled'] },
+    scheduledDate: { $gte: startOfToday },
+  })
     .populate('assetId', 'name location')
     .sort('scheduledDate')
     .limit(5)
@@ -30,7 +36,30 @@ export const getAlerts = catchAsync(async (_req: AuthRequest, res: Response, _ne
     };
   });
 
-  // 3. Synthesize alerts from Critical unresolved incidents
+  // 3. Handle overdue maintenance schedules separately so past schedules don't crowd out upcoming ones
+  const overdueMaintenance = await MaintenanceSchedule.find({
+    status: { $nin: ['Completed', 'Cancelled'] },
+    scheduledDate: { $lt: startOfToday },
+  })
+    .populate('assetId', 'name location')
+    .sort('scheduledDate')
+    .limit(5)
+    .lean();
+
+  const overdueAlerts = overdueMaintenance.map((m) => {
+    const asset = m.assetId as any;
+    const dateStr = m.scheduledDate ? new Date(m.scheduledDate).toLocaleDateString() : 'Overdue';
+    return {
+      _id: m._id,
+      type: 'alert' as const,
+      title: `Overdue Maintenance: ${m.description || asset?.name || 'Asset'}`,
+      loc: asset?.location || 'Campus Lab',
+      date: dateStr,
+      source: 'overdue_maintenance',
+    };
+  });
+
+  // 4. Synthesize alerts from Critical unresolved incidents
   const criticalIncidents = await Incident.find({
     priority: 'Critical',
     status: { $ne: 'Resolved' },
@@ -53,7 +82,7 @@ export const getAlerts = catchAsync(async (_req: AuthRequest, res: Response, _ne
     };
   });
 
-  // Merge manual alerts first, followed by urgent incidents and upcoming maintenance
+  // Merge manual alerts first, followed by urgent items (overdue maintenance, critical incidents) and upcoming maintenance
   const combinedAlerts = [
     ...manualAlerts.map((a) => ({
       _id: a._id,
@@ -63,6 +92,7 @@ export const getAlerts = catchAsync(async (_req: AuthRequest, res: Response, _ne
       date: a.date,
       source: 'manual',
     })),
+    ...overdueAlerts,
     ...incidentAlerts,
     ...maintenanceAlerts,
   ];

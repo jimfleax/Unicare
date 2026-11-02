@@ -43,6 +43,35 @@ export const updateMyStatus = catchAsync(async (req: AuthRequest, res: Response)
   });
 });
 
+const MAX_AVATAR_URL_LENGTH = 2048;
+
+const isValidAvatarUrl = (url: unknown): url is string => {
+  if (typeof url !== 'string') {
+    return false;
+  }
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_AVATAR_URL_LENGTH) {
+    return false;
+  }
+
+  // Accept a relative /uploads/ path (no protocol-relative //, and no directory traversal)
+  if (trimmed.startsWith('/uploads/') && !trimmed.startsWith('//') && !trimmed.includes('..')) {
+    return true;
+  }
+
+  // Accept an https:// URL
+  if (trimmed.startsWith('https://')) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+};
+
 export const updateMyAvatar = catchAsync(async (req: AuthRequest, res: Response) => {
   const { avatarUrl } = req.body;
   const user = req.user;
@@ -51,11 +80,15 @@ export const updateMyAvatar = catchAsync(async (req: AuthRequest, res: Response)
     return res.status(401).json({ success: false, error: 'Not authenticated' });
   }
 
-  if (!avatarUrl) {
+  if (typeof avatarUrl !== 'string' || avatarUrl.trim().length === 0) {
     return res.status(400).json({ success: false, error: 'avatarUrl is required' });
   }
 
-  user.avatarUrl = avatarUrl;
+  if (!isValidAvatarUrl(avatarUrl)) {
+    return res.status(400).json({ success: false, error: 'Invalid avatarUrl' });
+  }
+
+  user.avatarUrl = avatarUrl.trim();
   await user.save();
 
   res.status(200).json({

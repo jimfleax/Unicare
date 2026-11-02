@@ -23,21 +23,31 @@ export const createTechnicianReport = catchAsync(async (req: AuthRequest, res: R
     }
   }
 
-  if (!resolvedTechnicianId && technicianName) {
+  if (!resolvedTechnicianId && technicianName !== undefined) {
+    if (typeof technicianName !== 'string' || !technicianName.trim()) {
+      return next(new AppError('Valid technician must be specified', 400));
+    }
+
+    const trimmedName = technicianName.trim();
+    const escapedName = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const tech = await User.findOne({
       role: 'technician',
-      name: { $regex: new RegExp(`^${technicianName.trim()}$`, 'i') },
+      name: { $regex: new RegExp(`^${escapedName}$`, 'i') },
     });
     if (tech) {
       resolvedTechnicianId = tech._id as mongoose.Types.ObjectId;
     } else {
-      // Find partial match
-      const partialTech = await User.findOne({
+      // Find partial match - only accept if exactly one technician matches
+      const partialMatches = await User.find({
         role: 'technician',
-        name: { $regex: new RegExp(technicianName.trim(), 'i') },
-      });
-      if (partialTech) {
-        resolvedTechnicianId = partialTech._id as mongoose.Types.ObjectId;
+        name: { $regex: new RegExp(escapedName, 'i') },
+      }).limit(2);
+
+      if (partialMatches.length === 1) {
+        resolvedTechnicianId = partialMatches[0]._id as mongoose.Types.ObjectId;
+      } else if (partialMatches.length > 1) {
+        return next(new AppError('Multiple technicians match this name. Please choose from the roster', 400));
       }
     }
   }

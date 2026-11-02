@@ -4,6 +4,10 @@ import { CloudinaryStorageService } from './cloudinaryStorageService';
 
 let storageInstance: IStorageService | null = null;
 
+export function setStorageService(instance: IStorageService | null): void {
+  storageInstance = instance;
+}
+
 export function getStorageService(): IStorageService {
   if (storageInstance) {
     return storageInstance;

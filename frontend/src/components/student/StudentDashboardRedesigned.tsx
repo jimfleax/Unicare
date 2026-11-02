@@ -80,6 +80,19 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const photoReaderRef = useRef<FileReader | null>(null)
+  const avatarReaderRef = useRef<FileReader | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (photoReaderRef.current) {
+        photoReaderRef.current.abort()
+      }
+      if (avatarReaderRef.current) {
+        avatarReaderRef.current.abort()
+      }
+    }
+  }, [])
   
   const { data: locations = [] } = useSWR('/metadata/locations', fetchLocationsApi)
   const { data: categories = [] } = useSWR('/metadata/categories', fetchCategoriesApi)
@@ -185,14 +198,27 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     }
     setPhotoError(null)
     setSelectedPhoto(file)
+
+    if (photoReaderRef.current) {
+      photoReaderRef.current.abort()
+      photoReaderRef.current = null
+    }
+
     const reader = new FileReader()
+    photoReaderRef.current = reader
     reader.onload = (event) => {
+      if (photoReaderRef.current !== reader) return
       setPhotoPreview(event.target?.result as string)
+      photoReaderRef.current = null
     }
     reader.readAsDataURL(file)
   }
 
   const handleRemovePhoto = () => {
+    if (photoReaderRef.current) {
+      photoReaderRef.current.abort()
+      photoReaderRef.current = null
+    }
     setSelectedPhoto(null)
     setPhotoPreview(null)
     setPhotoError(null)
@@ -205,25 +231,52 @@ export function StudentDashboard({ records, onAddRecord, onSelectIssue }: Studen
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Optimistic local preview
+    const previousAvatar = profilePic
+    let isCancelled = false
+
+    if (avatarReaderRef.current) {
+      avatarReaderRef.current.abort()
+      avatarReaderRef.current = null
+    }
+
+    // Optimistic local preview in memory only - do not persist before API succeeds
     const reader = new FileReader()
+    avatarReaderRef.current = reader
     reader.onload = (event) => {
-      const dataUrl = event.target?.result as string
-      setProfilePic(dataUrl)
-      localStorage.setItem('ucare-student-avatar', dataUrl)
+      if (isCancelled || avatarReaderRef.current !== reader) return
+      setProfilePic(event.target?.result as string)
     }
     reader.readAsDataURL(file)
 
     // Upload to modular storage & update user record in database
     try {
       const uploadedUrl = await uploadImageApi(file, 'avatars')
-      if (uploadedUrl) {
-        setProfilePic(uploadedUrl)
-        localStorage.setItem('ucare-student-avatar', uploadedUrl)
-        await updateMyAvatarApi(uploadedUrl)
+      if (!uploadedUrl) {
+        throw new Error('Image upload failed')
       }
+      const success = await updateMyAvatarApi(uploadedUrl)
+      if (!success) {
+        throw new Error('Avatar update failed')
+      }
+      if (avatarReaderRef.current) {
+        avatarReaderRef.current.abort()
+        avatarReaderRef.current = null
+      }
+      setProfilePic(uploadedUrl)
+      localStorage.setItem('ucare-student-avatar', uploadedUrl)
     } catch (err) {
+      isCancelled = true
+      if (avatarReaderRef.current) {
+        avatarReaderRef.current.abort()
+        avatarReaderRef.current = null
+      }
+      setProfilePic(previousAvatar)
       console.warn('Failed to persist avatar to server:', err)
+      alert('Failed to update avatar. Please try again.')
+    } finally {
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = ''
+      }
     }
   }
 

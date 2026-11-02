@@ -4,13 +4,23 @@ import { getStorageService } from '../services/storage';
 import { catchAsync } from '../utils/catchAsync';
 import { AppError } from '../utils/AppError';
 
+const ALLOWED_FOLDERS = ['general', 'avatars', 'incidents'] as const;
+type AllowedFolder = (typeof ALLOWED_FOLDERS)[number];
+
+const validateFolder = (folder: unknown): AllowedFolder => {
+  if (typeof folder === 'string' && (ALLOWED_FOLDERS as readonly string[]).includes(folder)) {
+    return folder as AllowedFolder;
+  }
+  return 'general';
+};
+
 export const uploadFile = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const file = req.file;
   if (!file) {
     return next(new AppError('No file provided for upload', 400));
   }
 
-  const folder = (req.body.folder as string) || 'general';
+  const folder = validateFolder(req.body?.folder);
   const storage = getStorageService();
   const result = await storage.uploadFile(file, folder);
 
@@ -26,7 +36,7 @@ export const uploadMultipleFiles = catchAsync(async (req: AuthRequest, res: Resp
     return next(new AppError('No files provided for upload', 400));
   }
 
-  const folder = (req.body.folder as string) || 'general';
+  const folder = validateFolder(req.body?.folder);
   const storage = getStorageService();
 
   const results = await Promise.all(

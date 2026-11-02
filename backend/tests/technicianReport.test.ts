@@ -86,6 +86,84 @@ describe('Technician Report Endpoints', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Valid technician must be specified');
+    });
+
+    it('should reject whitespace-only or invalid technicianName with 400', async () => {
+      const whitespaceRes = await request(app)
+        .post('/api/technician-reports')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          technicianName: '    ',
+          issueType: 'Other',
+          description: 'Testing whitespace name',
+        });
+
+      expect(whitespaceRes.status).toBe(400);
+      expect(whitespaceRes.body.message).toContain('Valid technician must be specified');
+
+      const nonStringRes = await request(app)
+        .post('/api/technician-reports')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          technicianName: 12345,
+          issueType: 'Other',
+          description: 'Testing numeric name',
+        });
+
+      expect(nonStringRes.status).toBe(400);
+      expect(nonStringRes.body.message).toContain('Valid technician must be specified');
+    });
+
+    it('should escape regex metacharacters and treat technicianName literally', async () => {
+      const res = await request(app)
+        .post('/api/technician-reports')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          technicianName: 'Bob.*',
+          issueType: 'Other',
+          description: 'Attempting regex wildcard',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Valid technician must be specified');
+    });
+
+    it('should accept partial match when exactly one technician matches', async () => {
+      const res = await request(app)
+        .post('/api/technician-reports')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          technicianName: 'Handyman',
+          issueType: 'Poor Quality Work',
+          description: 'Cable work was loose',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.report.technicianId.toString()).toBe(technicianId);
+    });
+
+    it('should return 400 asking reporter to choose from roster when multiple technicians match partial name', async () => {
+      await User.create({
+        name: 'Bob Electrician',
+        email: 'bobelectric@example.com',
+        password: 'password123',
+        role: 'technician',
+        specialty: 'Electrical',
+      });
+
+      const res = await request(app)
+        .post('/api/technician-reports')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          technicianName: 'Bob',
+          issueType: 'Unresponsive / SLA Breach',
+          description: 'Which Bob was it?',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message.toLowerCase()).toContain('roster');
     });
   });
 

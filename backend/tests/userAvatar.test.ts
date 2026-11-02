@@ -44,7 +44,7 @@ describe('User Avatar Persistence', () => {
     expect(meRes.body.data.user.avatarUrl).toBe(avatarUrl);
   });
 
-  it('should return 400 when avatarUrl is missing', async () => {
+  it('should return 400 when avatarUrl is missing or whitespace', async () => {
     const patchRes = await request(app)
       .patch('/api/users/me/avatar')
       .set('Authorization', `Bearer ${token}`)
@@ -52,5 +52,55 @@ describe('User Avatar Persistence', () => {
 
     expect(patchRes.status).toBe(400);
     expect(patchRes.body.success).toBe(false);
+
+    const emptyRes = await request(app)
+      .patch('/api/users/me/avatar')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ avatarUrl: '   ' });
+
+    expect(emptyRes.status).toBe(400);
+    expect(emptyRes.body.success).toBe(false);
+  });
+
+  it('should accept valid https avatarUrl', async () => {
+    const avatarUrl = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
+    const patchRes = await request(app)
+      .patch('/api/users/me/avatar')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ avatarUrl });
+
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.success).toBe(true);
+    expect(patchRes.body.data.avatarUrl).toBe(avatarUrl);
+  });
+
+  it('should reject invalid avatarUrl values', async () => {
+    const invalidUrls = [
+      'http://insecure.example.com/pic.jpg',
+      'javascript:alert(1)',
+      '/etc/passwd',
+      '/api/users',
+      '/uploads/../secret.png',
+      '//uploads/pic.png',
+      'https://' + 'a'.repeat(2048), // exceeds limit
+    ];
+
+    for (const url of invalidUrls) {
+      const res = await request(app)
+        .patch('/api/users/me/avatar')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ avatarUrl: url });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    }
+
+    const nonStringRes = await request(app)
+      .patch('/api/users/me/avatar')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ avatarUrl: { url: '/uploads/avatars/pic.png' } });
+
+    expect(nonStringRes.status).toBe(400);
+    expect(nonStringRes.body.success).toBe(false);
   });
 });
