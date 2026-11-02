@@ -1,5 +1,5 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { IStorageService, UploadResult } from './storageService.interface';
+import { v2 as cloudinary } from "cloudinary";
+import { IStorageService, UploadResult } from "./storageService.interface";
 
 export class CloudinaryStorageService implements IStorageService {
   constructor() {
@@ -14,30 +14,38 @@ export class CloudinaryStorageService implements IStorageService {
     }
   }
 
-  async uploadFile(file: Express.Multer.File, folder = 'unicare'): Promise<UploadResult> {
+  async uploadFile(
+    file: Express.Multer.File,
+    folder = "unicare",
+  ): Promise<UploadResult> {
     return new Promise((resolve, reject) => {
       const uploadOptions = {
         folder: `unicare/${folder}`,
-        resource_type: 'auto' as const,
+        resource_type: "auto" as const,
       };
 
-      const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-        if (error || !result) {
-          return reject(error || new Error('Cloudinary upload returned empty response'));
-        }
-        resolve({
-          url: result.secure_url,
-          key: result.public_id,
-          originalName: file.originalname,
-          mimeType: file.mimetype,
-          size: result.bytes || file.size,
-        });
-      });
+      const stream = cloudinary.uploader.upload_stream(
+        uploadOptions,
+        (error, result) => {
+          if (error || !result) {
+            return reject(
+              error || new Error("Cloudinary upload returned empty response"),
+            );
+          }
+          resolve({
+            url: result.secure_url,
+            key: result.public_id,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: result.bytes || file.size,
+          });
+        },
+      );
 
       if (file.buffer) {
         stream.end(file.buffer);
       } else {
-        reject(new Error('Buffer required for Cloudinary stream upload'));
+        reject(new Error("Buffer required for Cloudinary stream upload"));
       }
     });
   }

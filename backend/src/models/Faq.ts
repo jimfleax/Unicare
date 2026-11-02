@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IFaq extends Document {
   question: string;
@@ -14,7 +14,7 @@ const faqSchema = new Schema<IFaq>(
     order: { type: Number, default: 0 },
     active: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model<IFaq>('Faq', faqSchema);
+export default mongoose.model<IFaq>("Faq", faqSchema);

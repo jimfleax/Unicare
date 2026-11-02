@@ -118,9 +118,14 @@ The `User` model manages authentication and profile data for students, technicia
 - **`GET /locations`**: Aggregates distinct locations from `Asset` model and maps colors from `Metadata`. Seeds defaults if empty.
 - **`GET /categories`**: Aggregates distinct categories from `Asset` model.
 - **`GET /priorities`**: Fetches priority metadata from the DB.
-- **`GET /statuses`**: Returns hardcoded incident statuses.
+- **`GET /statuses`**: Returns incident statuses (`Open`, `In Progress`, `Resolved`).
 - **`GET /faqs`**: Fetches active FAQs, sorting by `order` (seeds defaults if empty).
 - **`GET /student-profile`**: Extracts and returns `batch`, `batchCode`, `branch`, and `rollNo` from `req.user`.
+- **`GET /asset-health-statuses`**: Returns valid asset health statuses (`healthy`, `degraded`, `broken`).
+- **`GET /technician-statuses`**: Returns valid technician shift statuses (`On Shift`, `In Field`, `On Call`, `Off Duty`).
+- **`GET /user-roles`**: Returns valid user roles (`student`, `technician`, `admin`, `lab_admin`).
+- **`GET /technician-report-types`**: Returns valid technician report issue types.
+- **`GET /maintenance-statuses`**: Returns valid maintenance schedule statuses (`Pending`, `Completed`, `Cancelled`).
 
 ---
 

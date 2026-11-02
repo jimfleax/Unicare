@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react';
-import './CursorGrid.css';
+import { useRef, useEffect } from "react";
+import "./CursorGrid.css";
 
 interface FalloffCurves {
   [key: string]: (t: number) => number;
@@ -8,18 +8,29 @@ interface FalloffCurves {
 const FALLOFF_CURVES: FalloffCurves = {
   linear: (t: number) => t,
   smooth: (t: number) => t * t * (3 - 2 * t),
-  sharp: (t: number) => t * t * t
+  sharp: (t: number) => t * t * t,
 };
 
 const hexToRgb = (hex: string): [number, number, number] => {
-  const h = hex.replace('#', '');
-  const v = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const h = hex.replace("#", "");
+  const v =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
   const num = parseInt(v.slice(0, 6), 16);
   return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
 };
 
 /** Draw a regular pentagon centered at (cx, cy) with circumradius r, point-up */
-const pentagonPath = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) => {
+const pentagonPath = (
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+) => {
   ctx.beginPath();
   for (let i = 0; i < 5; i++) {
     const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
@@ -35,7 +46,7 @@ export interface CursorGridProps {
   cellSize?: number;
   color?: string;
   radius?: number;
-  falloff?: 'linear' | 'smooth' | 'sharp';
+  falloff?: "linear" | "smooth" | "sharp";
   holdTime?: number;
   fadeDuration?: number;
   lineWidth?: number;
@@ -50,9 +61,9 @@ export interface CursorGridProps {
 
 const CursorGrid = ({
   cellSize = 60,
-  color = '#dc2626',
+  color = "#dc2626",
   radius = 160,
-  falloff = 'smooth',
+  falloff = "smooth",
   holdTime = 400,
   fadeDuration = 800,
   lineWidth = 1.2,
@@ -62,11 +73,11 @@ const CursorGrid = ({
   cellRadius = 4,
   clickPulse = true,
   pulseSpeed = 600,
-  className = ''
+  className = "",
 }: CursorGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const propsRef = useRef<Required<Omit<CursorGridProps, 'className'>>>({
+  const propsRef = useRef<Required<Omit<CursorGridProps, "className">>>({
     cellSize,
     color,
     radius,
@@ -79,7 +90,7 @@ const CursorGrid = ({
     gridOpacity,
     cellRadius,
     clickPulse,
-    pulseSpeed
+    pulseSpeed,
   });
   const wakeRef = useRef<(() => void) | null>(null);
 
@@ -97,7 +108,7 @@ const CursorGrid = ({
       gridOpacity,
       cellRadius,
       clickPulse,
-      pulseSpeed
+      pulseSpeed,
     };
   });
 
@@ -106,7 +117,7 @@ const CursorGrid = ({
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -153,9 +164,15 @@ const CursorGrid = ({
       const ease = FALLOFF_CURVES[p.falloff] ?? FALLOFF_CURVES.linear;
       const now = performance.now();
       const minCol = Math.max(0, Math.floor((x - r - offX) / p.cellSize));
-      const maxCol = Math.min(cols - 1, Math.floor((x + r - offX) / p.cellSize));
+      const maxCol = Math.min(
+        cols - 1,
+        Math.floor((x + r - offX) / p.cellSize),
+      );
       const minRow = Math.max(0, Math.floor((y - r - offY) / p.cellSize));
-      const maxRow = Math.min(rows - 1, Math.floor((y + r - offY) / p.cellSize));
+      const maxRow = Math.min(
+        rows - 1,
+        Math.floor((y + r - offY) / p.cellSize),
+      );
       for (let cRow = minRow; cRow <= maxRow; cRow++) {
         for (let cCol = minCol; cCol <= maxCol; cCol++) {
           const i = cRow * cols + cCol;
@@ -204,10 +221,22 @@ const CursorGrid = ({
           continue;
         }
         const band = p.cellSize;
-        const minCol = Math.max(0, Math.floor((pulse.x - ringR - band - offX) / p.cellSize));
-        const maxCol = Math.min(cols - 1, Math.floor((pulse.x + ringR + band - offX) / p.cellSize));
-        const minRow = Math.max(0, Math.floor((pulse.y - ringR - band - offY) / p.cellSize));
-        const maxRow = Math.min(rows - 1, Math.floor((pulse.y + ringR + band - offY) / p.cellSize));
+        const minCol = Math.max(
+          0,
+          Math.floor((pulse.x - ringR - band - offX) / p.cellSize),
+        );
+        const maxCol = Math.min(
+          cols - 1,
+          Math.floor((pulse.x + ringR + band - offX) / p.cellSize),
+        );
+        const minRow = Math.max(
+          0,
+          Math.floor((pulse.y - ringR - band - offY) / p.cellSize),
+        );
+        const maxRow = Math.min(
+          rows - 1,
+          Math.floor((pulse.y + ringR + band - offY) / p.cellSize),
+        );
         for (let cRow = minRow; cRow <= maxRow; cRow++) {
           for (let cCol = minCol; cCol <= maxCol; cCol++) {
             const i = cRow * cols + cCol;
@@ -236,7 +265,14 @@ const CursorGrid = ({
 
         const [cx, cy] = cellCenter(i);
         const pentR = (p.cellSize / 2) * 0.82;
-        const gradient = ctx.createRadialGradient(cx, cy, pentR * 0.1, cx, cy, pentR * 1.4);
+        const gradient = ctx.createRadialGradient(
+          cx,
+          cy,
+          pentR * 0.1,
+          cx,
+          cy,
+          pentR * 1.4,
+        );
         gradient.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${a})`);
         gradient.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
 
@@ -292,8 +328,8 @@ const CursorGrid = ({
     rebuild();
     wake();
 
-    container.addEventListener('pointermove', onPointerMove);
-    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener("pointermove", onPointerMove);
+    container.addEventListener("pointerdown", onPointerDown);
 
     // Also track window events so moving mouse anywhere over hero triggers grid lightup
     const onWindowMove = (e: PointerEvent) => {
@@ -306,14 +342,14 @@ const CursorGrid = ({
       }
     };
 
-    window.addEventListener('pointermove', onWindowMove);
+    window.addEventListener("pointermove", onWindowMove);
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      container.removeEventListener('pointermove', onPointerMove);
-      container.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onWindowMove);
+      container.removeEventListener("pointermove", onPointerMove);
+      container.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onWindowMove);
     };
   }, [cellSize]);
 
@@ -322,7 +358,10 @@ const CursorGrid = ({
   }, [gridOpacity, color, lineWidth, maxOpacity, fillOpacity, cellRadius]);
 
   return (
-    <div ref={containerRef} className={`cursor-grid${className ? ` ${className}` : ''}`}>
+    <div
+      ref={containerRef}
+      className={`cursor-grid${className ? ` ${className}` : ""}`}
+    >
       <canvas ref={canvasRef} className="cursor-grid__canvas" />
     </div>
   );

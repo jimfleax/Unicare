@@ -1,8 +1,8 @@
-import React from 'react'
-import * as AccordionPrimitive from '@radix-ui/react-accordion'
-import { ChevronDown } from 'lucide-react'
+import React from "react";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { ChevronDown } from "lucide-react";
 
-const Accordion = AccordionPrimitive.Root
+const Accordion = AccordionPrimitive.Root;
 
 const AccordionItem = React.forwardRef<
   React.ComponentRef<typeof AccordionPrimitive.Item>,
@@ -10,11 +10,11 @@ const AccordionItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={`rdx-accordion-item ${className || ''}`}
+    className={`rdx-accordion-item ${className || ""}`}
     {...props}
   />
-))
-AccordionItem.displayName = 'AccordionItem'
+));
+AccordionItem.displayName = "AccordionItem";
 
 const AccordionTrigger = React.forwardRef<
   React.ComponentRef<typeof AccordionPrimitive.Trigger>,
@@ -23,15 +23,15 @@ const AccordionTrigger = React.forwardRef<
   <AccordionPrimitive.Header className="rdx-accordion-header">
     <AccordionPrimitive.Trigger
       ref={ref}
-      className={`rdx-accordion-trigger ${className || ''}`}
+      className={`rdx-accordion-trigger ${className || ""}`}
       {...props}
     >
       {children}
       <ChevronDown size={16} className="rdx-accordion-chevron" aria-hidden />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
-))
-AccordionTrigger.displayName = 'AccordionTrigger'
+));
+AccordionTrigger.displayName = "AccordionTrigger";
 
 const AccordionContent = React.forwardRef<
   React.ComponentRef<typeof AccordionPrimitive.Content>,
@@ -39,12 +39,12 @@ const AccordionContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className={`rdx-accordion-content ${className || ''}`}
+    className={`rdx-accordion-content ${className || ""}`}
     {...props}
   >
     <div className="rdx-accordion-content-inner">{children}</div>
   </AccordionPrimitive.Content>
-))
-AccordionContent.displayName = 'AccordionContent'
+));
+AccordionContent.displayName = "AccordionContent";
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

@@ -1,27 +1,126 @@
-import React from 'react'
-import * as SelectPrimitive from '@radix-ui/react-select'
-import { Check, ChevronDown, ChevronUp } from 'lucide-react'
+import React from "react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
-const Select = SelectPrimitive.Root
-const SelectGroup = SelectPrimitive.Group
-const SelectValue = SelectPrimitive.Value
+interface SelectContextValue {
+  value?: string;
+  onValueChange?: (val: string) => void;
+}
+
+const SelectContext = React.createContext<SelectContextValue>({});
+
+const Select = ({
+  value,
+  onValueChange,
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>) => (
+  <SelectContext.Provider value={{ value, onValueChange }}>
+    <SelectPrimitive.Root
+      value={value}
+      onValueChange={onValueChange}
+      {...props}
+    >
+      {children}
+    </SelectPrimitive.Root>
+  </SelectContext.Provider>
+);
+
+const SelectGroup = SelectPrimitive.Group;
+const SelectValue = SelectPrimitive.Value;
+
+export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<
+  typeof SelectPrimitive.Trigger
+> {
+  value?: string;
+}
 
 const SelectTrigger = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={`rdx-select-trigger ${className || ''}`}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown size={14} className="rdx-select-icon" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-))
-SelectTrigger.displayName = 'SelectTrigger'
+  SelectTriggerProps
+>(({ className, children, value: explicitValue, onChange, ...props }, ref) => {
+  const ctx = React.useContext(SelectContext);
+  const activeValue = explicitValue !== undefined ? explicitValue : ctx.value;
+  const innerRef = React.useRef<HTMLButtonElement | null>(null);
+  const currentValRef = React.useRef(activeValue);
+  currentValRef.current = activeValue;
+
+  const defineValueProperty = (el: HTMLButtonElement) => {
+    Object.defineProperty(el, "value", {
+      get: () => {
+        const protoGet = Object.getOwnPropertyDescriptor(
+          HTMLButtonElement.prototype,
+          "value",
+        )?.get;
+        const protoVal = protoGet ? protoGet.call(el) : "";
+        return protoVal || currentValRef.current;
+      },
+      set: (v) => {
+        currentValRef.current = v;
+        const protoSet = Object.getOwnPropertyDescriptor(
+          HTMLButtonElement.prototype,
+          "value",
+        )?.set;
+        if (protoSet) protoSet.call(el, v);
+      },
+      configurable: true,
+    });
+  };
+
+  React.useImperativeHandle(ref, () => {
+    const el = innerRef.current!;
+    if (el) {
+      defineValueProperty(el);
+    }
+    return el;
+  });
+
+  React.useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    defineValueProperty(el);
+    const handleNativeChange = (e: Event) => {
+      const protoGet = Object.getOwnPropertyDescriptor(
+        HTMLButtonElement.prototype,
+        "value",
+      )?.get;
+      const protoVal = protoGet ? protoGet.call(el) : undefined;
+      const rawVal = protoVal || (e as any).target?.value;
+      if (rawVal !== undefined && ctx.onValueChange) {
+        ctx.onValueChange(rawVal);
+      }
+    };
+    el.addEventListener("change", handleNativeChange);
+    return () => {
+      el.removeEventListener("change", handleNativeChange);
+    };
+  }, [ctx.onValueChange]);
+
+  const handleChange = (e: React.ChangeEvent<any>) => {
+    if (onChange) {
+      onChange(e);
+    }
+    const val = e.target?.value;
+    if (val !== undefined && ctx.onValueChange) {
+      ctx.onValueChange(val);
+    }
+  };
+
+  return (
+    <SelectPrimitive.Trigger
+      ref={innerRef}
+      className={`rdx-select-trigger ${className || ""}`}
+      onChange={handleChange}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown size={14} className="rdx-select-icon" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  );
+});
+SelectTrigger.displayName = "SelectTrigger";
 
 const SelectScrollUpButton = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.ScrollUpButton>,
@@ -29,13 +128,13 @@ const SelectScrollUpButton = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.ScrollUpButton
     ref={ref}
-    className={`rdx-select-scroll-btn ${className || ''}`}
+    className={`rdx-select-scroll-btn ${className || ""}`}
     {...props}
   >
     <ChevronUp size={14} />
   </SelectPrimitive.ScrollUpButton>
-))
-SelectScrollUpButton.displayName = 'SelectScrollUpButton'
+));
+SelectScrollUpButton.displayName = "SelectScrollUpButton";
 
 const SelectScrollDownButton = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.ScrollDownButton>,
@@ -43,22 +142,22 @@ const SelectScrollDownButton = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.ScrollDownButton
     ref={ref}
-    className={`rdx-select-scroll-btn ${className || ''}`}
+    className={`rdx-select-scroll-btn ${className || ""}`}
     {...props}
   >
     <ChevronDown size={14} />
   </SelectPrimitive.ScrollDownButton>
-))
-SelectScrollDownButton.displayName = 'SelectScrollDownButton'
+));
+SelectScrollDownButton.displayName = "SelectScrollDownButton";
 
 const SelectContent = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
+>(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
-      className={`rdx-select-content ${className || ''}`}
+      className={`rdx-select-content ${className || ""}`}
       position={position}
       sideOffset={4}
       {...props}
@@ -70,8 +169,8 @@ const SelectContent = React.forwardRef<
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
-))
-SelectContent.displayName = 'SelectContent'
+));
+SelectContent.displayName = "SelectContent";
 
 const SelectItem = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Item>,
@@ -79,7 +178,7 @@ const SelectItem = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
-    className={`rdx-select-item ${className || ''}`}
+    className={`rdx-select-item ${className || ""}`}
     {...props}
   >
     <span className="rdx-select-item-indicator">
@@ -89,8 +188,8 @@ const SelectItem = React.forwardRef<
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
-))
-SelectItem.displayName = 'SelectItem'
+));
+SelectItem.displayName = "SelectItem";
 
 const SelectLabel = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Label>,
@@ -98,11 +197,11 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={`rdx-select-label ${className || ''}`}
+    className={`rdx-select-label ${className || ""}`}
     {...props}
   />
-))
-SelectLabel.displayName = 'SelectLabel'
+));
+SelectLabel.displayName = "SelectLabel";
 
 const SelectSeparator = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Separator>,
@@ -110,11 +209,11 @@ const SelectSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Separator
     ref={ref}
-    className={`rdx-select-separator ${className || ''}`}
+    className={`rdx-select-separator ${className || ""}`}
     {...props}
   />
-))
-SelectSeparator.displayName = 'SelectSeparator'
+));
+SelectSeparator.displayName = "SelectSeparator";
 
 export {
   Select,
@@ -127,4 +226,4 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
-}
+};

@@ -1,132 +1,269 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  Package, CircleAlert, CheckCircle2, Timer, TrendingUp, TrendingDown,
-  Calendar, MapPin, ArrowRight, Plus, Users,
-  Clock3, Target, Repeat, Wrench, Zap
-} from 'lucide-react'
-import type { IssueRecord } from '../types'
-import useSWR from 'swr'
-import { fetcher, fetchPrioritiesApi, fetchLocationsApi } from '../services/api'
+  Package,
+  CircleAlert,
+  CheckCircle2,
+  Timer,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  MapPin,
+  ArrowRight,
+  Plus,
+  Users,
+  Clock3,
+  Target,
+  Repeat,
+  Wrench,
+  Zap,
+} from "lucide-react";
+import type { IssueRecord } from "../types";
+import useSWR from "swr";
 import {
-  Tooltip, TooltipTrigger, TooltipContent,
-  HoverCard, HoverCardTrigger, HoverCardContent,
-  Progress, ScrollArea, Separator,
-  Tabs, TabsList, TabsTrigger
-} from './ui'
+  fetcher,
+  fetchPrioritiesApi,
+  fetchLocationsApi,
+} from "../services/api";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+  Progress,
+  ScrollArea,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "./ui";
 
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from "../context/AuthContext";
 
 interface AdminDashboardProps {
-  records: IssueRecord[]
-  onSelectIssue: (issue: IssueRecord) => void
+  records: IssueRecord[];
+  onSelectIssue: (issue: IssueRecord) => void;
 }
 
 function TrendIcon({ value, size }: { value?: string | number; size: number }) {
-  const n = typeof value === 'number' ? value : parseFloat(String(value ?? '0').replace('%', ''))
-  return n < 0 ? <TrendingDown size={size} /> : <TrendingUp size={size} />
+  const n =
+    typeof value === "number"
+      ? value
+      : parseFloat(String(value ?? "0").replace("%", ""));
+  return n < 0 ? <TrendingDown size={size} /> : <TrendingUp size={size} />;
 }
 
-export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) {
-  const { data: analytics } = useSWR('/analytics', fetcher, { refreshInterval: 15000 })
-  const { data: techData } = useSWR('/users/technicians', fetcher)
-  const { data: assetsData } = useSWR('/assets', fetcher)
-  const { data: alertsData } = useSWR('/alerts', fetcher)
-  const { data: prioritiesMeta } = useSWR('/metadata/priorities', fetchPrioritiesApi)
-  const { data: locationsMeta } = useSWR('/metadata/locations', fetchLocationsApi)
-  const { user } = useAuth()
+export function AdminDashboard({
+  records,
+  onSelectIssue,
+}: AdminDashboardProps) {
+  const { data: analytics } = useSWR("/analytics", fetcher, {
+    refreshInterval: 15000,
+  });
+  const { data: techData } = useSWR("/users/technicians", fetcher);
+  const { data: assetsData } = useSWR("/assets", fetcher);
+  const { data: alertsData } = useSWR("/alerts", fetcher);
+  const { data: prioritiesMeta } = useSWR(
+    "/metadata/priorities",
+    fetchPrioritiesApi,
+  );
+  const { data: locationsMeta } = useSWR(
+    "/metadata/locations",
+    fetchLocationsApi,
+  );
+  const { user } = useAuth();
 
-  const navigate = useNavigate()
-  const [chartPeriod, setChartPeriod] = useState<'7d' | '30d' | '6m' | '1y'>('6m')
-  const { data: trendsData } = useSWR(`/analytics/trends?period=${chartPeriod}`, fetcher)
+  const navigate = useNavigate();
+  const [chartPeriod, setChartPeriod] = useState<"7d" | "30d" | "6m" | "1y">(
+    "6m",
+  );
+  const { data: trendsData } = useSWR(
+    `/analytics/trends?period=${chartPeriod}`,
+    fetcher,
+  );
 
   // ─── Derived data ───
-  const activeRequests = records.filter(r => r.status !== 'Resolved')
-  const resolvedRequests = records.filter(r => r.status === 'Resolved')
-  const criticalCount = records.filter(r => r.priority === 'Critical' && r.status !== 'Resolved').length
-  const highCount = records.filter(r => r.priority === 'High' && r.status !== 'Resolved').length
-  const mediumCount = records.filter(r => r.priority === 'Medium' && r.status !== 'Resolved').length
-  const lowCount = records.filter(r => r.priority === 'Low' && r.status !== 'Resolved').length
+  const activeRequests = records.filter((r) => r.status !== "Resolved");
+  const resolvedRequests = records.filter((r) => r.status === "Resolved");
+  const criticalCount = records.filter(
+    (r) => r.priority === "Critical" && r.status !== "Resolved",
+  ).length;
+  const highCount = records.filter(
+    (r) => r.priority === "High" && r.status !== "Resolved",
+  ).length;
+  const mediumCount = records.filter(
+    (r) => r.priority === "Medium" && r.status !== "Resolved",
+  ).length;
+  const lowCount = records.filter(
+    (r) => r.priority === "Low" && r.status !== "Resolved",
+  ).length;
 
   // Category breakdown
-  const categoryMap = new Map<string, number>()
-  records.forEach(r => {
-    const cat = r.category || 'Other'
-    categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1)
-  })
-  const categoryData = Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
-  const totalCategoryCount = categoryData.reduce((s, c) => s + c.count, 0)
+  const categoryMap = new Map<string, number>();
+  records.forEach((r) => {
+    const cat = r.category || "Other";
+    categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+  });
+  const categoryData = Array.from(categoryMap.entries()).map(
+    ([name, count]) => ({ name, count }),
+  );
+  const totalCategoryCount = categoryData.reduce((s, c) => s + c.count, 0);
 
   // Chart data
-  const chartData: { labels: string[], reported: number[], resolved: number[] } = (trendsData?.labels ? trendsData : trendsData?.data) || {
-    '7d': { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], reported: [5, 8, 6, 9, 7, 3, 4], resolved: [4, 6, 7, 5, 8, 3, 5] },
-    '30d': { labels: ['W1', 'W2', 'W3', 'W4'], reported: [18, 24, 21, 19], resolved: [15, 20, 22, 18] },
-    '6m': { labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'], reported: [42, 51, 47, 63, 58, 71], resolved: [38, 48, 45, 58, 55, 68] },
-    '1y': { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], reported: [30, 35, 42, 42, 51, 47, 63, 58, 71, 72, 65, 55], resolved: [28, 32, 38, 38, 48, 45, 58, 55, 68, 70, 62, 53] },
-  }[chartPeriod]
+  const chartData: {
+    labels: string[];
+    reported: number[];
+    resolved: number[];
+  } =
+    (trendsData?.labels ? trendsData : trendsData?.data) ||
+    {
+      "7d": {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        reported: [5, 8, 6, 9, 7, 3, 4],
+        resolved: [4, 6, 7, 5, 8, 3, 5],
+      },
+      "30d": {
+        labels: ["W1", "W2", "W3", "W4"],
+        reported: [18, 24, 21, 19],
+        resolved: [15, 20, 22, 18],
+      },
+      "6m": {
+        labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"],
+        reported: [42, 51, 47, 63, 58, 71],
+        resolved: [38, 48, 45, 58, 55, 68],
+      },
+      "1y": {
+        labels: [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ],
+        reported: [30, 35, 42, 42, 51, 47, 63, 58, 71, 72, 65, 55],
+        resolved: [28, 32, 38, 38, 48, 45, 58, 55, 68, 70, 62, 53],
+      },
+    }[chartPeriod];
 
   // SVG chart helpers
-  const chartW = 540, chartH = 210, chartPad = 42
-  const maxVal = Math.max(...chartData.reported, ...chartData.resolved, 1) * 1.15
-  const xStep = (chartW - chartPad * 2) / (chartData.labels.length - 1 || 1)
-  const toY = (v: number) => chartH - chartPad - ((v / maxVal) * (chartH - chartPad * 2))
-  const toX = (i: number) => chartPad + i * xStep
-  const makePath = (data: number[]) => data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ')
-  const makeArea = (data: number[]) => makePath(data) + ` L${toX(data.length - 1).toFixed(1)},${(chartH - chartPad).toFixed(1)} L${toX(0).toFixed(1)},${(chartH - chartPad).toFixed(1)} Z`
+  const chartW = 540,
+    chartH = 210,
+    chartPad = 42;
+  const maxVal =
+    Math.max(...chartData.reported, ...chartData.resolved, 1) * 1.15;
+  const xStep = (chartW - chartPad * 2) / (chartData.labels.length - 1 || 1);
+  const toY = (v: number) =>
+    chartH - chartPad - (v / maxVal) * (chartH - chartPad * 2);
+  const toX = (i: number) => chartPad + i * xStep;
+  const makePath = (data: number[]) =>
+    data
+      .map(
+        (v, i) =>
+          `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toY(v).toFixed(1)}`,
+      )
+      .join(" ");
+  const makeArea = (data: number[]) =>
+    makePath(data) +
+    ` L${toX(data.length - 1).toFixed(1)},${(chartH - chartPad).toFixed(1)} L${toX(0).toFixed(1)},${(chartH - chartPad).toFixed(1)} Z`;
 
   // Donut
-  const donutR = 62, donutStroke = 18, donutCx = 80, donutCy = 80
-  const donutCirc = 2 * Math.PI * donutR
-  const donutColors = ['var(--red)', 'var(--amber-border)', '#3b82f6', 'var(--green-border)', '#8b5cf6', 'var(--txt-dim)']
-  let donutOffset = 0
+  const donutR = 62,
+    donutStroke = 18,
+    donutCx = 80,
+    donutCy = 80;
+  const donutCirc = 2 * Math.PI * donutR;
+  const donutColors = [
+    "var(--red)",
+    "var(--amber-border)",
+    "#3b82f6",
+    "var(--green-border)",
+    "#8b5cf6",
+    "var(--txt-dim)",
+  ];
+  let donutOffset = 0;
 
   // Resolution rate donut
-  const totalIssues = records.length || 1
-  const resolvePct = Math.round((resolvedRequests.length / totalIssues) * 100)
-  const resolveStroke = 14
-  const resolveR = 56
-  const resolveCirc = 2 * Math.PI * resolveR
+  const totalIssues = records.length || 1;
+  const resolvePct = Math.round((resolvedRequests.length / totalIssues) * 100);
+  const resolveStroke = 14;
+  const resolveR = 56;
+  const resolveCirc = 2 * Math.PI * resolveR;
 
   // Campus blocks
-  const locationMap = new Map<string, number>()
-  records.forEach(r => {
-    const loc = r.location || 'Unknown'
-    locationMap.set(loc, (locationMap.get(loc) || 0) + 1)
-  })
-  const fallbackLocColors = ['var(--red)', 'var(--amber-border)', '#3b82f6', 'var(--green-border)']
-  const campusBlocks = Array.from(locationMap.entries()).map(([name, issues], i) => {
-    const meta = locationsMeta?.find(m => m.value === name)
-    const color = meta ? meta.color : fallbackLocColors[i % fallbackLocColors.length]
-    return { name, issues, color }
-  })
+  const locationMap = new Map<string, number>();
+  records.forEach((r) => {
+    const loc = r.location || "Unknown";
+    locationMap.set(loc, (locationMap.get(loc) || 0) + 1);
+  });
+  const fallbackLocColors = [
+    "var(--red)",
+    "var(--amber-border)",
+    "#3b82f6",
+    "var(--green-border)",
+  ];
+  const campusBlocks = Array.from(locationMap.entries()).map(
+    ([name, issues], i) => {
+      const meta = locationsMeta?.find((m) => m.value === name);
+      const color = meta
+        ? meta.color
+        : fallbackLocColors[i % fallbackLocColors.length];
+      return { name, issues, color };
+    },
+  );
 
   // Greeting
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const dateStr = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   // Time ago helper
   const timeAgo = (dateStr: string, timeStr?: string) => {
-    const d = new Date(dateStr + (timeStr ? 'T' + timeStr.replace(' PM', '').replace(' AM', '') : ''))
-    const diff = Date.now() - d.getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 60) return `${mins}m ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs}h ago`
-    return `${Math.floor(hrs / 24)}d ago`
-  }
+    const d = new Date(
+      dateStr +
+        (timeStr ? "T" + timeStr.replace(" PM", "").replace(" AM", "") : ""),
+    );
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
 
-  const priorityMax = Math.max(criticalCount, highCount, mediumCount, lowCount, 1)
+  const priorityMax = Math.max(
+    criticalCount,
+    highCount,
+    mediumCount,
+    lowCount,
+    1,
+  );
 
   // Technician roster preview
-  const fallbackColors = ['var(--red-bright)', '#3b82f6', '#eab308', '#22c55e']
-  const techTeam = techData ? techData.map((t: any, i: number) => ({
-    name: t.name,
-    role: t.role || '—',
-    status: t.status || '—',
-    color: fallbackColors[i % fallbackColors.length],
-    jobs: t.activeJobs || 0
-  })) : []
+  const fallbackColors = ["var(--red-bright)", "#3b82f6", "#eab308", "#22c55e"];
+  const techTeam = techData
+    ? techData.map((t: any, i: number) => ({
+        name: t.name,
+        role: t.role || "—",
+        status: t.status || "—",
+        color: fallbackColors[i % fallbackColors.length],
+        jobs: t.activeJobs || 0,
+      }))
+    : [];
 
   return (
     <main className="page">
@@ -138,9 +275,14 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             <span className="adm-avatar-dot" />
           </div>
           <div>
-            <p className="adm-greeting">{greeting}, <span>{user?.name?.split(' ')[0] || 'Admin'}!</span></p>
+            <p className="adm-greeting">
+              {greeting}, <span>{user?.name?.split(" ")[0] || "Admin"}!</span>
+            </p>
             <h1 className="adm-title">Dashboard</h1>
-            <p className="adm-subtitle">Plan, prioritize, and manage your campus maintenance — all in one view.</p>
+            <p className="adm-subtitle">
+              Plan, prioritize, and manage your campus maintenance — all in one
+              view.
+            </p>
           </div>
         </div>
         <div className="adm-header-right">
@@ -148,7 +290,10 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             <Calendar size={14} />
             <span>{dateStr}</span>
           </div>
-          <button className="adm-btn-primary" onClick={() => navigate('/report')}>
+          <button
+            className="adm-btn-primary"
+            onClick={() => navigate("/report")}
+          >
             <Plus size={15} /> Report Issue
           </button>
         </div>
@@ -159,57 +304,87 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
         <Tooltip>
           <TooltipTrigger asChild>
             <Link className="adm-kpi accent-red" to="/inventory">
-              <div className="adm-kpi-icon-circle icon-red"><Package size={22} /></div>
+              <div className="adm-kpi-icon-circle icon-red">
+                <Package size={22} />
+              </div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Total Assets</span>
-                <span className="adm-kpi-number">{assetsData?.length || 0}</span>
+                <span className="adm-kpi-number">
+                  {assetsData?.length || 0}
+                </span>
               </div>
-              <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.assetGrowth} size={12} /> {analytics?.assetGrowth || "0%"} from last month</div>
+              <div className="adm-kpi-badge trend-up">
+                <TrendIcon value={analytics?.assetGrowth} size={12} />{" "}
+                {analytics?.assetGrowth || "0%"} from last month
+              </div>
             </Link>
           </TooltipTrigger>
-          <TooltipContent className="kpi-tooltip-content"><p>Click to view full inventory &amp; asset registry</p></TooltipContent>
+          <TooltipContent className="kpi-tooltip-content">
+            <p>Click to view full inventory &amp; asset registry</p>
+          </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Link className="adm-kpi accent-amber" to="/issues">
-              <div className="adm-kpi-icon-circle icon-amber"><CircleAlert size={22} /></div>
+              <div className="adm-kpi-icon-circle icon-amber">
+                <CircleAlert size={22} />
+              </div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Active Requests</span>
                 <span className="adm-kpi-number">{activeRequests.length}</span>
               </div>
-              <div className="adm-kpi-badge trend-critical">{criticalCount} Critical</div>
+              <div className="adm-kpi-badge trend-critical">
+                {criticalCount} Critical
+              </div>
             </Link>
           </TooltipTrigger>
-          <TooltipContent className="kpi-tooltip-content"><p>Click to view all active maintenance requests</p></TooltipContent>
+          <TooltipContent className="kpi-tooltip-content">
+            <p>Click to view all active maintenance requests</p>
+          </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Link className="adm-kpi accent-green" to="/analytics">
-              <div className="adm-kpi-icon-circle icon-green"><CheckCircle2 size={22} /></div>
+              <div className="adm-kpi-icon-circle icon-green">
+                <CheckCircle2 size={22} />
+              </div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Resolved This Month</span>
-                <span className="adm-kpi-number">{analytics?.resolvedThisMonth || 0}</span>
+                <span className="adm-kpi-number">
+                  {analytics?.resolvedThisMonth || 0}
+                </span>
               </div>
-              <div className="adm-kpi-badge trend-up"><TrendIcon value={analytics?.resolvedGrowth} size={12} /> {analytics?.resolvedGrowth || "0%"}</div>
+              <div className="adm-kpi-badge trend-up">
+                <TrendIcon value={analytics?.resolvedGrowth} size={12} />{" "}
+                {analytics?.resolvedGrowth || "0%"}
+              </div>
             </Link>
           </TooltipTrigger>
-          <TooltipContent className="kpi-tooltip-content"><p>Click to view analytics &amp; resolution performance</p></TooltipContent>
+          <TooltipContent className="kpi-tooltip-content">
+            <p>Click to view analytics &amp; resolution performance</p>
+          </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Link className="adm-kpi accent-blue" to="/analytics">
-              <div className="adm-kpi-icon-circle icon-blue"><Timer size={22} /></div>
+              <div className="adm-kpi-icon-circle icon-blue">
+                <Timer size={22} />
+              </div>
               <div className="adm-kpi-body">
                 <span className="adm-kpi-label">Avg Resolution</span>
-                <span className="adm-kpi-number">{analytics?.avgResolution || "0h"}</span>
+                <span className="adm-kpi-number">
+                  {analytics?.avgResolution || "0h"}
+                </span>
               </div>
               <div className="adm-kpi-badge trend-up">Target &lt; 4h</div>
             </Link>
           </TooltipTrigger>
-          <TooltipContent className="kpi-tooltip-content"><p>Average time to resolve campus maintenance issues</p></TooltipContent>
+          <TooltipContent className="kpi-tooltip-content">
+            <p>Average time to resolve campus maintenance issues</p>
+          </TooltipContent>
         </Tooltip>
       </div>
 
@@ -220,13 +395,24 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           <div className="adm-card-head">
             <div>
               <h3 className="adm-card-title">Maintenance Trends</h3>
-              <p className="adm-card-sub">Request activity and resolution performance.</p>
+              <p className="adm-card-sub">
+                Request activity and resolution performance.
+              </p>
             </div>
-            <Tabs value={chartPeriod} onValueChange={(v) => setChartPeriod(v as typeof chartPeriod)}>
+            <Tabs
+              value={chartPeriod}
+              onValueChange={(v) => setChartPeriod(v as typeof chartPeriod)}
+            >
               <TabsList className="adm-tabs-list">
-                {(['7d', '30d', '6m', '1y'] as const).map(p => (
+                {(["7d", "30d", "6m", "1y"] as const).map((p) => (
                   <TabsTrigger key={p} value={p} className="adm-tab-trigger">
-                    {p === '7d' ? '7D' : p === '30d' ? '30D' : p === '6m' ? '6M' : '1Y'}
+                    {p === "7d"
+                      ? "7D"
+                      : p === "30d"
+                        ? "30D"
+                        : p === "6m"
+                          ? "6M"
+                          : "1Y"}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -235,27 +421,92 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           <div className="adm-chart-body">
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="adm-line-chart">
               {[0, 0.25, 0.5, 0.75, 1].map((f, i) => {
-                const y = chartH - chartPad - f * (chartH - chartPad * 2)
-                const label = Math.round(f * maxVal)
+                const y = chartH - chartPad - f * (chartH - chartPad * 2);
+                const label = Math.round(f * maxVal);
                 return (
                   <g key={i}>
-                    <line x1={chartPad} y1={y} x2={chartW - chartPad} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <text x={chartPad - 8} y={y + 4} textAnchor="end" fill="var(--txt-sub)" fontSize="10" fontFamily="var(--font-primary)">{label}</text>
+                    <line
+                      x1={chartPad}
+                      y1={y}
+                      x2={chartW - chartPad}
+                      y2={y}
+                      stroke="var(--border)"
+                      strokeWidth="0.5"
+                      strokeDasharray="4 4"
+                    />
+                    <text
+                      x={chartPad - 8}
+                      y={y + 4}
+                      textAnchor="end"
+                      fill="var(--txt-sub)"
+                      fontSize="10"
+                      fontFamily="var(--font-primary)"
+                    >
+                      {label}
+                    </text>
                   </g>
-                )
+                );
               })}
               {chartData.labels.map((l, i) => (
-                <text key={i} x={toX(i)} y={chartH - chartPad + 18} textAnchor="middle" fill="var(--txt-sub)" fontSize="10" fontFamily="var(--font-primary)">{l}</text>
+                <text
+                  key={i}
+                  x={toX(i)}
+                  y={chartH - chartPad + 18}
+                  textAnchor="middle"
+                  fill="var(--txt-sub)"
+                  fontSize="10"
+                  fontFamily="var(--font-primary)"
+                >
+                  {l}
+                </text>
               ))}
-              <path d={makeArea(chartData.reported)} fill="url(#redGrad)" opacity="0.4" />
-              <path d={makeArea(chartData.resolved)} fill="url(#greenGrad)" opacity="0.4" />
-              <path d={makePath(chartData.reported)} fill="none" stroke="var(--red)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d={makePath(chartData.resolved)} fill="none" stroke="var(--green-border)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d={makeArea(chartData.reported)}
+                fill="url(#redGrad)"
+                opacity="0.4"
+              />
+              <path
+                d={makeArea(chartData.resolved)}
+                fill="url(#greenGrad)"
+                opacity="0.4"
+              />
+              <path
+                d={makePath(chartData.reported)}
+                fill="none"
+                stroke="var(--red)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d={makePath(chartData.resolved)}
+                fill="none"
+                stroke="var(--green-border)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
               {chartData.reported.map((v, i) => (
-                <circle key={`r${i}`} cx={toX(i)} cy={toY(v)} r="3.5" fill="var(--red)" stroke="var(--bg-card)" strokeWidth="2" />
+                <circle
+                  key={`r${i}`}
+                  cx={toX(i)}
+                  cy={toY(v)}
+                  r="3.5"
+                  fill="var(--red)"
+                  stroke="var(--bg-card)"
+                  strokeWidth="2"
+                />
               ))}
               {chartData.resolved.map((v, i) => (
-                <circle key={`g${i}`} cx={toX(i)} cy={toY(v)} r="3.5" fill="var(--green-border)" stroke="var(--bg-card)" strokeWidth="2" />
+                <circle
+                  key={`g${i}`}
+                  cx={toX(i)}
+                  cy={toY(v)}
+                  r="3.5"
+                  fill="var(--green-border)"
+                  stroke="var(--bg-card)"
+                  strokeWidth="2"
+                />
               ))}
               <defs>
                 <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
@@ -263,14 +514,34 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
                   <stop offset="100%" stopColor="var(--red)" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--green-border)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="var(--green-border)" stopOpacity="0" />
+                  <stop
+                    offset="0%"
+                    stopColor="var(--green-border)"
+                    stopOpacity="0.25"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--green-border)"
+                    stopOpacity="0"
+                  />
                 </linearGradient>
               </defs>
             </svg>
             <div className="adm-chart-legend">
-              <span className="adm-legend-item"><span className="adm-legend-dot" style={{ background: 'var(--red)' }} />Reported</span>
-              <span className="adm-legend-item"><span className="adm-legend-dot" style={{ background: 'var(--green-border)' }} />Resolved</span>
+              <span className="adm-legend-item">
+                <span
+                  className="adm-legend-dot"
+                  style={{ background: "var(--red)" }}
+                />
+                Reported
+              </span>
+              <span className="adm-legend-item">
+                <span
+                  className="adm-legend-dot"
+                  style={{ background: "var(--green-border)" }}
+                />
+                Resolved
+              </span>
             </div>
           </div>
         </div>
@@ -280,22 +551,33 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           <div className="adm-card-head">
             <div>
               <h3 className="adm-card-title">Alerts & Reminders</h3>
-              <p className="adm-card-sub">Scheduled tasks and critical notices.</p>
+              <p className="adm-card-sub">
+                Scheduled tasks and critical notices.
+              </p>
             </div>
           </div>
           <div className="adm-alerts-list">
             {(alertsData || []).map((item: any, i: number) => (
               <div key={i} className="adm-alert-item">
-                <div className={`adm-alert-dot ${item.type === 'alert' ? 'dot-amber' : ''}`} />
+                <div
+                  className={`adm-alert-dot ${item.type === "alert" ? "dot-amber" : ""}`}
+                />
                 <div className="adm-alert-content">
                   <span className="adm-alert-title">{item.title}</span>
-                  <span className="adm-alert-loc"><MapPin size={11} /> {item.loc}</span>
+                  <span className="adm-alert-loc">
+                    <MapPin size={11} /> {item.loc}
+                  </span>
                 </div>
                 <span className="adm-alert-date">{item.date}</span>
               </div>
             ))}
           </div>
-          <button className="adm-card-cta" onClick={() => navigate('/technician')}>View Full Schedule →</button>
+          <button
+            className="adm-card-cta"
+            onClick={() => navigate("/technician")}
+          >
+            View Full Schedule →
+          </button>
         </div>
       </div>
 
@@ -310,7 +592,12 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             </div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="adm-btn-outline" onClick={() => navigate('/technician')}>+ View Roster</button>
+                <button
+                  className="adm-btn-outline"
+                  onClick={() => navigate("/technician")}
+                >
+                  + View Roster
+                </button>
               </TooltipTrigger>
               <TooltipContent>Open full technician roster</TooltipContent>
             </Tooltip>
@@ -319,21 +606,39 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             {techTeam.map((t: any, i: number) => (
               <HoverCard key={i} openDelay={300} closeDelay={200}>
                 <HoverCardTrigger asChild>
-                  <div className="adm-team-row" style={{ cursor: 'pointer' }}>
-                    <div className="adm-team-avatar" style={{ background: t.color }}>{t.name.split(' ').map((n: string) => n[0]).join('')}</div>
+                  <div className="adm-team-row" style={{ cursor: "pointer" }}>
+                    <div
+                      className="adm-team-avatar"
+                      style={{ background: t.color }}
+                    >
+                      {t.name
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
+                    </div>
                     <div className="adm-team-info">
                       <span className="adm-team-name">{t.name}</span>
-                      <span className="adm-team-role">{t.role} · {t.jobs} active jobs</span>
+                      <span className="adm-team-role">
+                        {t.role} · {t.jobs} active jobs
+                      </span>
                     </div>
-                    <span className={`adm-team-status ${t.status === 'On Shift' ? 'online' : 'away'}`}>
+                    <span
+                      className={`adm-team-status ${t.status === "On Shift" ? "online" : "away"}`}
+                    >
                       <span className="adm-status-dot" /> {t.status}
                     </span>
                   </div>
                 </HoverCardTrigger>
                 <HoverCardContent align="center" className="team-hovercard">
                   <div className="team-hovercard-info">
-                    <div className="team-hovercard-avatar" style={{ background: t.color }}>
-                      {t.name.split(' ').map((n: string) => n[0]).join('')}
+                    <div
+                      className="team-hovercard-avatar"
+                      style={{ background: t.color }}
+                    >
+                      {t.name
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
                     </div>
                     <div className="team-hovercard-details">
                       <h4>{t.name}</h4>
@@ -346,8 +651,16 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
                       <span className="stat-label">Active Jobs</span>
                     </div>
                     <div className="team-hovercard-stat">
-                      <span className="stat-value" style={{ color: t.status === 'On Shift' ? 'var(--green-txt)' : 'var(--amber-txt)' }}>
-                        {t.status === 'On Shift' ? '●' : '○'}
+                      <span
+                        className="stat-value"
+                        style={{
+                          color:
+                            t.status === "On Shift"
+                              ? "var(--green-txt)"
+                              : "var(--amber-txt)",
+                        }}
+                      >
+                        {t.status === "On Shift" ? "●" : "○"}
                       </span>
                       <span className="stat-label">{t.status}</span>
                     </div>
@@ -368,19 +681,73 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           </div>
           <div className="adm-donut-center">
             <svg viewBox="0 0 160 160" className="adm-resolve-donut">
-              <circle cx="80" cy="80" r={resolveR} fill="none" stroke="var(--border)" strokeWidth={resolveStroke} />
-              <circle cx="80" cy="80" r={resolveR} fill="none" stroke="var(--green-border)" strokeWidth={resolveStroke}
+              <circle
+                cx="80"
+                cy="80"
+                r={resolveR}
+                fill="none"
+                stroke="var(--border)"
+                strokeWidth={resolveStroke}
+              />
+              <circle
+                cx="80"
+                cy="80"
+                r={resolveR}
+                fill="none"
+                stroke="var(--green-border)"
+                strokeWidth={resolveStroke}
                 strokeDasharray={`${(resolvePct / 100) * resolveCirc} ${resolveCirc}`}
                 strokeDashoffset={resolveCirc * 0.25}
                 strokeLinecap="round"
-                style={{ transition: 'all 0.8s ease' }} />
-              <text x="80" y="74" textAnchor="middle" fill="var(--txt)" fontSize="28" fontWeight="800" fontFamily="var(--font-display)">{resolvePct}%</text>
-              <text x="80" y="96" textAnchor="middle" fill="var(--txt-sub)" fontSize="11" fontFamily="var(--font-primary)">Resolved</text>
+                style={{ transition: "all 0.8s ease" }}
+              />
+              <text
+                x="80"
+                y="74"
+                textAnchor="middle"
+                fill="var(--txt)"
+                fontSize="28"
+                fontWeight="800"
+                fontFamily="var(--font-display)"
+              >
+                {resolvePct}%
+              </text>
+              <text
+                x="80"
+                y="96"
+                textAnchor="middle"
+                fill="var(--txt-sub)"
+                fontSize="11"
+                fontFamily="var(--font-primary)"
+              >
+                Resolved
+              </text>
             </svg>
             <div className="adm-resolve-stats">
-              <div><span className="adm-rs-dot" style={{ background: 'var(--green-border)' }} /> Resolved <b>{resolvedRequests.length}</b></div>
-              <div><span className="adm-rs-dot" style={{ background: 'var(--amber-border)' }} /> In Progress <b>{records.filter(r => r.status === 'In Progress').length}</b></div>
-              <div><span className="adm-rs-dot" style={{ background: 'var(--red)' }} /> Open <b>{records.filter(r => r.status === 'Open').length}</b></div>
+              <div>
+                <span
+                  className="adm-rs-dot"
+                  style={{ background: "var(--green-border)" }}
+                />{" "}
+                Resolved <b>{resolvedRequests.length}</b>
+              </div>
+              <div>
+                <span
+                  className="adm-rs-dot"
+                  style={{ background: "var(--amber-border)" }}
+                />{" "}
+                In Progress{" "}
+                <b>
+                  {records.filter((r) => r.status === "In Progress").length}
+                </b>
+              </div>
+              <div>
+                <span
+                  className="adm-rs-dot"
+                  style={{ background: "var(--red)" }}
+                />{" "}
+                Open <b>{records.filter((r) => r.status === "Open").length}</b>
+              </div>
             </div>
           </div>
         </div>
@@ -396,25 +763,57 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           <div className="adm-donut-center">
             <svg viewBox="0 0 160 160" className="adm-category-donut">
               {categoryData.map((cat, i) => {
-                const pct = cat.count / totalCategoryCount
-                const dashLen = pct * donutCirc
-                const gap = donutCirc - dashLen
-                const currentOffset = donutOffset
-                donutOffset += dashLen
+                const pct = cat.count / totalCategoryCount;
+                const dashLen = pct * donutCirc;
+                const gap = donutCirc - dashLen;
+                const currentOffset = donutOffset;
+                donutOffset += dashLen;
                 return (
-                  <circle key={i} cx={donutCx} cy={donutCy} r={donutR} fill="none" stroke={donutColors[i]} strokeWidth={donutStroke}
-                    strokeDasharray={`${dashLen} ${gap}`} strokeDashoffset={-currentOffset}
-                    transform={`rotate(-90 ${donutCx} ${donutCy})`} style={{ transition: 'all 0.6s ease' }} />
-                )
+                  <circle
+                    key={i}
+                    cx={donutCx}
+                    cy={donutCy}
+                    r={donutR}
+                    fill="none"
+                    stroke={donutColors[i]}
+                    strokeWidth={donutStroke}
+                    strokeDasharray={`${dashLen} ${gap}`}
+                    strokeDashoffset={-currentOffset}
+                    transform={`rotate(-90 ${donutCx} ${donutCy})`}
+                    style={{ transition: "all 0.6s ease" }}
+                  />
+                );
               })}
-              <text x={donutCx} y={donutCy - 4} textAnchor="middle" fill="var(--txt)" fontSize="22" fontWeight="800" fontFamily="var(--font-display)">{totalCategoryCount}</text>
-              <text x={donutCx} y={donutCy + 14} textAnchor="middle" fill="var(--txt-sub)" fontSize="10" fontFamily="var(--font-primary)">Total</text>
+              <text
+                x={donutCx}
+                y={donutCy - 4}
+                textAnchor="middle"
+                fill="var(--txt)"
+                fontSize="22"
+                fontWeight="800"
+                fontFamily="var(--font-display)"
+              >
+                {totalCategoryCount}
+              </text>
+              <text
+                x={donutCx}
+                y={donutCy + 14}
+                textAnchor="middle"
+                fill="var(--txt-sub)"
+                fontSize="10"
+                fontFamily="var(--font-primary)"
+              >
+                Total
+              </text>
             </svg>
           </div>
           <div className="adm-cat-legend">
             {categoryData.map((cat, i) => (
               <div key={i} className="adm-cat-row">
-                <span className="adm-legend-dot" style={{ background: donutColors[i] }} />
+                <span
+                  className="adm-legend-dot"
+                  style={{ background: donutColors[i] }}
+                />
                 <span className="adm-cat-name">{cat.name}</span>
                 <span className="adm-cat-count">{cat.count}</span>
               </div>
@@ -427,13 +826,22 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
       <div className="adm-card adm-table-card">
         <div className="adm-card-head">
           <div>
-            <div className="adm-live-dot"><span /> LIVE</div>
+            <div className="adm-live-dot">
+              <span /> LIVE
+            </div>
             <h3 className="adm-card-title">Active Maintenance Requests</h3>
-            <p className="adm-card-sub">Real-time issue pipeline across campus labs.</p>
+            <p className="adm-card-sub">
+              Real-time issue pipeline across campus labs.
+            </p>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="adm-btn-outline" onClick={() => navigate('/issues')}>View All Requests →</button>
+              <button
+                className="adm-btn-outline"
+                onClick={() => navigate("/issues")}
+              >
+                View All Requests →
+              </button>
             </TooltipTrigger>
             <TooltipContent>Open full issue tracking view</TooltipContent>
           </Tooltip>
@@ -448,30 +856,51 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Reported</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
+                <th style={{ textAlign: "right" }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {records.slice(0, 5).map(r => (
+              {records.slice(0, 5).map((r) => (
                 <tr key={r.id}>
-                  <td><span className="adm-issue-title">{r.title}</span></td>
-                  <td><span className="adm-loc-chip"><MapPin size={12} /> {r.location}</span></td>
-                  <td><span className="adm-cat-chip">{r.category}</span></td>
                   <td>
-                    <span className={`badge-status ${r.priority.toLowerCase()}`}>
+                    <span className="adm-issue-title">{r.title}</span>
+                  </td>
+                  <td>
+                    <span className="adm-loc-chip">
+                      <MapPin size={12} /> {r.location}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="adm-cat-chip">{r.category}</span>
+                  </td>
+                  <td>
+                    <span
+                      className={`badge-status ${r.priority.toLowerCase()}`}
+                    >
                       <span className="status-dot" /> {r.priority}
                     </span>
                   </td>
                   <td>
-                    <span className={`badge-status ${r.status === 'Resolved' ? 'available' : r.status === 'In Progress' ? 'in-progress' : 'critical'}`}>
+                    <span
+                      className={`badge-status ${r.status === "Resolved" ? "available" : r.status === "In Progress" ? "in-progress" : "critical"}`}
+                    >
                       <span className="status-dot" /> {r.status}
                     </span>
                   </td>
-                  <td><span className="adm-time-ago">{timeAgo(r.date, r.time)}</span></td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td>
+                    <span className="adm-time-ago">
+                      {timeAgo(r.date, r.time)}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="adm-action-btn" onClick={() => onSelectIssue(r)}>View <ArrowRight size={12} /></button>
+                        <button
+                          className="adm-action-btn"
+                          onClick={() => onSelectIssue(r)}
+                        >
+                          View <ArrowRight size={12} />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>View full issue details</TooltipContent>
                     </Tooltip>
@@ -497,46 +926,89 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="adm-perf-item">
-                  <div className="adm-perf-icon"><Clock3 size={16} /></div>
+                  <div className="adm-perf-icon">
+                    <Clock3 size={16} />
+                  </div>
                   <span className="adm-perf-label">First Response</span>
-                  <span className="adm-perf-value">{analytics?.firstResponse || "0 min"}</span>
-                  <span className="adm-perf-trend"><TrendIcon value={analytics?.firstResponseTrend} size={11} /> {analytics?.firstResponseTrend || "0%"}</span>
+                  <span className="adm-perf-value">
+                    {analytics?.firstResponse || "0 min"}
+                  </span>
+                  <span className="adm-perf-trend">
+                    <TrendIcon
+                      value={analytics?.firstResponseTrend}
+                      size={11}
+                    />{" "}
+                    {analytics?.firstResponseTrend || "0%"}
+                  </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Average time to first acknowledge an issue</TooltipContent>
+              <TooltipContent>
+                Average time to first acknowledge an issue
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="adm-perf-item">
-                  <div className="adm-perf-icon"><Timer size={16} /></div>
+                  <div className="adm-perf-icon">
+                    <Timer size={16} />
+                  </div>
                   <span className="adm-perf-label">Avg Resolution</span>
-                  <span className="adm-perf-value">{analytics?.avgResolution || "0h"}</span>
-                  <span className="adm-perf-trend"><TrendIcon value={analytics?.avgResolutionTrend} size={11} /> {analytics?.avgResolutionTrend || "0%"}</span>
+                  <span className="adm-perf-value">
+                    {analytics?.avgResolution || "0h"}
+                  </span>
+                  <span className="adm-perf-trend">
+                    <TrendIcon
+                      value={analytics?.avgResolutionTrend}
+                      size={11}
+                    />{" "}
+                    {analytics?.avgResolutionTrend || "0%"}
+                  </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Average time from report to resolution</TooltipContent>
+              <TooltipContent>
+                Average time from report to resolution
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="adm-perf-item">
-                  <div className="adm-perf-icon"><Target size={16} /></div>
+                  <div className="adm-perf-icon">
+                    <Target size={16} />
+                  </div>
                   <span className="adm-perf-label">SLA Compliance</span>
-                  <span className="adm-perf-value">{analytics ? Math.round(analytics.slaCompliance) + '%' : '—'}</span>
-                  <Progress value={analytics ? Math.round(analytics.slaCompliance) : 0} style={{ height: '6px', marginTop: '6px' }} />
+                  <span className="adm-perf-value">
+                    {analytics
+                      ? Math.round(analytics.slaCompliance) + "%"
+                      : "—"}
+                  </span>
+                  <Progress
+                    value={analytics ? Math.round(analytics.slaCompliance) : 0}
+                    style={{ height: "6px", marginTop: "6px" }}
+                  />
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Percentage of issues resolved within SLA targets</TooltipContent>
+              <TooltipContent>
+                Percentage of issues resolved within SLA targets
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="adm-perf-item">
-                  <div className="adm-perf-icon"><Repeat size={16} /></div>
+                  <div className="adm-perf-icon">
+                    <Repeat size={16} />
+                  </div>
                   <span className="adm-perf-label">Resolved Issues</span>
-                  <span className="adm-perf-value">{analytics?.resolvedIncidents || 0}</span>
-                  <span className="adm-perf-trend"><TrendingUp size={11} /> Total</span>
+                  <span className="adm-perf-value">
+                    {analytics?.resolvedIncidents || 0}
+                  </span>
+                  <span className="adm-perf-trend">
+                    <TrendingUp size={11} /> Total
+                  </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Total number of issues resolved to date</TooltipContent>
+              <TooltipContent>
+                Total number of issues resolved to date
+              </TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -551,25 +1023,51 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
           </div>
           <div className="adm-priority-list">
             {[
-              { label: 'Critical', count: criticalCount, fallbackColor: 'var(--red)' },
-              { label: 'High', count: highCount, fallbackColor: 'var(--amber-border)' },
-              { label: 'Medium', count: mediumCount, fallbackColor: 'var(--txt-sub)' },
-              { label: 'Low', count: lowCount, fallbackColor: 'var(--border-bright)' },
+              {
+                label: "Critical",
+                count: criticalCount,
+                fallbackColor: "var(--red)",
+              },
+              {
+                label: "High",
+                count: highCount,
+                fallbackColor: "var(--amber-border)",
+              },
+              {
+                label: "Medium",
+                count: mediumCount,
+                fallbackColor: "var(--txt-sub)",
+              },
+              {
+                label: "Low",
+                count: lowCount,
+                fallbackColor: "var(--border-bright)",
+              },
             ].map((p, i) => {
-              const meta = prioritiesMeta?.find(m => m.value === p.label)
-              const color = meta ? meta.color : p.fallbackColor
+              const meta = prioritiesMeta?.find((m) => m.value === p.label);
+              const color = meta ? meta.color : p.fallbackColor;
               return (
-              <div key={i} className="adm-priority-item">
-                <div className="adm-priority-label">
-                  <span className="adm-priority-dot" style={{ background: color }} />
-                  <span>{p.label}</span>
+                <div key={i} className="adm-priority-item">
+                  <div className="adm-priority-label">
+                    <span
+                      className="adm-priority-dot"
+                      style={{ background: color }}
+                    />
+                    <span>{p.label}</span>
+                  </div>
+                  <div className="adm-priority-bar-wrap">
+                    <div
+                      className="adm-priority-bar"
+                      style={{
+                        width: `${(p.count / (priorityMax || 1)) * 100}%`,
+                        background: color,
+                      }}
+                    />
+                  </div>
+                  <span className="adm-priority-count">{p.count}</span>
                 </div>
-                <div className="adm-priority-bar-wrap">
-                  <div className="adm-priority-bar" style={{ width: `${(p.count / (priorityMax || 1)) * 100}%`, background: color }} />
-                </div>
-                <span className="adm-priority-count">{p.count}</span>
-              </div>
-            )})}
+              );
+            })}
           </div>
         </div>
 
@@ -582,16 +1080,27 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
             </div>
           </div>
           <div className="adm-campus-list">
-            {campusBlocks.sort((a, b) => b.issues - a.issues).map((b, i) => (
-              <div key={i} className="adm-campus-row">
-                <span className="adm-campus-dot" style={{ background: b.color }} />
-                <span className="adm-campus-name">{b.name}</span>
-                <div className="adm-campus-bar-wrap">
-                  <div className="adm-campus-bar" style={{ width: `${(b.issues / Math.max(...campusBlocks.map(c => c.issues), 1)) * 100}%`, background: b.color }} />
+            {campusBlocks
+              .sort((a, b) => b.issues - a.issues)
+              .map((b, i) => (
+                <div key={i} className="adm-campus-row">
+                  <span
+                    className="adm-campus-dot"
+                    style={{ background: b.color }}
+                  />
+                  <span className="adm-campus-name">{b.name}</span>
+                  <div className="adm-campus-bar-wrap">
+                    <div
+                      className="adm-campus-bar"
+                      style={{
+                        width: `${(b.issues / Math.max(...campusBlocks.map((c) => c.issues), 1)) * 100}%`,
+                        background: b.color,
+                      }}
+                    />
+                  </div>
+                  <span className="adm-campus-count">{b.issues}</span>
                 </div>
-                <span className="adm-campus-count">{b.issues}</span>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
@@ -607,30 +1116,52 @@ export function AdminDashboard({ records, onSelectIssue }: AdminDashboardProps) 
         <div className="adm-quick-row">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="adm-btn-primary" onClick={() => navigate('/report')}><Plus size={16} /> Report an Issue</button>
+              <button
+                className="adm-btn-primary"
+                onClick={() => navigate("/report")}
+              >
+                <Plus size={16} /> Report an Issue
+              </button>
             </TooltipTrigger>
             <TooltipContent>Submit a new maintenance request</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="adm-btn-secondary" onClick={() => navigate('/inventory')}><Package size={16} /> View Inventory</button>
+              <button
+                className="adm-btn-secondary"
+                onClick={() => navigate("/inventory")}
+              >
+                <Package size={16} /> View Inventory
+              </button>
             </TooltipTrigger>
             <TooltipContent>Browse campus asset inventory</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="adm-btn-secondary" onClick={() => navigate('/schedule-maintenance')}><Calendar size={16} /> Schedule Maintenance</button>
+              <button
+                className="adm-btn-secondary"
+                onClick={() => navigate("/schedule-maintenance")}
+              >
+                <Calendar size={16} /> Schedule Maintenance
+              </button>
             </TooltipTrigger>
             <TooltipContent>Plan preventive maintenance tasks</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="adm-btn-secondary" onClick={() => navigate('/manage-technicians')}><Users size={16} /> Manage Technicians</button>
+              <button
+                className="adm-btn-secondary"
+                onClick={() => navigate("/manage-technicians")}
+              >
+                <Users size={16} /> Manage Technicians
+              </button>
             </TooltipTrigger>
-            <TooltipContent>Manage technician assignments &amp; roster</TooltipContent>
+            <TooltipContent>
+              Manage technician assignments &amp; roster
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>
     </main>
-  )
+  );
 }

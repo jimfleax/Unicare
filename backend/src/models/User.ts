@@ -1,14 +1,14 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
   name: string;
   email: string;
   password?: string;
-  role: 'student' | 'technician' | 'admin' | 'lab_admin';
+  role: "student" | "technician" | "admin" | "lab_admin";
   carePoints: number;
   title?: string;
   specialty?: string;
-  status?: 'On Shift' | 'In Field' | 'On Call' | 'Off Duty';
+  status?: "On Shift" | "In Field" | "On Call" | "Off Duty";
   phone?: string;
   avatarColor?: string;
   avatarUrl?: string;
@@ -29,16 +29,16 @@ const userSchema = new Schema<IUser>(
     password: { type: String },
     role: {
       type: String,
-      enum: ['student', 'technician', 'admin', 'lab_admin'],
-      default: 'student',
+      enum: ["student", "technician", "admin", "lab_admin"],
+      default: "student",
     },
     carePoints: { type: Number, default: 0 },
     title: { type: String },
     specialty: { type: String },
-    status: { 
-      type: String, 
-      enum: ['On Shift', 'In Field', 'On Call', 'Off Duty'],
-      default: 'On Shift'
+    status: {
+      type: String,
+      enum: ["On Shift", "In Field", "On Call", "Off Duty"],
+      default: "On Shift",
     },
     phone: { type: String },
     avatarColor: { type: String },
@@ -50,7 +50,7 @@ const userSchema = new Schema<IUser>(
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model<IUser>('User', userSchema);
+export default mongoose.model<IUser>("User", userSchema);

@@ -1,17 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import { IStorageService, UploadResult } from './storageService.interface';
-import { AppError } from '../../utils/AppError';
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { IStorageService, UploadResult } from "./storageService.interface";
+import { AppError } from "../../utils/AppError";
 
 const MIME_EXTENSION_MAP: Record<string, string> = {
-  'image/jpeg': '.jpg',
-  'image/jpg': '.jpg',
-  'image/png': '.png',
-  'image/webp': '.webp',
+  "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
 };
 
-function getValidatedImageMime(buffer: Buffer, claimedMime?: string): string | null {
+function getValidatedImageMime(
+  buffer: Buffer,
+  claimedMime?: string,
+): string | null {
   if (!buffer || !claimedMime) {
     return null;
   }
@@ -33,7 +36,7 @@ function getValidatedImageMime(buffer: Buffer, claimedMime?: string): string | n
     buffer[6] === 0x1a &&
     buffer[7] === 0x0a
   ) {
-    return normalizedClaimed === 'image/png' ? 'image/png' : null;
+    return normalizedClaimed === "image/png" ? "image/png" : null;
   }
 
   // JPEG: FF D8 FF
@@ -43,7 +46,8 @@ function getValidatedImageMime(buffer: Buffer, claimedMime?: string): string | n
     buffer[1] === 0xd8 &&
     buffer[2] === 0xff
   ) {
-    return (normalizedClaimed === 'image/jpeg' || normalizedClaimed === 'image/jpg')
+    return normalizedClaimed === "image/jpeg" ||
+      normalizedClaimed === "image/jpg"
       ? normalizedClaimed
       : null;
   }
@@ -60,7 +64,7 @@ function getValidatedImageMime(buffer: Buffer, claimedMime?: string): string | n
     buffer[10] === 0x42 &&
     buffer[11] === 0x50
   ) {
-    return normalizedClaimed === 'image/webp' ? 'image/webp' : null;
+    return normalizedClaimed === "image/webp" ? "image/webp" : null;
   }
 
   return null;
@@ -70,13 +74,19 @@ export class LocalStorageService implements IStorageService {
   private baseDir: string;
 
   constructor(baseDir?: string) {
-    this.baseDir = baseDir || process.env.UPLOAD_DIR || path.resolve(process.cwd(), 'uploads');
+    this.baseDir =
+      baseDir ||
+      process.env.UPLOAD_DIR ||
+      path.resolve(process.cwd(), "uploads");
     if (!fs.existsSync(this.baseDir)) {
       fs.mkdirSync(this.baseDir, { recursive: true });
     }
   }
 
-  async uploadFile(file: Express.Multer.File, folder = 'general'): Promise<UploadResult> {
+  async uploadFile(
+    file: Express.Multer.File,
+    folder = "general",
+  ): Promise<UploadResult> {
     const targetFolder = path.join(this.baseDir, folder);
     if (!fs.existsSync(targetFolder)) {
       fs.mkdirSync(targetFolder, { recursive: true });
@@ -88,7 +98,7 @@ export class LocalStorageService implements IStorageService {
     } else if (file.path) {
       buffer = await fs.promises.readFile(file.path);
     } else {
-      throw new AppError('File buffer or path is missing', 400);
+      throw new AppError("File buffer or path is missing", 400);
     }
 
     const validatedMime = getValidatedImageMime(buffer, file.mimetype);
@@ -96,11 +106,14 @@ export class LocalStorageService implements IStorageService {
       if (file.path) {
         await fs.promises.unlink(file.path).catch(() => {});
       }
-      throw new AppError('File content does not match the image MIME type', 400);
+      throw new AppError(
+        "File content does not match the image MIME type",
+        400,
+      );
     }
 
     const ext = MIME_EXTENSION_MAP[validatedMime];
-    const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
+    const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
     const targetPath = path.join(targetFolder, uniqueName);
 
     if (file.buffer) {
@@ -111,7 +124,7 @@ export class LocalStorageService implements IStorageService {
       await fs.promises.unlink(file.path).catch(() => {});
     }
 
-    const key = path.join(folder, uniqueName).replace(/\\/g, '/');
+    const key = path.join(folder, uniqueName).replace(/\\/g, "/");
     const url = `/uploads/${key}`;
 
     return {
@@ -124,7 +137,7 @@ export class LocalStorageService implements IStorageService {
   }
 
   async deleteFile(key: string): Promise<void> {
-    const safeKey = path.normalize(key).replace(/^(\.\.[\/\\])+/, '');
+    const safeKey = path.normalize(key).replace(/^(\.\.[/\\])+/, "");
     const fullPath = path.join(this.baseDir, safeKey);
     try {
       if (fs.existsSync(fullPath)) {

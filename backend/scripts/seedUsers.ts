@@ -1,47 +1,48 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import path from 'path';
-import User from '../src/models/User';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import path from "path";
+import User from "../src/models/User";
+import bcrypt from "bcryptjs";
 
 // Load env vars
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const seedUsers = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unicare';
-    const dbName = process.env.DB_NAME || 'ucare_test';
+    const mongoUri =
+      process.env.MONGODB_URI || "mongodb://localhost:27017/unicare";
+    const dbName = process.env.DB_NAME || "ucare_test";
     await mongoose.connect(mongoUri, { dbName });
-    console.log('MongoDB Connected...');
+    console.log("MongoDB Connected...");
 
     const users: Array<{
       name: string;
       email: string;
       password: string;
-      role: 'admin' | 'technician' | 'student';
+      role: "admin" | "technician" | "student";
       phone: string;
     }> = [
       {
-        name: 'Admin User',
-        email: 'admin@ucare.com',
-        password: 'password123',
-        role: 'admin',
-        phone: '1234567890'
+        name: "Admin User",
+        email: "admin@ucare.com",
+        password: "password123",
+        role: "admin",
+        phone: "1234567890",
       },
       {
-        name: 'Technician User',
-        email: 'tech@ucare.com',
-        password: 'password123',
-        role: 'technician',
-        phone: '1234567892'
+        name: "Technician User",
+        email: "tech@ucare.com",
+        password: "password123",
+        role: "technician",
+        phone: "1234567892",
       },
       {
-        name: 'Student User',
-        email: 'student@ucare.com',
-        password: 'password123',
-        role: 'student',
-        phone: '1234567893'
-      }
+        name: "Student User",
+        email: "student@ucare.com",
+        password: "password123",
+        role: "student",
+        phone: "1234567893",
+      },
     ];
 
     // Check if users already exist to avoid duplicates
@@ -57,10 +58,10 @@ const seedUsers = async () => {
       }
     }
 
-    console.log('Database seeded successfully');
+    console.log("Database seeded successfully");
     process.exit(0);
   } catch (error) {
-    console.error('Error seeding data:', error);
+    console.error("Error seeding data:", error);
     process.exit(1);
   }
 };

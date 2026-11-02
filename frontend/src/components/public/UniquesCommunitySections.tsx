@@ -1,189 +1,207 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from "react";
 import {
-  Search, MapPin, UserCheck, AlertTriangle,
-  ClipboardList, Cpu, Radio, ShieldCheck
-} from 'lucide-react'
+  Search,
+  MapPin,
+  UserCheck,
+  AlertTriangle,
+  ClipboardList,
+  Cpu,
+  Radio,
+  ShieldCheck,
+} from "lucide-react";
 
 export function SmartRoutingSection() {
-  const [hoveredStage, setHoveredStage] = useState<number | null>(null)
-  const [centerStage, setCenterStage] = useState<number | null>(null)
-  const [visibleStages, setVisibleStages] = useState<Record<number, boolean>>({})
-  const [passedStages, setPassedStages] = useState<Record<number, boolean>>({})
-  const [isConclusionVisible, setIsConclusionVisible] = useState(false)
+  const [hoveredStage, setHoveredStage] = useState<number | null>(null);
+  const [centerStage, setCenterStage] = useState<number | null>(null);
+  const [visibleStages, setVisibleStages] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [passedStages, setPassedStages] = useState<Record<number, boolean>>({});
+  const [isConclusionVisible, setIsConclusionVisible] = useState(false);
 
-  const timelineRef = useRef<HTMLDivElement | null>(null)
-  const progressLineRef = useRef<HTMLDivElement | null>(null)
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([])
-  const conclusionRef = useRef<HTMLDivElement | null>(null)
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const progressLineRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const conclusionRef = useRef<HTMLDivElement | null>(null);
 
   // Fast layout cache to avoid calling getBoundingClientRect repeatedly in scroll listener
-  const rowMetricsRef = useRef<{ top: number; center: number }[]>([])
-  const conclusionTopRef = useRef<number>(0)
-  const currentCenterRef = useRef<number | null>(null)
-  const visibleStagesRef = useRef<Record<number, boolean>>({})
-  const passedStagesRef = useRef<Record<number, boolean>>({})
+  const rowMetricsRef = useRef<{ top: number; center: number }[]>([]);
+  const conclusionTopRef = useRef<number>(0);
+  const currentCenterRef = useRef<number | null>(null);
+  const visibleStagesRef = useRef<Record<number, boolean>>({});
+  const passedStagesRef = useRef<Record<number, boolean>>({});
 
   const stages = [
     {
-      num: '01',
-      label: 'Identify',
+      num: "01",
+      label: "Identify",
       question: "What's wrong?",
-      desc: 'The reported issue is categorized by type — electrical, HVAC, plumbing, network, furniture, and more.',
+      desc: "The reported issue is categorized by type — electrical, HVAC, plumbing, network, furniture, and more.",
       icon: Search,
     },
     {
-      num: '02',
-      label: 'Locate',
-      question: 'Where is it?',
-      desc: 'The system uses the reported location to identify the relevant building, floor, room, or facility.',
+      num: "02",
+      label: "Locate",
+      question: "Where is it?",
+      desc: "The system uses the reported location to identify the relevant building, floor, room, or facility.",
       icon: MapPin,
     },
     {
-      num: '03',
-      label: 'Match',
-      question: 'Who can fix it?',
-      desc: 'Available technicians are matched based on specialization, availability, and assigned area.',
+      num: "03",
+      label: "Match",
+      question: "Who can fix it?",
+      desc: "Available technicians are matched based on specialization, availability, and assigned area.",
       icon: UserCheck,
     },
     {
-      num: '04',
-      label: 'Prioritize',
-      question: 'How urgent is it?',
-      desc: 'Issues are prioritized based on severity and operational impact, ensuring critical problems are handled first.',
+      num: "04",
+      label: "Prioritize",
+      question: "How urgent is it?",
+      desc: "Issues are prioritized based on severity and operational impact, ensuring critical problems are handled first.",
       icon: AlertTriangle,
     },
-  ]
+  ];
 
   // ── High Performance Scroll-Linked Line & Center Auto-Hover ──
   useEffect(() => {
-    let rafId: number
+    let rafId: number;
 
     // Measure layout metrics once and on resize (zero reflow during scrolling)
     const measureLayout = () => {
-      if (!timelineRef.current) return
+      if (!timelineRef.current) return;
       rowMetricsRef.current = rowRefs.current.map((el) => {
-        if (!el) return { top: 0, center: 0 }
+        if (!el) return { top: 0, center: 0 };
         return {
           top: el.offsetTop,
           center: el.offsetTop + el.offsetHeight * 0.5,
-        }
-      })
+        };
+      });
       if (conclusionRef.current) {
-        conclusionTopRef.current = conclusionRef.current.offsetTop
+        conclusionTopRef.current = conclusionRef.current.offsetTop;
       }
-    }
+    };
 
-    measureLayout()
+    measureLayout();
 
     const updateScroll = () => {
-      const timeline = timelineRef.current
-      if (!timeline) return
+      const timeline = timelineRef.current;
+      if (!timeline) return;
 
-      const timelineRect = timeline.getBoundingClientRect()
-      const timelineHeight = timelineRect.height
-      const screenH = window.innerHeight
-      const triggerY = screenH * 0.55
+      const timelineRect = timeline.getBoundingClientRect();
+      const timelineHeight = timelineRect.height;
+      const screenH = window.innerHeight;
+      const triggerY = screenH * 0.55;
 
       // How far down has the trigger penetrated?
-      const rawProgress = triggerY - timelineRect.top
-      const progressHeight = Math.max(0, Math.min(timelineHeight, rawProgress))
+      const rawProgress = triggerY - timelineRect.top;
+      const progressHeight = Math.max(0, Math.min(timelineHeight, rawProgress));
 
       // Direct style update for 120fps hardware-accelerated smoothness
       if (progressLineRef.current) {
-        progressLineRef.current.style.height = `${progressHeight}px`
+        progressLineRef.current.style.height = `${progressHeight}px`;
       }
 
       // 1. Sequential Card Reveals (One by one)
-      let visibleChanged = false
-      let passedChanged = false
+      let visibleChanged = false;
+      let passedChanged = false;
 
       rowMetricsRef.current.forEach((metric, idx) => {
         // As the line reaches near the row top, reveal it
-        if (progressHeight >= metric.top - 50 || (timelineRect.top + metric.top) <= screenH * 0.88) {
+        if (
+          progressHeight >= metric.top - 50 ||
+          timelineRect.top + metric.top <= screenH * 0.88
+        ) {
           if (!visibleStagesRef.current[idx]) {
-            visibleStagesRef.current[idx] = true
-            visibleChanged = true
+            visibleStagesRef.current[idx] = true;
+            visibleChanged = true;
           }
         }
 
         // Passed status
         if (progressHeight >= metric.center - 10) {
           if (!passedStagesRef.current[idx]) {
-            passedStagesRef.current[idx] = true
-            passedChanged = true
+            passedStagesRef.current[idx] = true;
+            passedChanged = true;
           }
         }
-      })
+      });
 
       if (visibleChanged) {
-        setVisibleStages({ ...visibleStagesRef.current })
+        setVisibleStages({ ...visibleStagesRef.current });
       }
       if (passedChanged) {
-        setPassedStages({ ...passedStagesRef.current })
+        setPassedStages({ ...passedStagesRef.current });
       }
 
       // Check conclusion box
       if (conclusionTopRef.current > 0) {
-        if (progressHeight >= conclusionTopRef.current - 60 || (timelineRect.top + conclusionTopRef.current) <= screenH * 0.88) {
-          setIsConclusionVisible(true)
+        if (
+          progressHeight >= conclusionTopRef.current - 60 ||
+          timelineRect.top + conclusionTopRef.current <= screenH * 0.88
+        ) {
+          setIsConclusionVisible(true);
         }
       }
 
       // 2. Automatically hover the card in the center of the viewport
-      let closestIdx: number | null = null
-      let closestDist = Infinity
+      let closestIdx: number | null = null;
+      let closestDist = Infinity;
 
       rowMetricsRef.current.forEach((metric, idx) => {
-        const rowScreenCenter = timelineRect.top + metric.center
-        const dist = Math.abs(rowScreenCenter - screenH * 0.5)
+        const rowScreenCenter = timelineRect.top + metric.center;
+        const dist = Math.abs(rowScreenCenter - screenH * 0.5);
         if (dist < screenH * 0.38 && dist < closestDist) {
-          closestDist = dist
-          closestIdx = idx
+          closestDist = dist;
+          closestIdx = idx;
         }
-      })
+      });
 
       // Only trigger React state change if center card actually changed
       if (currentCenterRef.current !== closestIdx) {
-        currentCenterRef.current = closestIdx
-        setCenterStage(closestIdx)
+        currentCenterRef.current = closestIdx;
+        setCenterStage(closestIdx);
       }
-    }
+    };
 
     const onScroll = () => {
-      cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(updateScroll)
-    }
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateScroll);
+    };
 
     const onResize = () => {
-      measureLayout()
-      onScroll()
-    }
+      measureLayout();
+      onScroll();
+    };
 
-    updateScroll()
+    updateScroll();
 
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onResize, { passive: true })
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
-      cancelAnimationFrame(rafId)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
-    }
-  }, [])
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   return (
     <section className="smart-routing-section">
       <div className="smart-routing-container">
-
         {/* Header */}
         <div className="smart-routing-header reveal-fade-up">
           <p className="smart-routing-eyebrow">AUTOMATED DISPATCH ENGINE</p>
-          <h2 className="smart-routing-title">Smart <span className="text-red-highlight">Routing</span></h2>
+          <h2 className="smart-routing-title">
+            Smart <span className="text-red-highlight">Routing</span>
+          </h2>
           <p className="smart-routing-subtitle">
-            THE RIGHT ISSUE. <span className="text-red-highlight">THE RIGHT PERSON.</span>
+            THE RIGHT ISSUE.{" "}
+            <span className="text-red-highlight">THE RIGHT PERSON.</span>
           </p>
           <p className="smart-routing-desc">
-            Every report is automatically categorized, prioritized, and routed to the appropriate maintenance team so issues reach the people who can actually fix them.
+            Every report is automatically categorized, prioritized, and routed
+            to the appropriate maintenance team so issues reach the people who
+            can actually fix them.
           </p>
         </div>
 
@@ -196,20 +214,22 @@ export function SmartRoutingSection() {
           </div>
 
           {stages.map((stage, idx) => {
-            const Icon = stage.icon
-            const isHovered = hoveredStage === idx
-            const isAutoHovered = hoveredStage === null && centerStage === idx
-            const isActive = isHovered || isAutoHovered
-            const isVisible = !!visibleStages[idx]
-            const isPassed = !!passedStages[idx]
-            const isEven = idx % 2 === 0 // even = right content, odd = left content
+            const Icon = stage.icon;
+            const isHovered = hoveredStage === idx;
+            const isAutoHovered = hoveredStage === null && centerStage === idx;
+            const isActive = isHovered || isAutoHovered;
+            const isVisible = !!visibleStages[idx];
+            const isPassed = !!passedStages[idx];
+            const isEven = idx % 2 === 0; // even = right content, odd = left content
 
             return (
               <div
                 key={stage.num}
-                ref={(el) => { rowRefs.current[idx] = el }}
+                ref={(el) => {
+                  rowRefs.current[idx] = el;
+                }}
                 data-stage-index={idx}
-                className={`sr-timeline-row ${isEven ? 'sr-row-right sr-anim-right' : 'sr-row-left sr-anim-left'} ${isVisible ? 'is-visible' : ''} ${isActive ? 'sr-row-active' : ''} ${isPassed ? 'sr-row-passed' : ''}`}
+                className={`sr-timeline-row ${isEven ? "sr-row-right sr-anim-right" : "sr-row-left sr-anim-left"} ${isVisible ? "is-visible" : ""} ${isActive ? "sr-row-active" : ""} ${isPassed ? "sr-row-passed" : ""}`}
                 onMouseEnter={() => setHoveredStage(idx)}
                 onMouseLeave={() => setHoveredStage(null)}
                 onTouchStart={() => setHoveredStage(idx)}
@@ -224,7 +244,9 @@ export function SmartRoutingSection() {
 
                 {/* Center connector: circle with icon + number */}
                 <div className="sr-timeline-center">
-                  <div className={`sr-timeline-node ${isActive ? 'sr-node-active' : ''} ${isPassed ? 'sr-node-passed' : ''}`}>
+                  <div
+                    className={`sr-timeline-node ${isActive ? "sr-node-active" : ""} ${isPassed ? "sr-node-passed" : ""}`}
+                  >
                     <Icon size={22} />
                   </div>
                 </div>
@@ -234,61 +256,62 @@ export function SmartRoutingSection() {
                   <span className="sr-timeline-num">{stage.num}</span>
                 </div>
               </div>
-            )
+            );
           })}
 
           {/* Conclusion box – terminal step */}
-          <div 
+          <div
             ref={conclusionRef}
-            className={`sr-timeline-conclusion ${isConclusionVisible ? 'is-visible' : ''}`}
+            className={`sr-timeline-conclusion ${isConclusionVisible ? "is-visible" : ""}`}
           >
             <p className="sr-conclusion-text">
-              And there you have <strong>the right person</strong> dealing with <strong>the right issue</strong> without any manual efforts.
+              And there you have <strong>the right person</strong> dealing with{" "}
+              <strong>the right issue</strong> without any manual efforts.
             </p>
           </div>
         </div>
-
       </div>
     </section>
-  )
-}export function WhatHappensNextSection() {
+  );
+}
+export function WhatHappensNextSection() {
   const steps = [
     {
-      num: '01',
-      title: 'Your Report Is Logged',
-      desc: 'Your issue, location, description, and attached media are recorded and given a unique request ID.',
+      num: "01",
+      title: "Your Report Is Logged",
+      desc: "Your issue, location, description, and attached media are recorded and given a unique request ID.",
       icon: ClipboardList,
-      side: 'left' as const,
+      side: "left" as const,
     },
     {
-      num: '02',
-      title: 'The Issue Is Analyzed',
-      desc: 'The system identifies the issue category, severity, and required service.',
+      num: "02",
+      title: "The Issue Is Analyzed",
+      desc: "The system identifies the issue category, severity, and required service.",
       icon: Cpu,
-      side: 'right' as const,
+      side: "right" as const,
     },
     {
-      num: '03',
-      title: 'The Right Technician Is Found',
-      desc: 'The request is matched with an available technician based on expertise, location, and workload.',
+      num: "03",
+      title: "The Right Technician Is Found",
+      desc: "The request is matched with an available technician based on expertise, location, and workload.",
       icon: UserCheck,
-      side: 'left' as const,
+      side: "left" as const,
     },
     {
-      num: '04',
-      title: 'You Get Real-Time Updates',
-      desc: 'Track your request as it moves through Assigned → In Progress → Resolved.',
+      num: "04",
+      title: "You Get Real-Time Updates",
+      desc: "Track your request as it moves through Assigned → In Progress → Resolved.",
       icon: Radio,
-      side: 'right' as const,
+      side: "right" as const,
     },
     {
-      num: '05',
-      title: 'Resolution Is Confirmed',
-      desc: 'Once the work is completed, the issue is marked resolved and the requester can verify the fix.',
+      num: "05",
+      title: "Resolution Is Confirmed",
+      desc: "Once the work is completed, the issue is marked resolved and the requester can verify the fix.",
       icon: ShieldCheck,
-      side: 'left' as const,
+      side: "left" as const,
     },
-  ]
+  ];
 
   return (
     <section className="whn-fluid-section reveal-on-scroll">
@@ -300,7 +323,8 @@ export function SmartRoutingSection() {
             What Happens <span className="text-red-highlight">Next?</span>
           </h2>
           <p className="whn-subtitle">
-            From initial report to verified completion — here's how every issue travels through our automated resolution engine.
+            From initial report to verified completion — here's how every issue
+            travels through our automated resolution engine.
           </p>
         </div>
 
@@ -314,14 +338,31 @@ export function SmartRoutingSection() {
               preserveAspectRatio="none"
             >
               <defs>
-                <linearGradient id="whnSpineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient
+                  id="whnSpineGrad"
+                  x1="0%"
+                  y1="0%"
+                  x2="0%"
+                  y2="100%"
+                >
                   <stop offset="0%" stopColor="#b91c1c" />
                   <stop offset="35%" stopColor="#dc2626" />
                   <stop offset="70%" stopColor="#ef4444" />
                   <stop offset="100%" stopColor="#b91c1c" />
                 </linearGradient>
-                <filter id="whnSpineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(220, 38, 38, 0.45)" />
+                <filter
+                  id="whnSpineGlow"
+                  x="-20%"
+                  y="-20%"
+                  width="140%"
+                  height="140%"
+                >
+                  <feDropShadow
+                    dx="0"
+                    dy="4"
+                    stdDeviation="8"
+                    floodColor="rgba(220, 38, 38, 0.45)"
+                  />
                 </filter>
               </defs>
 
@@ -358,13 +399,13 @@ export function SmartRoutingSection() {
 
           {/* 5 Rows */}
           {steps.map((step, idx) => {
-            const Icon = step.icon
-            const isLeft = step.side === 'left'
+            const Icon = step.icon;
+            const isLeft = step.side === "left";
 
             return (
               <div
                 key={step.num}
-                className={`whn-row whn-row-${step.side} ${isLeft ? 'reveal-fade-left' : 'reveal-fade-right'} delay-${Math.min(idx + 1, 3)}`}
+                className={`whn-row whn-row-${step.side} ${isLeft ? "reveal-fade-left" : "reveal-fade-right"} delay-${Math.min(idx + 1, 3)}`}
               >
                 {/* Left side card wrap (only if isLeft) */}
                 {isLeft ? (
@@ -372,7 +413,9 @@ export function SmartRoutingSection() {
                     <div className="whn-capsule-card whn-capsule-left">
                       <div className="whn-capsule-dashed-border" />
                       <div className="whn-capsule-body">
-                        <span className="whn-card-num-tag">{step.num} — STEP</span>
+                        <span className="whn-card-num-tag">
+                          {step.num} — STEP
+                        </span>
                         <h3 className="whn-card-title">{step.title}</h3>
                         <p className="whn-card-desc">{step.desc}</p>
                       </div>
@@ -401,7 +444,9 @@ export function SmartRoutingSection() {
                     <div className="whn-capsule-card whn-capsule-right">
                       <div className="whn-capsule-dashed-border" />
                       <div className="whn-capsule-body">
-                        <span className="whn-card-num-tag">{step.num} — STEP</span>
+                        <span className="whn-card-num-tag">
+                          {step.num} — STEP
+                        </span>
                         <h3 className="whn-card-title">{step.title}</h3>
                         <p className="whn-card-desc">{step.desc}</p>
                       </div>
@@ -411,20 +456,20 @@ export function SmartRoutingSection() {
                   <div className="whn-opposite-spacer" />
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 interface StepData {
-  num: string
-  title: string
-  desc: string
-  arcClass: string
-  dots: Array<{ cx: number; cy: number; r: number; cls: string }>
+  num: string;
+  title: string;
+  desc: string;
+  arcClass: string;
+  dots: Array<{ cx: number; cy: number; r: number; cls: string }>;
 }
 
 function WorkflowStepCard({
@@ -434,151 +479,154 @@ function WorkflowStepCard({
   onHover,
   onLeave,
 }: {
-  step: StepData
-  index: number
-  hoveredIndex: number | null
-  onHover: (idx: number) => void
-  onLeave: () => void
+  step: StepData;
+  index: number;
+  hoveredIndex: number | null;
+  onHover: (idx: number) => void;
+  onLeave: () => void;
 }) {
-  const rotatorRef = useRef<SVGGElement | null>(null)
-  const angleRef = useRef<number>(0)
-  const rafRef = useRef<number | null>(null)
-  const isHoveredRef = useRef<boolean>(false)
+  const rotatorRef = useRef<SVGGElement | null>(null);
+  const angleRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+  const isHoveredRef = useRef<boolean>(false);
 
   // Clean up animation frames on unmount
   useEffect(() => {
     return () => {
       if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
+        cancelAnimationFrame(rafRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const startClockwiseHover = () => {
     if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(rafRef.current);
     }
-    let lastTime = performance.now()
-    const ROTATION_SPEED = 85 // degrees per second, smooth & elegant
+    let lastTime = performance.now();
+    const ROTATION_SPEED = 85; // degrees per second, smooth & elegant
 
     const tickHover = (now: number) => {
-      if (!isHoveredRef.current) return
+      if (!isHoveredRef.current) return;
 
-      const dt = Math.min((now - lastTime) / 1000, 0.1)
-      lastTime = now
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
 
-      angleRef.current += dt * ROTATION_SPEED
+      angleRef.current += dt * ROTATION_SPEED;
       if (rotatorRef.current) {
         rotatorRef.current.setAttribute(
-          'transform',
-          `rotate(${angleRef.current.toFixed(2)} 100 100)`
-        )
+          "transform",
+          `rotate(${angleRef.current.toFixed(2)} 100 100)`,
+        );
       }
 
-      rafRef.current = requestAnimationFrame(tickHover)
-    }
+      rafRef.current = requestAnimationFrame(tickHover);
+    };
 
-    rafRef.current = requestAnimationFrame(tickHover)
-  }
+    rafRef.current = requestAnimationFrame(tickHover);
+  };
 
   const startClockwiseReturn = () => {
     if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(rafRef.current);
     }
 
-    const currentAngle = angleRef.current
-    const mod = ((currentAngle % 360) + 360) % 360
+    const currentAngle = angleRef.current;
+    const mod = ((currentAngle % 360) + 360) % 360;
 
     // If already virtually at initial orientation, snap cleanly to 0
     if (mod < 0.5 || 360 - mod < 0.5) {
-      angleRef.current = 0
+      angleRef.current = 0;
       if (rotatorRef.current) {
-        rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+        rotatorRef.current.setAttribute("transform", "rotate(0 100 100)");
       }
-      return
+      return;
     }
 
     // Always rotate CLOCKWISE to the next multiple of 360 (never backwards / anticlockwise)
-    let remainingDegrees = 360 - mod
+    let remainingDegrees = 360 - mod;
     // If too close to target, add 360deg so momentum has enough space to coast down with organic grace
     if (remainingDegrees < 75) {
-      remainingDegrees += 360
+      remainingDegrees += 360;
     }
 
     // Naturally calibrated duration for a calm, organic spin-down (850ms - 1280ms)
-    const returnDuration = Math.max(820, Math.min(1300, (remainingDegrees / 360) * 520 + 680))
-    const startTime = performance.now()
+    const returnDuration = Math.max(
+      820,
+      Math.min(1300, (remainingDegrees / 360) * 520 + 680),
+    );
+    const startTime = performance.now();
 
     const tickReturn = (now: number) => {
       // If user re-hovers while returning, seamlessly resume hover spin
       if (isHoveredRef.current) {
-        startClockwiseHover()
-        return
+        startClockwiseHover();
+        return;
       }
 
-      const elapsed = now - startTime
-      const t = Math.min(1, elapsed / returnDuration)
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / returnDuration);
       // Organic sinusoidal ease-out deceleration (smooth momentum coast-down)
-      const eased = Math.sin((t * Math.PI) / 2)
+      const eased = Math.sin((t * Math.PI) / 2);
 
-      const nextAngle = currentAngle + remainingDegrees * eased
-      angleRef.current = nextAngle
+      const nextAngle = currentAngle + remainingDegrees * eased;
+      angleRef.current = nextAngle;
 
       if (rotatorRef.current) {
         rotatorRef.current.setAttribute(
-          'transform',
-          `rotate(${nextAngle.toFixed(2)} 100 100)`
-        )
+          "transform",
+          `rotate(${nextAngle.toFixed(2)} 100 100)`,
+        );
       }
 
       if (t < 1) {
-        rafRef.current = requestAnimationFrame(tickReturn)
+        rafRef.current = requestAnimationFrame(tickReturn);
       } else {
         // Return complete: 360deg is identical to 0deg, normalize seamlessly
-        angleRef.current = 0
+        angleRef.current = 0;
         if (rotatorRef.current) {
-          rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+          rotatorRef.current.setAttribute("transform", "rotate(0 100 100)");
         }
       }
-    }
+    };
 
-    rafRef.current = requestAnimationFrame(tickReturn)
-  }
+    rafRef.current = requestAnimationFrame(tickReturn);
+  };
 
   const handleMouseEnter = () => {
-    isHoveredRef.current = true
-    onHover(index)
-    startClockwiseHover()
-  }
+    isHoveredRef.current = true;
+    onHover(index);
+    startClockwiseHover();
+  };
 
   const handleMouseLeave = () => {
-    isHoveredRef.current = false
-    onLeave()
-    startClockwiseReturn()
-  }
+    isHoveredRef.current = false;
+    onLeave();
+    startClockwiseReturn();
+  };
 
   // Calculate dynamic transform for smooth expansion & outward shift of other cards
-  let cardTransform: string | undefined = undefined
-  let cardZIndex: number | undefined = undefined
-  let stateClass = ''
+  let cardTransform: string | undefined = undefined;
+  let cardZIndex: number | undefined = undefined;
+  let stateClass = "";
 
   if (hoveredIndex !== null) {
     if (hoveredIndex === index) {
-      stateClass = 'is-hovered'
-      cardTransform = 'translateY(-12px) scale(1.09)'
-      cardZIndex = 12
+      stateClass = "is-hovered";
+      cardTransform = "translateY(-12px) scale(1.09)";
+      cardZIndex = 12;
     } else if (index < hoveredIndex) {
-      stateClass = 'shift-left'
-      const dist = hoveredIndex - index
-      const shiftX = -(22 + (dist - 1) * 4)
-      cardTransform = `translateX(${shiftX}px)`
-      cardZIndex = 1
+      stateClass = "shift-left";
+      const dist = hoveredIndex - index;
+      const shiftX = -(22 + (dist - 1) * 4);
+      cardTransform = `translateX(${shiftX}px)`;
+      cardZIndex = 1;
     } else {
-      stateClass = 'shift-right'
-      const dist = index - hoveredIndex
-      const shiftX = 22 + (dist - 1) * 4
-      cardTransform = `translateX(${shiftX}px)`
-      cardZIndex = 1
+      stateClass = "shift-right";
+      const dist = index - hoveredIndex;
+      const shiftX = 22 + (dist - 1) * 4;
+      cardTransform = `translateX(${shiftX}px)`;
+      cardZIndex = 1;
     }
   }
 
@@ -599,7 +647,7 @@ function WorkflowStepCard({
         <svg
           className="htc-ring-svg"
           viewBox="0 0 200 200"
-          style={{ overflow: 'visible' }}
+          style={{ overflow: "visible" }}
         >
           <circle className="htc-ring-track" cx="100" cy="100" r="90" />
           <g
@@ -631,115 +679,120 @@ function WorkflowStepCard({
       </div>
       <p className="htc-step-desc">{step.desc}</p>
     </div>
-  )
+  );
 }
 
 export function ComplaintWorkflowSection() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const sectionRef = useRef<HTMLElement | null>(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const steps: StepData[] = [
     {
-      num: '01',
-      title: 'SELECT ISSUE',
+      num: "01",
+      title: "SELECT ISSUE",
       desc: "Choose what's wrong — AC, Electrical, Plumbing, Furniture, Wi-Fi, or Other.",
-      arcClass: '',
+      arcClass: "",
       dots: [
-        { cx: 100, cy: 10, r: 4, cls: 'htc-glow-1' },
-        { cx: 10, cy: 100, r: 3, cls: 'htc-glow-2' },
-        { cx: 190, cy: 100, r: 3, cls: 'htc-glow-3' },
+        { cx: 100, cy: 10, r: 4, cls: "htc-glow-1" },
+        { cx: 10, cy: 100, r: 3, cls: "htc-glow-2" },
+        { cx: 190, cy: 100, r: 3, cls: "htc-glow-3" },
       ],
     },
     {
-      num: '02',
-      title: 'ADD DETAILS',
-      desc: 'Describe the problem and upload a photo/video if needed.',
-      arcClass: 'htc-arc-2',
+      num: "02",
+      title: "ADD DETAILS",
+      desc: "Describe the problem and upload a photo/video if needed.",
+      arcClass: "htc-arc-2",
       dots: [
-        { cx: 100, cy: 10, r: 4, cls: 'htc-glow-1' },
-        { cx: 190, cy: 100, r: 3, cls: 'htc-glow-2' },
-        { cx: 100, cy: 190, r: 3, cls: 'htc-glow-3' },
+        { cx: 100, cy: 10, r: 4, cls: "htc-glow-1" },
+        { cx: 190, cy: 100, r: 3, cls: "htc-glow-2" },
+        { cx: 100, cy: 190, r: 3, cls: "htc-glow-3" },
       ],
     },
     {
-      num: '03',
-      title: 'ADD LOCATION',
-      desc: 'Select your building, floor, room/lab, or exact location.',
-      arcClass: 'htc-arc-3',
+      num: "03",
+      title: "ADD LOCATION",
+      desc: "Select your building, floor, room/lab, or exact location.",
+      arcClass: "htc-arc-3",
       dots: [
-        { cx: 190, cy: 100, r: 4, cls: 'htc-glow-1' },
-        { cx: 10, cy: 100, r: 3, cls: 'htc-glow-2' },
-        { cx: 100, cy: 10, r: 3, cls: 'htc-glow-3' },
+        { cx: 190, cy: 100, r: 4, cls: "htc-glow-1" },
+        { cx: 10, cy: 100, r: 3, cls: "htc-glow-2" },
+        { cx: 100, cy: 10, r: 3, cls: "htc-glow-3" },
       ],
     },
     {
-      num: '04',
-      title: 'SUBMIT REQUEST',
-      desc: 'Review the details and submit your maintenance request.',
-      arcClass: 'htc-arc-4',
+      num: "04",
+      title: "SUBMIT REQUEST",
+      desc: "Review the details and submit your maintenance request.",
+      arcClass: "htc-arc-4",
       dots: [
-        { cx: 100, cy: 190, r: 4, cls: 'htc-glow-1' },
-        { cx: 190, cy: 100, r: 3, cls: 'htc-glow-2' },
-        { cx: 10, cy: 100, r: 3, cls: 'htc-glow-3' },
+        { cx: 100, cy: 190, r: 4, cls: "htc-glow-1" },
+        { cx: 190, cy: 100, r: 3, cls: "htc-glow-2" },
+        { cx: 10, cy: 100, r: 3, cls: "htc-glow-3" },
       ],
     },
     {
-      num: '05',
-      title: 'TRACK & RESOLVE',
-      desc: 'Get a request ID, track the status, and receive updates until the issue is resolved.',
-      arcClass: 'htc-arc-5',
+      num: "05",
+      title: "TRACK & RESOLVE",
+      desc: "Get a request ID, track the status, and receive updates until the issue is resolved.",
+      arcClass: "htc-arc-5",
       dots: [
-        { cx: 10, cy: 100, r: 4, cls: 'htc-glow-1' },
-        { cx: 100, cy: 190, r: 3, cls: 'htc-glow-2' },
-        { cx: 100, cy: 10, r: 3, cls: 'htc-glow-3' },
+        { cx: 10, cy: 100, r: 4, cls: "htc-glow-1" },
+        { cx: 100, cy: 190, r: 3, cls: "htc-glow-2" },
+        { cx: 100, cy: 10, r: 3, cls: "htc-glow-3" },
       ],
     },
-  ]
+  ];
 
   useEffect(() => {
-    const el = sectionRef.current
-    if (!el) return
+    const el = sectionRef.current;
+    if (!el) return;
 
     const check = () => {
-      const rect = el.getBoundingClientRect()
+      const rect = el.getBoundingClientRect();
       if (rect.top <= window.innerHeight * 0.88) {
-        setIsVisible(true)
+        setIsVisible(true);
       }
-    }
-    check()
+    };
+    check();
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setIsVisible(true)
-          observer.disconnect()
+          setIsVisible(true);
+          observer.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-    )
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
 
-    observer.observe(el)
+    observer.observe(el);
 
     return () => {
-      observer.disconnect()
-    }
-  }, [])
+      observer.disconnect();
+    };
+  }, []);
 
   return (
-    <section ref={sectionRef} className={`how-to-section ${isVisible ? 'is-visible' : ''}`}>
-      <div className={`how-to-header ${isVisible ? 'is-visible' : ''}`}>
+    <section
+      ref={sectionRef}
+      className={`how-to-section ${isVisible ? "is-visible" : ""}`}
+    >
+      <div className={`how-to-header ${isVisible ? "is-visible" : ""}`}>
         <p className="how-to-eyebrow">YOUR COMPLAINT WORKFLOW</p>
         <h2>
-          Raise a <span className="text-red-highlight">Complaint</span> in 5 Steps
+          Raise a <span className="text-red-highlight">Complaint</span> in 5
+          Steps
         </h2>
         <p className="how-to-sub">
-          From spotting a fault to getting it fixed — here's exactly how the Unicare pipeline works for you.
+          From spotting a fault to getting it fixed — here's exactly how the
+          Unicare pipeline works for you.
         </p>
       </div>
 
       <div
-        className={`how-to-steps-v2 ${isVisible ? 'is-visible' : ''}`}
+        className={`how-to-steps-v2 ${isVisible ? "is-visible" : ""}`}
         onMouseLeave={() => setHoveredIndex(null)}
       >
         {steps.map((step, idx) => (
@@ -754,5 +807,5 @@ export function ComplaintWorkflowSection() {
         ))}
       </div>
     </section>
-  )
+  );
 }

@@ -48,3 +48,5 @@ test-results/
 scratch/
 *scratch*
 credentials.md
+backend/uploads/
+uploads/

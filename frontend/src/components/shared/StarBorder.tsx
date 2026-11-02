@@ -1,5 +1,5 @@
-import React from 'react';
-import './StarBorder.css';
+import React from "react";
+import "./StarBorder.css";
 
 export interface StarBorderProps extends React.HTMLAttributes<HTMLElement> {
   as?: React.ElementType;
@@ -12,10 +12,10 @@ export interface StarBorderProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const StarBorder: React.FC<StarBorderProps> = ({
-  as: Component = 'button',
-  className = '',
-  color = '#ef4444',
-  speed = '6s',
+  as: Component = "button",
+  className = "",
+  color = "#ef4444",
+  speed = "6s",
   thickness = 1,
   children,
   style,

@@ -1,70 +1,81 @@
-import React from 'react'
-import {
-  Monitor, Rocket, BarChart3, Search
-} from 'lucide-react'
+import React from "react";
+import { Monitor, Rocket, BarChart3, Search } from "lucide-react";
 
 interface StepCard {
-  id: string
-  stepNum: string
-  title: string
-  desc: string
-  icon: React.ElementType
-  isRed: boolean
+  id: string;
+  stepNum: string;
+  title: string;
+  desc: string;
+  icon: React.ElementType;
+  isRed: boolean;
 }
 
 const stepsData: StepCard[] = [
   {
-    id: 'step-01',
-    stepNum: '01',
-    title: 'Detect Patterns',
-    desc: 'Repeated complaints around the same asset, location, or issue type are identified.',
+    id: "step-01",
+    stepNum: "01",
+    title: "Detect Patterns",
+    desc: "Repeated complaints around the same asset, location, or issue type are identified.",
     icon: Monitor,
     isRed: true, // Red Card
   },
   {
-    id: 'step-02',
-    stepNum: '02',
-    title: 'Identify Risk',
-    desc: 'Recurring failures are flagged as potential maintenance risks.',
+    id: "step-02",
+    stepNum: "02",
+    title: "Identify Risk",
+    desc: "Recurring failures are flagged as potential maintenance risks.",
     icon: Rocket,
     isRed: false, // Black in dark mode / White in light mode
   },
   {
-    id: 'step-03',
-    stepNum: '03',
-    title: 'Schedule Maintenance',
-    desc: 'Maintenance teams can inspect or service the affected asset before another breakdown occurs.',
+    id: "step-03",
+    stepNum: "03",
+    title: "Schedule Maintenance",
+    desc: "Maintenance teams can inspect or service the affected asset before another breakdown occurs.",
     icon: BarChart3,
     isRed: true, // Red Card
   },
   {
-    id: 'step-04',
-    stepNum: '04',
-    title: 'Prevent Downtime',
-    desc: 'Problems are addressed proactively instead of waiting for users to report them again.',
+    id: "step-04",
+    stepNum: "04",
+    title: "Prevent Downtime",
+    desc: "Problems are addressed proactively instead of waiting for users to report them again.",
     icon: Search,
     isRed: false, // Black in dark mode / White in light mode
   },
-]
+];
 
 interface PreventiveMaintenanceSectionProps {
-  theme?: 'dark' | 'light'
+  theme?: "dark" | "light";
 }
 
-export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaintenanceSectionProps) {
-  const isLight = theme === 'light'
+export function PreventiveMaintenanceSection({
+  theme = "dark",
+}: PreventiveMaintenanceSectionProps) {
+  const isLight = theme === "light";
 
   // Alternating palette: Red cards vs Contrast (Black in dark mode, White in light mode)
-  const redStroke: [string, string] = isLight ? ['#ef4444', '#dc2626'] : ['#f87171', '#ef4444']
-  const redShadow = isLight ? 'rgba(220, 38, 38, 0.22)' : 'rgba(239, 68, 68, 0.32)'
-  const redArc = isLight ? '#dc2626' : '#ef4444'
+  const redStroke: [string, string] = isLight
+    ? ["#ef4444", "#dc2626"]
+    : ["#f87171", "#ef4444"];
+  const redShadow = isLight
+    ? "rgba(220, 38, 38, 0.22)"
+    : "rgba(239, 68, 68, 0.32)";
+  const redArc = isLight ? "#dc2626" : "#ef4444";
 
-  const contrastStroke: [string, string] = isLight ? ['#94a3b8', '#cbd5e1'] : ['#71717a', '#3f3f46']
-  const contrastShadow = isLight ? 'rgba(100, 116, 139, 0.18)' : 'rgba(0, 0, 0, 0.75)'
-  const contrastArc = isLight ? '#64748b' : '#a1a1aa'
+  const contrastStroke: [string, string] = isLight
+    ? ["#94a3b8", "#cbd5e1"]
+    : ["#71717a", "#3f3f46"];
+  const contrastShadow = isLight
+    ? "rgba(100, 116, 139, 0.18)"
+    : "rgba(0, 0, 0, 0.75)";
+  const contrastArc = isLight ? "#64748b" : "#a1a1aa";
 
   return (
-    <section id="preventive-maintenance" className="pm-section reveal-on-scroll">
+    <section
+      id="preventive-maintenance"
+      className="pm-section reveal-on-scroll"
+    >
       {/* Background Ambient Glow & Vectors */}
       <div className="pm-ambient-glow" aria-hidden="true" />
 
@@ -76,24 +87,26 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
           </h2>
 
           <p className="pm-subtitle">
-            Your maintenance system shouldn't wait for something to fail.{' '}
-            <span className="text-red-highlight">It should learn from what keeps going wrong.</span>
+            Your maintenance system shouldn't wait for something to fail.{" "}
+            <span className="text-red-highlight">
+              It should learn from what keeps going wrong.
+            </span>
           </p>
         </div>
 
         {/* 4 Alternating Red & Black/White Notched Cards */}
         <div className="pm-cards-grid">
           {stepsData.map((step, idx) => {
-            const Icon = step.icon
-            const isRed = step.isRed
-            const strokeGrad = isRed ? redStroke : contrastStroke
-            const shadowColor = isRed ? redShadow : contrastShadow
-            const arcColor = isRed ? redArc : contrastArc
+            const Icon = step.icon;
+            const isRed = step.isRed;
+            const strokeGrad = isRed ? redStroke : contrastStroke;
+            const shadowColor = isRed ? redShadow : contrastShadow;
+            const arcColor = isRed ? redArc : contrastArc;
 
             return (
               <div
                 key={step.id}
-                className={`pm-card-wrapper ${isRed ? 'pm-card-red' : 'pm-card-contrast'} reveal-zoom-in delay-${idx + 1}`}
+                className={`pm-card-wrapper ${isRed ? "pm-card-red" : "pm-card-contrast"} reveal-zoom-in delay-${idx + 1}`}
               >
                 {/* SVG Card Frame: Notched outline, connecting wire, decorative arcs & drop shadow */}
                 <svg
@@ -104,7 +117,13 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
                 >
                   <defs>
                     {/* Dynamic Drop Shadow Filter */}
-                    <filter id={`pm-shadow-${step.id}`} x="-15%" y="-15%" width="130%" height="135%">
+                    <filter
+                      id={`pm-shadow-${step.id}`}
+                      x="-15%"
+                      y="-15%"
+                      width="130%"
+                      height="135%"
+                    >
                       <feDropShadow
                         dx="3"
                         dy="12"
@@ -115,15 +134,35 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
                     </filter>
 
                     {/* Outer Border Stroke Gradient */}
-                    <linearGradient id={`pm-stroke-${step.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient
+                      id={`pm-stroke-${step.id}`}
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
                       <stop offset="0%" stopColor={strokeGrad[0]} />
                       <stop offset="100%" stopColor={strokeGrad[1]} />
                     </linearGradient>
 
                     {/* Corner Accent Arc Gradient */}
-                    <linearGradient id={`pm-arc-grad-${step.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor={arcColor} stopOpacity="0.35" />
-                      <stop offset="100%" stopColor={arcColor} stopOpacity="0.05" />
+                    <linearGradient
+                      id={`pm-arc-grad-${step.id}`}
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor={arcColor}
+                        stopOpacity="0.35"
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={arcColor}
+                        stopOpacity="0.05"
+                      />
                     </linearGradient>
                   </defs>
 
@@ -197,9 +236,7 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
 
                   {/* Title & Phase Number */}
                   <div className="pm-card-header-text">
-                    <span className="pm-card-tag">
-                      INFODATA {step.stepNum}
-                    </span>
+                    <span className="pm-card-tag">INFODATA {step.stepNum}</span>
                     <h3 className="pm-card-title">
                       {step.stepNum} — {step.title}
                     </h3>
@@ -209,10 +246,10 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
                   <p className="pm-card-desc">{step.desc}</p>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

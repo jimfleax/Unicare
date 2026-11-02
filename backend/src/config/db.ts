@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 // Declare a cached variable in the global scope to hold the connection promise.
 // Caching the promise rather than the connection prevents race conditions
@@ -27,23 +27,25 @@ export const connectDB = async () => {
   const dbName = process.env.DB_NAME;
 
   if (!mongoUri || !dbName) {
-    const errorMsg = '❌ Missing required database environment variables: MONGODB_URI and/or DB_NAME.';
+    const errorMsg =
+      "❌ Missing required database environment variables: MONGODB_URI and/or DB_NAME.";
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
-  
+
   // Efficient Mongoose options, particularly for serverless/ephemeral environments
   const opts = {
-    dbName: dbName,                 // Specify the database name here
-    bufferCommands: false,          // Fail fast instead of buffering queries if disconnected
+    dbName: dbName, // Specify the database name here
+    bufferCommands: false, // Fail fast instead of buffering queries if disconnected
     serverSelectionTimeoutMS: 5000, // 5s timeout instead of the default 30s
-    maxPoolSize: 10,                // Optimize socket pool for concurrent requests
+    maxPoolSize: 10, // Optimize socket pool for concurrent requests
   };
 
-  console.log('Connecting to MongoDB...');
+  console.log("Connecting to MongoDB...");
 
   // Establish a new connection and cache the PROMISE
-  cachedDb = mongoose.connect(mongoUri, opts)
+  cachedDb = mongoose
+    .connect(mongoUri, opts)
     .then((mongooseInstance) => {
       console.log(`✅ MongoDB Connected: ${mongooseInstance.connection.host}`);
       return mongooseInstance;

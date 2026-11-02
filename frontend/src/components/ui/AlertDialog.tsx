@@ -1,10 +1,10 @@
-import React from 'react'
-import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
+import React from "react";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
-const AlertDialog = AlertDialogPrimitive.Root
-const AlertDialogTrigger = AlertDialogPrimitive.Trigger
+const AlertDialog = AlertDialogPrimitive.Root;
+const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
-const AlertDialogPortal = AlertDialogPrimitive.Portal
+const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
 const AlertDialogOverlay = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Overlay>,
@@ -12,11 +12,11 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     ref={ref}
-    className={`rdx-dialog-overlay ${className || ''}`}
+    className={`rdx-dialog-overlay ${className || ""}`}
     {...props}
   />
-))
-AlertDialogOverlay.displayName = 'AlertDialogOverlay'
+));
+AlertDialogOverlay.displayName = "AlertDialogOverlay";
 
 const AlertDialogContent = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Content>,
@@ -26,14 +26,14 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}
-      className={`rdx-dialog-content rdx-alert-dialog-content ${className || ''}`}
+      className={`rdx-dialog-content rdx-alert-dialog-content ${className || ""}`}
       {...props}
     >
       {children}
     </AlertDialogPrimitive.Content>
   </AlertDialogPortal>
-))
-AlertDialogContent.displayName = 'AlertDialogContent'
+));
+AlertDialogContent.displayName = "AlertDialogContent";
 
 const AlertDialogTitle = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Title>,
@@ -41,11 +41,11 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={`rdx-alert-dialog-title ${className || ''}`}
+    className={`rdx-alert-dialog-title ${className || ""}`}
     {...props}
   />
-))
-AlertDialogTitle.displayName = 'AlertDialogTitle'
+));
+AlertDialogTitle.displayName = "AlertDialogTitle";
 
 const AlertDialogDescription = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Description>,
@@ -53,11 +53,11 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={`rdx-alert-dialog-description ${className || ''}`}
+    className={`rdx-alert-dialog-description ${className || ""}`}
     {...props}
   />
-))
-AlertDialogDescription.displayName = 'AlertDialogDescription'
+));
+AlertDialogDescription.displayName = "AlertDialogDescription";
 
 const AlertDialogAction = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Action>,
@@ -65,11 +65,11 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
-    className={`btn-red ${className || ''}`}
+    className={`btn-red ${className || ""}`}
     {...props}
   />
-))
-AlertDialogAction.displayName = 'AlertDialogAction'
+));
+AlertDialogAction.displayName = "AlertDialogAction";
 
 const AlertDialogCancel = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Cancel>,
@@ -77,33 +77,27 @@ const AlertDialogCancel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
-    className={`btn-dark ${className || ''}`}
+    className={`btn-dark ${className || ""}`}
     {...props}
   />
-))
-AlertDialogCancel.displayName = 'AlertDialogCancel'
+));
+AlertDialogCancel.displayName = "AlertDialogCancel";
 
 const AlertDialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={`rdx-dialog-header ${className || ''}`}
-    {...props}
-  />
-)
-AlertDialogHeader.displayName = 'AlertDialogHeader'
+  <div className={`rdx-dialog-header ${className || ""}`} {...props} />
+);
+AlertDialogHeader.displayName = "AlertDialogHeader";
 
 const AlertDialogFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={`rdx-dialog-footer ${className || ''}`}
-    {...props}
-  />
-)
-AlertDialogFooter.displayName = 'AlertDialogFooter'
+  <div className={`rdx-dialog-footer ${className || ""}`} {...props} />
+);
+AlertDialogFooter.displayName = "AlertDialogFooter";
 
 export {
   AlertDialog,
@@ -117,4 +111,4 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-}
+};

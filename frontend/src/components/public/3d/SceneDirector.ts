@@ -5,20 +5,20 @@
  */
 
 export interface ChapterConfig {
-  orbit: number       // Azimuthal rotation angle (radians or degrees)
-  elevation: number   // Altitude angle above the horizontal plane (degrees)
-  distance: number    // Camera zoom distance
-  panY: number        // Vertical view framing offset
-  panX: number        // Horizontal framing offset
-  coreX: number       // 3D position X of the central facility core
-  coreY: number       // 3D position Y of the central facility core
-  coreScale: number   // Scale factor of the digital facility core
-  coreSpin: number    // Rotational speed of internal rings
-  particleSpeed: number // Ambient particle stream velocity
-  lightIntensity: number // Core glow & bloom intensity
-  networkActivity: number // Intensity of 3D data routing arcs (0 to 1)
-  ringTilt: number    // Axial tilt of the orbital tech rings (degrees)
-  themeColor: string  // Primary energy color hex
+  orbit: number; // Azimuthal rotation angle (radians or degrees)
+  elevation: number; // Altitude angle above the horizontal plane (degrees)
+  distance: number; // Camera zoom distance
+  panY: number; // Vertical view framing offset
+  panX: number; // Horizontal framing offset
+  coreX: number; // 3D position X of the central facility core
+  coreY: number; // 3D position Y of the central facility core
+  coreScale: number; // Scale factor of the digital facility core
+  coreSpin: number; // Rotational speed of internal rings
+  particleSpeed: number; // Ambient particle stream velocity
+  lightIntensity: number; // Core glow & bloom intensity
+  networkActivity: number; // Intensity of 3D data routing arcs (0 to 1)
+  ringTilt: number; // Axial tilt of the orbital tech rings (degrees)
+  themeColor: string; // Primary energy color hex
 }
 
 export const CHAPTERS: Record<string, ChapterConfig> = {
@@ -36,7 +36,7 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 1.3,
     networkActivity: 0.3,
     ringTilt: 25,
-    themeColor: '#ef4444',
+    themeColor: "#ef4444",
   },
   features: {
     orbit: 0.9,
@@ -52,7 +52,7 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 0.95,
     networkActivity: 0.4,
     ringTilt: 40,
-    themeColor: '#f97316',
+    themeColor: "#f97316",
   },
   workflow: {
     orbit: 1.7,
@@ -68,7 +68,7 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 1.4,
     networkActivity: 0.65,
     ringTilt: 55,
-    themeColor: '#ef4444',
+    themeColor: "#ef4444",
   },
   routing: {
     orbit: 3.14,
@@ -84,7 +84,7 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 1.5,
     networkActivity: 1.0, // Peak routing activity with pulsing data arcs
     ringTilt: 70,
-    themeColor: '#dc2626',
+    themeColor: "#dc2626",
   },
   pipeline: {
     orbit: 4.2,
@@ -100,7 +100,7 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 1.3,
     networkActivity: 0.85,
     ringTilt: 48,
-    themeColor: '#f87171',
+    themeColor: "#f87171",
   },
   maintenance: {
     orbit: 5.4,
@@ -116,39 +116,39 @@ export const CHAPTERS: Record<string, ChapterConfig> = {
     lightIntensity: 1.1,
     networkActivity: 0.5,
     ringTilt: 30,
-    themeColor: '#ef4444',
+    themeColor: "#ef4444",
   },
-}
+};
 
-type ChapterListener = (chapter: string, config: ChapterConfig) => void
+type ChapterListener = (chapter: string, config: ChapterConfig) => void;
 
 class SceneDirectorEngine {
-  private currentChapter: string = 'hero'
-  private listeners: Set<ChapterListener> = new Set()
+  private currentChapter: string = "hero";
+  private listeners: Set<ChapterListener> = new Set();
 
   public getChapter(): string {
-    return this.currentChapter
+    return this.currentChapter;
   }
 
   public getConfig(chapterName?: string): ChapterConfig {
-    const key = chapterName || this.currentChapter
-    return CHAPTERS[key] || CHAPTERS.hero
+    const key = chapterName || this.currentChapter;
+    return CHAPTERS[key] || CHAPTERS.hero;
   }
 
   public setChapter(chapter: string) {
-    if (!CHAPTERS[chapter] || chapter === this.currentChapter) return
-    this.currentChapter = chapter
-    const config = CHAPTERS[chapter]
-    this.listeners.forEach((listener) => listener(chapter, config))
+    if (!CHAPTERS[chapter] || chapter === this.currentChapter) return;
+    this.currentChapter = chapter;
+    const config = CHAPTERS[chapter];
+    this.listeners.forEach((listener) => listener(chapter, config));
   }
 
   public subscribe(listener: ChapterListener): () => void {
-    this.listeners.add(listener)
-    listener(this.currentChapter, this.getConfig())
+    this.listeners.add(listener);
+    listener(this.currentChapter, this.getConfig());
     return () => {
-      this.listeners.delete(listener)
-    }
+      this.listeners.delete(listener);
+    };
   }
 }
 
-export const SceneDirector = new SceneDirectorEngine()
+export const SceneDirector = new SceneDirectorEngine();

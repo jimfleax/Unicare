@@ -1,6 +1,6 @@
-import { IStorageService } from './storageService.interface';
-import { LocalStorageService } from './localStorageService';
-import { CloudinaryStorageService } from './cloudinaryStorageService';
+import { IStorageService } from "./storageService.interface";
+import { LocalStorageService } from "./localStorageService";
+import { CloudinaryStorageService } from "./cloudinaryStorageService";
 
 let storageInstance: IStorageService | null = null;
 
@@ -16,8 +16,9 @@ export function getStorageService(): IStorageService {
   const provider = process.env.STORAGE_PROVIDER?.toLowerCase();
 
   if (
-    provider === 'cloudinary' ||
-    (!provider && (process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_URL))
+    provider === "cloudinary" ||
+    (!provider &&
+      (process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_URL))
   ) {
     storageInstance = new CloudinaryStorageService();
   } else {
@@ -28,6 +29,6 @@ export function getStorageService(): IStorageService {
   return storageInstance;
 }
 
-export * from './storageService.interface';
-export { LocalStorageService } from './localStorageService';
-export { CloudinaryStorageService } from './cloudinaryStorageService';
+export * from "./storageService.interface";
+export { LocalStorageService } from "./localStorageService";
+export { CloudinaryStorageService } from "./cloudinaryStorageService";

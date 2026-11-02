@@ -1,94 +1,161 @@
-import '@testing-library/jest-dom';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { UserManagementPortal } from './UserManagementPortal';
-import useSWR from 'swr';
-import { api } from '../../services/api';
+import "@testing-library/jest-dom";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { UserManagementPortal } from "./UserManagementPortal";
+import useSWR from "swr";
+import { api } from "../../services/api";
 
-vi.mock('swr');
-vi.mock('../../services/api');
+vi.mock("swr");
+vi.mock("../../services/api");
 
 const mockUseSWR = useSWR as any;
 const mockApi = api as any;
 
-describe('UserManagementPortal', () => {
+describe("UserManagementPortal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders correctly and lists users', async () => {
+  it("renders correctly and lists users", async () => {
     mockUseSWR.mockReturnValue({
       data: {
         success: true,
         data: [
-          { id: '1', name: 'Student One', email: 's1@example.com', role: 'student', branch: 'CSE' },
-          { id: '2', name: 'Tech One', email: 't1@example.com', role: 'technician', specialty: 'IT' }
-        ]
+          {
+            id: "1",
+            name: "Student One",
+            email: "s1@example.com",
+            role: "student",
+            branch: "CSE",
+          },
+          {
+            id: "2",
+            name: "Tech One",
+            email: "t1@example.com",
+            role: "technician",
+            specialty: "IT",
+          },
+        ],
       },
       error: undefined,
       isLoading: false,
-      mutate: vi.fn()
+      mutate: vi.fn(),
     });
 
     render(<UserManagementPortal />);
 
-    expect(screen.getByText('User Management')).toBeDefined();
-    expect(screen.getByText('Student One')).toBeDefined();
-    expect(screen.getByText('Tech One')).toBeDefined();
-    expect(screen.getByText('CSE')).toBeDefined(); // category info
-    expect(screen.getByText('IT')).toBeDefined();
+    expect(screen.getByText("User Management")).toBeDefined();
+    expect(screen.getByText("Student One")).toBeDefined();
+    expect(screen.getByText("Tech One")).toBeDefined();
+    expect(screen.getByText("CSE")).toBeDefined(); // category info
+    expect(screen.getByText("IT")).toBeDefined();
   });
 
-  it('handles user creation', async () => {
+  it("renders correctly with direct array data from fetcher", async () => {
+    mockUseSWR.mockReturnValue({
+      data: [
+        {
+          _id: "u-101",
+          name: "Real User",
+          email: "real@example.com",
+          role: "student",
+          branch: "Mechanical",
+        },
+      ],
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+    });
+
+    render(<UserManagementPortal />);
+
+    expect(screen.getByText("Real User")).toBeDefined();
+    expect(screen.getByText("real@example.com")).toBeDefined();
+    expect(screen.getByText("Mechanical")).toBeDefined();
+  });
+
+  it("handles fetch errors gracefully", async () => {
+    mockUseSWR.mockReturnValue({
+      data: undefined,
+      error: new Error("Unauthorized access"),
+      isLoading: false,
+      mutate: vi.fn(),
+    });
+
+    render(<UserManagementPortal />);
+
+    expect(screen.getByText(/Failed to load users: Unauthorized access/i)).toBeDefined();
+  });
+
+  it("handles user creation", async () => {
     const mockMutate = vi.fn();
     mockUseSWR.mockReturnValue({
       data: { success: true, data: [] },
       error: undefined,
       isLoading: false,
-      mutate: mockMutate
+      mutate: mockMutate,
     });
 
-    mockApi.post.mockResolvedValueOnce({ data: { success: true, data: { id: '3', name: 'New User' } } });
+    mockApi.post.mockResolvedValueOnce({
+      data: { success: true, data: { id: "3", name: "New User" } },
+    });
 
     render(<UserManagementPortal />);
 
-    fireEvent.click(screen.getByText('Create User'));
-    
-    // Fill out the modal
-    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'New User' } });
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'new@example.com' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'pass123' } });
-    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'student' } });
-    
-    // Should show branch field for student
-    fireEvent.change(screen.getByLabelText('Branch'), { target: { value: 'ECE' } });
+    fireEvent.click(screen.getByText("Create User"));
 
-    fireEvent.click(screen.getByText('Save'));
+    // Fill out the modal
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "New User" },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "new@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/i), {
+      target: { value: "pass123" },
+    });
+    fireEvent.change(screen.getByLabelText("Role"), {
+      target: { value: "student" },
+    });
+
+    // Should show branch field for student
+    fireEvent.change(screen.getByLabelText("Branch"), {
+      target: { value: "ECE" },
+    });
+
+    fireEvent.click(screen.getByText("Save"));
 
     await waitFor(() => {
-      expect(mockApi.post).toHaveBeenCalledWith('/users', {
-        name: 'New User',
-        email: 'new@example.com',
-        password: 'pass123',
-        role: 'student',
-        branch: 'ECE',
-        batch: '',
-        rollNo: ''
+      expect(mockApi.post).toHaveBeenCalledWith("/users", {
+        name: "New User",
+        email: "new@example.com",
+        password: "pass123",
+        role: "student",
+        branch: "ECE",
+        batch: "",
+        rollNo: "",
       });
       expect(mockMutate).toHaveBeenCalled();
     });
   });
 
-  it('handles user deletion', async () => {
+  it("handles user deletion", async () => {
     const mockMutate = vi.fn();
     mockUseSWR.mockReturnValue({
       data: {
         success: true,
-        data: [{ id: '1', name: 'Delete Me', email: 'del@example.com', role: 'student' }]
+        data: [
+          {
+            id: "1",
+            name: "Delete Me",
+            email: "del@example.com",
+            role: "student",
+          },
+        ],
       },
       error: undefined,
       isLoading: false,
-      mutate: mockMutate
+      mutate: mockMutate,
     });
 
     mockApi.delete.mockResolvedValueOnce({ data: { success: true } });
@@ -97,14 +164,18 @@ describe('UserManagementPortal', () => {
 
     render(<UserManagementPortal />);
 
-    fireEvent.click(screen.getAllByRole('button').find(b => b.classList.contains('text-red')) as HTMLElement);
+    fireEvent.click(
+      screen
+        .getAllByRole("button")
+        .find((b) => b.classList.contains("text-red")) as HTMLElement,
+    );
 
     // Confirm in the Radix AlertDialog
-    const confirmBtn = screen.getByRole('button', { name: /Delete Account/i });
+    const confirmBtn = screen.getByRole("button", { name: /Delete Account/i });
     fireEvent.click(confirmBtn);
 
     await waitFor(() => {
-      expect(mockApi.delete).toHaveBeenCalledWith('/users/1');
+      expect(mockApi.delete).toHaveBeenCalledWith("/users/1");
       expect(mockMutate).toHaveBeenCalled();
     });
   });

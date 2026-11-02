@@ -1,25 +1,25 @@
-import React from 'react'
-import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
+import React from "react";
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
-const DropdownMenu = DropdownMenuPrimitive.Root
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
-const DropdownMenuGroup = DropdownMenuPrimitive.Group
+const DropdownMenu = DropdownMenuPrimitive.Root;
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
 const DropdownMenuContent = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 8, align = 'end', ...props }, ref) => (
+>(({ className, sideOffset = 8, align = "end", ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
       align={align}
-      className={`rdx-dropdown-content ${className || ''}`}
+      className={`rdx-dropdown-content ${className || ""}`}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
-))
-DropdownMenuContent.displayName = 'DropdownMenuContent'
+));
+DropdownMenuContent.displayName = "DropdownMenuContent";
 
 const DropdownMenuItem = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Item>,
@@ -27,11 +27,11 @@ const DropdownMenuItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
-    className={`rdx-dropdown-item ${className || ''}`}
+    className={`rdx-dropdown-item ${className || ""}`}
     {...props}
   />
-))
-DropdownMenuItem.displayName = 'DropdownMenuItem'
+));
+DropdownMenuItem.displayName = "DropdownMenuItem";
 
 const DropdownMenuSeparator = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Separator>,
@@ -39,11 +39,11 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={`rdx-dropdown-separator ${className || ''}`}
+    className={`rdx-dropdown-separator ${className || ""}`}
     {...props}
   />
-))
-DropdownMenuSeparator.displayName = 'DropdownMenuSeparator'
+));
+DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
 
 const DropdownMenuLabel = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Label>,
@@ -51,11 +51,11 @@ const DropdownMenuLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
     ref={ref}
-    className={`rdx-dropdown-label ${className || ''}`}
+    className={`rdx-dropdown-label ${className || ""}`}
     {...props}
   />
-))
-DropdownMenuLabel.displayName = 'DropdownMenuLabel'
+));
+DropdownMenuLabel.displayName = "DropdownMenuLabel";
 
 export {
   DropdownMenu,
@@ -65,4 +65,4 @@ export {
   DropdownMenuSeparator,
   DropdownMenuLabel,
   DropdownMenuGroup,
-}
+};

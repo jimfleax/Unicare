@@ -1,14 +1,14 @@
 /// <reference types="@testing-library/jest-dom" />
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
-import { SystemStatus } from './SystemStatus';
-import * as api from '../../services/api';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
+import { SystemStatus } from "./SystemStatus";
+import * as api from "../../services/api";
 
-vi.mock('../../services/api', () => ({
+vi.mock("../../services/api", () => ({
   checkHealthApi: vi.fn(),
 }));
 
-describe('SystemStatus Component', () => {
+describe("SystemStatus Component", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -26,7 +26,7 @@ describe('SystemStatus Component', () => {
       render(<SystemStatus />);
     });
 
-    expect(screen.getByText('System Operational')).toBeDefined();
+    expect(screen.getByText("System Operational")).toBeDefined();
   });
 
   it('displays "System Offline" when health check is false', async () => {
@@ -36,10 +36,10 @@ describe('SystemStatus Component', () => {
       render(<SystemStatus />);
     });
 
-    expect(screen.getByText('System Offline')).toBeDefined();
+    expect(screen.getByText("System Offline")).toBeDefined();
   });
 
-  it('polls the health API every 60 seconds', async () => {
+  it("polls the health API every 60 seconds", async () => {
     vi.mocked(api.checkHealthApi).mockResolvedValue(true);
 
     await act(async () => {

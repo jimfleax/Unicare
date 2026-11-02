@@ -1,5 +1,5 @@
-import React from 'react'
-import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
+import React from "react";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 const ScrollArea = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
@@ -7,7 +7,7 @@ const ScrollArea = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
-    className={`rdx-scroll-area ${className || ''}`}
+    className={`rdx-scroll-area ${className || ""}`}
     {...props}
   >
     <ScrollAreaPrimitive.Viewport className="rdx-scroll-viewport">
@@ -16,22 +16,22 @@ const ScrollArea = React.forwardRef<
     <ScrollBar />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
-))
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+));
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
->(({ className, orientation = 'vertical', ...props }, ref) => (
+>(({ className, orientation = "vertical", ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar
     ref={ref}
     orientation={orientation}
-    className={`rdx-scrollbar ${className || ''}`}
+    className={`rdx-scrollbar ${className || ""}`}
     {...props}
   >
     <ScrollAreaPrimitive.ScrollAreaThumb className="rdx-scroll-thumb" />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
-))
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+));
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
 
-export { ScrollArea, ScrollBar }
+export { ScrollArea, ScrollBar };
