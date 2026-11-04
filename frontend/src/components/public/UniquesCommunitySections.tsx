@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Fragment } from 'react'
+import { motion } from 'motion/react'
 import {
   Search, MapPin, UserCheck, AlertTriangle,
   ClipboardList, Cpu, Radio, ShieldCheck
 } from 'lucide-react'
+import HowItWorks, { type Step } from '@/components/ui/how-it-works'
 
 export function SmartRoutingSection() {
   const [hoveredStage, setHoveredStage] = useState<number | null>(null)
@@ -251,172 +253,378 @@ export function SmartRoutingSection() {
       </div>
     </section>
   )
-}export function WhatHappensNextSection() {
+}
+
+export function WhatHappensNextSection() {
   const steps = [
     {
       num: '01',
       title: 'Your Report Is Logged',
-      desc: 'Your issue, location, description, and attached media are recorded and given a unique request ID.',
+      description:
+        'Your issue, location, description, and attached media are recorded and given a unique request ID.',
       icon: ClipboardList,
-      side: 'left' as const,
     },
     {
       num: '02',
       title: 'The Issue Is Analyzed',
-      desc: 'The system identifies the issue category, severity, and required service.',
+      description:
+        'The system identifies the issue category, severity, and required service.',
       icon: Cpu,
-      side: 'right' as const,
     },
     {
       num: '03',
       title: 'The Right Technician Is Found',
-      desc: 'The request is matched with an available technician based on expertise, location, and workload.',
+      description:
+        'The request is matched with an available technician based on expertise, location, and workload.',
       icon: UserCheck,
-      side: 'left' as const,
     },
     {
       num: '04',
       title: 'You Get Real-Time Updates',
-      desc: 'Track your request as it moves through Assigned → In Progress → Resolved.',
+      description:
+        'Track your request as it moves through Assigned → In Progress → Resolved.',
       icon: Radio,
-      side: 'right' as const,
     },
     {
       num: '05',
       title: 'Resolution Is Confirmed',
-      desc: 'Once the work is completed, the issue is marked resolved and the requester can verify the fix.',
+      description:
+        'Once the work is completed, the issue is marked resolved and the requester can verify the fix.',
       icon: ShieldCheck,
-      side: 'left' as const,
     },
-  ]
+  ];
+
+  // State for which cards are revealed and which card is currently centered
+  const [revealedCards, setRevealedCards] = useState<boolean[]>([false, false, false, false, false]);
+  const [centerCardIdx, setCenterCardIdx] = useState<number | null>(null);
+
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const connectorRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const maskPathsRef = useRef<(SVGPathElement | null)[]>([]);
+  const mobileMaskPathsRef = useRef<(SVGPathElement | null)[]>([]);
+  const arrowsRef = useRef<(SVGPathElement | null)[]>([]);
+  const mobileArrowsRef = useRef<(SVGPathElement | null)[]>([]);
+
+  const maxPathProgressRef = useRef<number[]>([0, 0, 0, 0]);
+  const revealedRef = useRef<boolean[]>([false, false, false, false, false]);
+  const centerIdxRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let rafId: number;
+
+    const updateScroll = () => {
+      const screenH = window.innerHeight;
+      // Exact vertical center of viewport where gradual reveals and line connections occur:
+      const triggerY = screenH * 0.5;
+
+      let changedReveal = false;
+
+      // 1. Reveal cards as they scroll into the viewport center zone (triggerY + 80px)
+      cardRefs.current.forEach((el, idx) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+
+        if (rect.top <= triggerY + 80) {
+          if (!revealedRef.current[idx]) {
+            revealedRef.current[idx] = true;
+            changedReveal = true;
+          }
+        }
+      });
+
+      if (changedReveal) {
+        setRevealedCards([...revealedRef.current]);
+      }
+
+      // 2. Draw connector paths progressively as user scrolls them through the viewport center
+      connectorRefs.current.forEach((el, idx) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const height = rect.height || 110;
+
+        // How far the connector has traveled through the center of the viewport
+        const rawProgress = (triggerY - rect.top) / height;
+        const clamped = Math.max(0, Math.min(1, rawProgress));
+
+        // Once drawn by scrolling, maintain progress
+        const prev = maxPathProgressRef.current[idx] || 0;
+        const progress = Math.max(prev, clamped);
+        maxPathProgressRef.current[idx] = progress;
+
+        const offset = 1000 * (1 - progress);
+
+        // Direct hardware-accelerated style update for 120fps smoothness
+        const mask = maskPathsRef.current[idx];
+        if (mask) {
+          mask.style.strokeDashoffset = `${offset}`;
+        }
+        const mobileMask = mobileMaskPathsRef.current[idx];
+        if (mobileMask) {
+          mobileMask.style.strokeDashoffset = `${offset}`;
+        }
+
+        // Arrowhead pops into place right as the line connects to the target card
+        const arrow = arrowsRef.current[idx];
+        if (arrow) {
+          arrow.style.opacity = progress >= 0.88 ? '1' : '0';
+          arrow.style.transform = progress >= 0.88 ? 'scale(1)' : 'scale(0)';
+        }
+        const mobileArrow = mobileArrowsRef.current[idx];
+        if (mobileArrow) {
+          mobileArrow.style.opacity = progress >= 0.88 ? '1' : '0';
+          mobileArrow.style.transform = progress >= 0.88 ? 'scale(1)' : 'scale(0)';
+        }
+      });
+
+      // 3. Keep the card closest to the viewport center active and focused
+      let closestIdx: number | null = null;
+      let closestDist = Infinity;
+
+      cardRefs.current.forEach((el, idx) => {
+        if (!el || !revealedRef.current[idx]) return;
+        const rect = el.getBoundingClientRect();
+        const cardCenter = rect.top + rect.height * 0.5;
+        const dist = Math.abs(cardCenter - triggerY);
+
+        if (dist < closestDist && dist < screenH * 0.42) {
+          closestDist = dist;
+          closestIdx = idx;
+        }
+      });
+
+      if (centerIdxRef.current !== closestIdx) {
+        centerIdxRef.current = closestIdx;
+        setCenterCardIdx(closestIdx);
+      }
+    };
+
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateScroll);
+    };
+
+    const onResize = () => {
+      onScroll();
+    };
+
+    updateScroll();
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
 
   return (
-    <section className="whn-fluid-section reveal-on-scroll">
-      <div className="whn-fluid-container">
+    <section className="whn-fluid-section relative py-20 px-4 md:px-8 overflow-hidden bg-transparent">
+      {/* Background Crimson Red Ambient Glows */}
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-red-600/10 dark:bg-red-600/12 rounded-full blur-[140px] pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[600px] h-[340px] bg-rose-600/10 dark:bg-rose-600/10 rounded-full blur-[140px] pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div className="whn-fluid-container max-w-5xl mx-auto relative z-10">
         {/* Header */}
-        <div className="whn-header reveal-fade-up">
-          <p className="whn-eyebrow">WORKFLOW PIPELINE</p>
-          <h2 className="whn-title">
+        <div className="whn-header text-center mb-16 md:mb-20">
+          <p className="whn-eyebrow text-xs font-bold tracking-[3px] text-red-500 uppercase mb-3 font-display">
+            WORKFLOW PIPELINE
+          </p>
+          <h2 className="whn-title text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-4 font-display">
             What Happens <span className="text-red-highlight">Next?</span>
           </h2>
-          <p className="whn-subtitle">
+          <p className="whn-subtitle text-base md:text-lg text-gray-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
             From initial report to verified completion — here's how every issue travels through our automated resolution engine.
           </p>
         </div>
 
-        {/* Infographic Tree */}
-        <div className="whn-tree">
-          {/* Continuous Organic Serpentine Spine (SVG) */}
-          <div className="whn-spine-svg-wrap" aria-hidden="true">
-            <svg
-              className="whn-spine-svg"
-              viewBox="0 0 160 840"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="whnSpineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#b91c1c" />
-                  <stop offset="35%" stopColor="#dc2626" />
-                  <stop offset="70%" stopColor="#ef4444" />
-                  <stop offset="100%" stopColor="#b91c1c" />
-                </linearGradient>
-                <filter id="whnSpineGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(220, 38, 38, 0.45)" />
-                </filter>
-              </defs>
+        {/* Staggered Zigzag Timeline Container */}
+        <div className="relative flex flex-col w-full space-y-6 md:space-y-0">
+          {steps.map((step, index) => {
+            const isEven = index % 2 === 0;
+            const isLast = index === steps.length - 1;
+            const isRevealed = revealedCards[index];
+            const isCenter = centerCardIdx === index;
 
-              {/* Serpentine flowing fluid ribbon connecting node centers at Y: 60, 230, 400, 570, 740 */}
-              <path
-                d="M 50 60
-                   C 50 145, 110 145, 110 230
-                   C 110 315, 50 315, 50 400
-                   C 50 485, 110 485, 110 570
-                   C 110 655, 50 655, 50 740"
-                fill="none"
-                stroke="url(#whnSpineGrad)"
-                strokeWidth="28"
-                strokeLinecap="round"
-                filter="url(#whnSpineGlow)"
-              />
-
-              {/* Inner accent flow line */}
-              <path
-                d="M 50 60
-                   C 50 145, 110 145, 110 230
-                   C 110 315, 50 315, 50 400
-                   C 50 485, 110 485, 110 570
-                   C 110 655, 50 655, 50 740"
-                fill="none"
-                stroke="rgba(255, 255, 255, 0.35)"
-                strokeWidth="3"
-                strokeDasharray="6 8"
-                strokeLinecap="round"
-                className="whn-spine-pulse"
-              />
-            </svg>
-          </div>
-
-          {/* 5 Rows */}
-          {steps.map((step, idx) => {
-            const Icon = step.icon
-            const isLeft = step.side === 'left'
+            const connectorD = isEven
+              ? "M 235 0 L 235 38 Q 235 50, 248 50 L 752 50 Q 765 50, 765 62 L 765 90"
+              : "M 765 0 L 765 38 Q 765 50, 752 50 L 248 50 Q 235 50, 235 62 L 235 90";
 
             return (
-              <div
-                key={step.num}
-                className={`whn-row whn-row-${step.side} ${isLeft ? 'reveal-fade-left' : 'reveal-fade-right'} delay-${Math.min(idx + 1, 3)}`}
-              >
-                {/* Left side card wrap (only if isLeft) */}
-                {isLeft ? (
-                  <div className="whn-card-wrap whn-card-wrap-left">
-                    <div className="whn-capsule-card whn-capsule-left">
-                      <div className="whn-capsule-dashed-border" />
-                      <div className="whn-capsule-body">
-                        <span className="whn-card-num-tag">{step.num} — STEP</span>
-                        <h3 className="whn-card-title">{step.title}</h3>
-                        <p className="whn-card-desc">{step.desc}</p>
+              <Fragment key={step.num}>
+                {/* Motion Card Wrapper with Staggered Zigzag Placement */}
+                <div
+                  ref={(el) => {
+                    cardRefs.current[index] = el;
+                  }}
+                  className={`w-full md:w-1/2 self-center transition-all duration-700 ease-out ${
+                    isEven
+                      ? "md:pr-8 md:self-start md:pl-0"
+                      : "md:pl-8 md:self-end md:pr-0"
+                  }`}
+                  style={{
+                    opacity: isRevealed ? 1 : 0,
+                    transform: isRevealed
+                      ? (isCenter ? "translateY(0) scale(1.02)" : "translateY(0) scale(1)")
+                      : "translateY(36px) scale(0.94)",
+                    pointerEvents: isRevealed ? "auto" : "none",
+                  }}
+                >
+                  {/* Unicare Crimson Red Design System Card */}
+                  <div
+                    className={`whn-card backdrop-blur-md rounded-xl flex flex-row items-stretch overflow-hidden ${
+                      isCenter ? "is-center-active" : ""
+                    }`}
+                  >
+                    {/* Step Pill (Left Column) */}
+                    <div className="shrink-0 flex items-stretch">
+                      <div className="w-14 sm:w-16 py-6 bg-gradient-to-b from-red-600 to-rose-700 flex items-center justify-center border-r border-red-500/30 select-none">
+                        <span className="text-white font-bold tracking-widest text-xs md:text-sm uppercase transform -rotate-90 whitespace-nowrap origin-center select-none font-display">
+                          STEP {step.num}
+                        </span>
                       </div>
                     </div>
-                    {/* Horizontal solid branch line extending to the central node */}
-                    <div className="whn-branch-line" />
-                  </div>
-                ) : (
-                  <div className="whn-opposite-spacer" />
-                )}
 
-                {/* Central Bulbous Node */}
-                <div className="whn-node-anchor">
-                  <div className="whn-bulbous-node">
-                    <div className="whn-node-core">
-                      <Icon className="whn-node-icon" size={26} />
+                    {/* Content Area (Right Column) */}
+                    <div className="whn-card-content">
+                      <h3 className="whn-card-title font-display">
+                        {step.title}
+                      </h3>
+                      <p className="whn-card-desc">
+                        {step.description}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Right side card wrap (only if !isLeft) */}
-                {!isLeft ? (
-                  <div className="whn-card-wrap whn-card-wrap-right">
-                    {/* Horizontal solid branch line extending from central node to card */}
-                    <div className="whn-branch-line" />
-                    <div className="whn-capsule-card whn-capsule-right">
-                      <div className="whn-capsule-dashed-border" />
-                      <div className="whn-capsule-body">
-                        <span className="whn-card-num-tag">{step.num} — STEP</span>
-                        <h3 className="whn-card-title">{step.title}</h3>
-                        <p className="whn-card-desc">{step.desc}</p>
-                      </div>
+                {/* Dotted Connector Lines (Slowly draws and connects as user scrolls) */}
+                {!isLast && (
+                  <div
+                    ref={(el) => {
+                      connectorRefs.current[index] = el;
+                    }}
+                    className="relative w-full"
+                  >
+                    {/* Desktop Elbow Connector */}
+                    <div
+                      className="relative w-full h-24 md:h-28 hidden md:block pointer-events-none -my-2"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        className="w-full h-full text-red-500 overflow-visible"
+                        viewBox="0 0 1000 100"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <mask id={`whn-mask-${index}`}>
+                            <path
+                              ref={(el) => {
+                                maskPathsRef.current[index] = el;
+                              }}
+                              d={connectorD}
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="16"
+                              strokeLinecap="round"
+                              pathLength="1000"
+                              strokeDasharray="1000"
+                              strokeDashoffset="1000"
+                            />
+                          </mask>
+                        </defs>
+                        {/* Animated Dotted Elbow Line */}
+                        <path
+                          d={connectorD}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeDasharray="6,6"
+                          mask={`url(#whn-mask-${index})`}
+                        />
+                        {/* Arrowhead at Target Card */}
+                        <path
+                          ref={(el) => {
+                            arrowsRef.current[index] = el;
+                          }}
+                          d={isEven ? "M 759 82 L 765 92 L 771 82 Z" : "M 229 82 L 235 92 L 241 82 Z"}
+                          fill="#ef4444"
+                          style={{
+                            opacity: 0,
+                            transform: "scale(0)",
+                            transformOrigin: isEven ? "765px 92px" : "235px 92px",
+                            transition: "opacity 0.25s ease, transform 0.25s ease",
+                          }}
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Mobile Vertical Connector */}
+                    <div
+                      className="relative w-full h-14 flex items-center justify-center md:hidden pointer-events-none -my-2"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        className="w-8 h-full text-red-500 overflow-visible"
+                        viewBox="0 0 32 56"
+                      >
+                        <defs>
+                          <mask id={`whn-mobile-mask-${index}`}>
+                            <path
+                              ref={(el) => {
+                                mobileMaskPathsRef.current[index] = el;
+                              }}
+                              d="M 16 0 L 16 46"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="12"
+                              strokeLinecap="round"
+                              pathLength="1000"
+                              strokeDasharray="1000"
+                              strokeDashoffset="1000"
+                            />
+                          </mask>
+                        </defs>
+                        {/* Animated Vertical Dotted Line */}
+                        <path
+                          d="M 16 0 L 16 46"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeDasharray="5,5"
+                          mask={`url(#whn-mobile-mask-${index})`}
+                        />
+                        {/* Arrowhead pointing down into next card */}
+                        <path
+                          ref={(el) => {
+                            mobileArrowsRef.current[index] = el;
+                          }}
+                          d="M 11 36 L 16 46 L 21 36 Z"
+                          fill="#ef4444"
+                          style={{
+                            opacity: 0,
+                            transform: "scale(0)",
+                            transformOrigin: "16px 46px",
+                            transition: "opacity 0.25s ease, transform 0.25s ease",
+                          }}
+                        />
+                      </svg>
                     </div>
                   </div>
-                ) : (
-                  <div className="whn-opposite-spacer" />
                 )}
-              </div>
-            )
+              </Fragment>
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 interface StepData {
@@ -440,10 +648,17 @@ function WorkflowStepCard({
   onHover: (idx: number) => void
   onLeave: () => void
 }) {
+  const [isSpinning, setIsSpinning] = useState(false)
   const rotatorRef = useRef<SVGGElement | null>(null)
-  const angleRef = useRef<number>(0)
+  const rotatorRefBack = useRef<SVGGElement | null>(null)
+  const spinnerRef = useRef<HTMLDivElement | null>(null)
+  const ambientGlowRef = useRef<HTMLDivElement | null>(null)
+
+  const cardAngleRef = useRef<number>(0)
+  const dotAngleRef = useRef<number>(0)
   const rafRef = useRef<number | null>(null)
   const isHoveredRef = useRef<boolean>(false)
+  const isSpinningRef = useRef<boolean>(false)
 
   // Clean up animation frames on unmount
   useEffect(() => {
@@ -454,25 +669,28 @@ function WorkflowStepCard({
     }
   }, [])
 
+  // Slow gentle rotation of orbital dots on hover (when not clicked/spinning)
   const startClockwiseHover = () => {
+    if (isSpinningRef.current) return
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)
     }
     let lastTime = performance.now()
-    const ROTATION_SPEED = 85 // degrees per second, smooth & elegant
+    const ROTATION_SPEED = 70 // degrees per second
 
     const tickHover = (now: number) => {
-      if (!isHoveredRef.current) return
+      if (!isHoveredRef.current || isSpinningRef.current) return
 
       const dt = Math.min((now - lastTime) / 1000, 0.1)
       lastTime = now
 
-      angleRef.current += dt * ROTATION_SPEED
+      dotAngleRef.current += dt * ROTATION_SPEED
+      const rotAttr = `rotate(${dotAngleRef.current.toFixed(2)} 100 100)`
       if (rotatorRef.current) {
-        rotatorRef.current.setAttribute(
-          'transform',
-          `rotate(${angleRef.current.toFixed(2)} 100 100)`
-        )
+        rotatorRef.current.setAttribute('transform', rotAttr)
+      }
+      if (rotatorRefBack.current) {
+        rotatorRefBack.current.setAttribute('transform', rotAttr)
       }
 
       rafRef.current = requestAnimationFrame(tickHover)
@@ -482,67 +700,134 @@ function WorkflowStepCard({
   }
 
   const startClockwiseReturn = () => {
+    if (isSpinningRef.current) return
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)
     }
 
-    const currentAngle = angleRef.current
+    const currentAngle = dotAngleRef.current
     const mod = ((currentAngle % 360) + 360) % 360
 
-    // If already virtually at initial orientation, snap cleanly to 0
-    if (mod < 0.5 || 360 - mod < 0.5) {
-      angleRef.current = 0
+    if (mod < 1 || 360 - mod < 1) {
+      dotAngleRef.current = 0
       if (rotatorRef.current) {
         rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+      }
+      if (rotatorRefBack.current) {
+        rotatorRefBack.current.setAttribute('transform', 'rotate(0 100 100)')
       }
       return
     }
 
-    // Always rotate CLOCKWISE to the next multiple of 360 (never backwards / anticlockwise)
     let remainingDegrees = 360 - mod
-    // If too close to target, add 360deg so momentum has enough space to coast down with organic grace
     if (remainingDegrees < 75) {
       remainingDegrees += 360
     }
 
-    // Naturally calibrated duration for a calm, organic spin-down (850ms - 1280ms)
-    const returnDuration = Math.max(820, Math.min(1300, (remainingDegrees / 360) * 520 + 680))
+    const returnDuration = Math.max(700, Math.min(1100, (remainingDegrees / 360) * 480 + 550))
     const startTime = performance.now()
 
     const tickReturn = (now: number) => {
-      // If user re-hovers while returning, seamlessly resume hover spin
-      if (isHoveredRef.current) {
-        startClockwiseHover()
+      if (isHoveredRef.current || isSpinningRef.current) {
+        if (!isSpinningRef.current) startClockwiseHover()
         return
       }
 
       const elapsed = now - startTime
       const t = Math.min(1, elapsed / returnDuration)
-      // Organic sinusoidal ease-out deceleration (smooth momentum coast-down)
       const eased = Math.sin((t * Math.PI) / 2)
 
       const nextAngle = currentAngle + remainingDegrees * eased
-      angleRef.current = nextAngle
+      dotAngleRef.current = nextAngle
 
+      const rotAttr = `rotate(${nextAngle.toFixed(2)} 100 100)`
       if (rotatorRef.current) {
-        rotatorRef.current.setAttribute(
-          'transform',
-          `rotate(${nextAngle.toFixed(2)} 100 100)`
-        )
+        rotatorRef.current.setAttribute('transform', rotAttr)
+      }
+      if (rotatorRefBack.current) {
+        rotatorRefBack.current.setAttribute('transform', rotAttr)
       }
 
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tickReturn)
       } else {
-        // Return complete: 360deg is identical to 0deg, normalize seamlessly
-        angleRef.current = 0
+        dotAngleRef.current = 0
         if (rotatorRef.current) {
           rotatorRef.current.setAttribute('transform', 'rotate(0 100 100)')
+        }
+        if (rotatorRefBack.current) {
+          rotatorRefBack.current.setAttribute('transform', 'rotate(0 100 100)')
         }
       }
     }
 
     rafRef.current = requestAnimationFrame(tickReturn)
+  }
+
+  // Click handler: 3D Horizontal Flip Spin (spinning while flipping horizontally and smoothly returning to itself)
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+    }
+    isSpinningRef.current = true
+    setIsSpinning(true)
+
+    const currentAngle = cardAngleRef.current
+    const currentMod = ((currentAngle % 360) + 360) % 360
+
+    // Spin 720 degrees (2 full 360° horizontal flips around Y axis)
+    const additionalTurns = 720
+    const targetAngle = currentAngle + (360 - currentMod) + additionalTurns
+    const totalDelta = targetAngle - currentAngle
+
+    // Calibrated duration for an energetic horizontal flip spin and smooth, graceful coast-down
+    const duration = 1200 // 1.2s total
+    const startTime = performance.now()
+
+    const tickClickSpin = (now: number) => {
+      const elapsed = now - startTime
+      const t = Math.min(1, elapsed / duration)
+
+      // Natural power ease-out curve: explosive initial flip-spin with smooth sinusoidal finish
+      const eased = 1 - Math.pow(1 - t, 3.4)
+
+      const nextAngle = currentAngle + totalDelta * eased
+      cardAngleRef.current = nextAngle
+
+      // Subtle scale bounce during flip (peaks at 1.08x in the middle of spin)
+      const scaleBounce = 1 + 0.08 * Math.sin(t * Math.PI)
+
+      if (spinnerRef.current) {
+        spinnerRef.current.style.transform = `rotateY(${nextAngle.toFixed(2)}deg) scale(${scaleBounce.toFixed(3)})`
+      }
+
+      // Dynamic glowing aura boost during spin
+      if (ambientGlowRef.current) {
+        ambientGlowRef.current.style.opacity = `${(0.4 + 0.6 * Math.sin(t * Math.PI)).toFixed(2)}`
+        ambientGlowRef.current.style.transform = `translate(-50%, -50%) scale(${(1 + 0.18 * Math.sin(t * Math.PI)).toFixed(3)})`
+      }
+
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tickClickSpin)
+      } else {
+        // Complete spin: reset cleanly upright at 0deg
+        cardAngleRef.current = 0
+        isSpinningRef.current = false
+        setIsSpinning(false)
+
+        if (spinnerRef.current) {
+          spinnerRef.current.style.transform = 'rotateY(0deg) scale(1)'
+        }
+        if (ambientGlowRef.current) {
+          ambientGlowRef.current.style.opacity = ''
+          ambientGlowRef.current.style.transform = ''
+        }
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tickClickSpin)
   }
 
   const handleMouseEnter = () => {
@@ -584,49 +869,105 @@ function WorkflowStepCard({
 
   return (
     <div
-      className={`htc-step ${stateClass}`}
+      className={`htc-step ${stateClass} ${isSpinning ? 'is-spinning' : ''}`}
       style={{
         transform: cardTransform,
         zIndex: cardZIndex,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleCardClick}
     >
-      <div className="htc-ring-wrap">
+      <div
+        className="htc-ring-wrap"
+        title="Click to flip card"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleCardClick(e as any)
+          }
+        }}
+      >
         {/* Ambient atmospheric radial glow that softly melts into the dark background */}
-        <div className="htc-ambient-glow" aria-hidden="true" />
+        <div ref={ambientGlowRef} className="htc-ambient-glow" aria-hidden="true" />
 
-        <svg
-          className="htc-ring-svg"
-          viewBox="0 0 200 200"
-          style={{ overflow: 'visible' }}
-        >
-          <circle className="htc-ring-track" cx="100" cy="100" r="90" />
-          <g
-            ref={rotatorRef}
-            className="htc-ring-rotator"
-            transform="rotate(0 100 100)"
-          >
-            <circle
-              className={`htc-ring-arc ${step.arcClass}`}
-              cx="100"
-              cy="100"
-              r="90"
-            />
-            {step.dots.map((dot, dIdx) => (
-              <circle
-                key={dIdx}
-                className={`htc-glow-dot ${dot.cls}`}
-                cx={dot.cx}
-                cy={dot.cy}
-                r={dot.r}
-              />
-            ))}
-          </g>
-        </svg>
-        <div className="htc-inner-content">
-          <span className="htc-step-num">{step.num}</span>
-          <h3 className="htc-step-title">{step.title}</h3>
+        {/* 3D Horizontal Flip Spinner */}
+        <div ref={spinnerRef} className="htc-flip-spinner">
+          {/* FRONT FACE */}
+          <div className="htc-card-face htc-card-face-front">
+            <div className="htc-face-disc" />
+            <svg
+              className="htc-ring-svg"
+              viewBox="0 0 200 200"
+              style={{ overflow: 'visible' }}
+            >
+              <circle className="htc-ring-track" cx="100" cy="100" r="90" />
+              <g
+                ref={rotatorRef}
+                className="htc-ring-rotator"
+                transform="rotate(0 100 100)"
+              >
+                <circle
+                  className={`htc-ring-arc ${step.arcClass}`}
+                  cx="100"
+                  cy="100"
+                  r="90"
+                />
+                {step.dots.map((dot, dIdx) => (
+                  <circle
+                    key={dIdx}
+                    className={`htc-glow-dot ${dot.cls}`}
+                    cx={dot.cx}
+                    cy={dot.cy}
+                    r={dot.r}
+                  />
+                ))}
+              </g>
+            </svg>
+            <div className="htc-inner-content">
+              <span className="htc-step-num">{step.num}</span>
+              <h3 className="htc-step-title">{step.title}</h3>
+            </div>
+          </div>
+
+          {/* BACK FACE (Double-sided for clean 3D horizontal flip) */}
+          <div className="htc-card-face htc-card-face-back">
+            <div className="htc-face-disc" />
+            <svg
+              className="htc-ring-svg"
+              viewBox="0 0 200 200"
+              style={{ overflow: 'visible' }}
+            >
+              <circle className="htc-ring-track" cx="100" cy="100" r="90" />
+              <g
+                ref={rotatorRefBack}
+                className="htc-ring-rotator"
+                transform="rotate(0 100 100)"
+              >
+                <circle
+                  className={`htc-ring-arc ${step.arcClass}`}
+                  cx="100"
+                  cy="100"
+                  r="90"
+                />
+                {step.dots.map((dot, dIdx) => (
+                  <circle
+                    key={dIdx}
+                    className={`htc-glow-dot ${dot.cls}`}
+                    cx={dot.cx}
+                    cy={dot.cy}
+                    r={dot.r}
+                  />
+                ))}
+              </g>
+            </svg>
+            <div className="htc-inner-content">
+              <span className="htc-step-num">{step.num}</span>
+              <h3 className="htc-step-title">{step.title}</h3>
+            </div>
+          </div>
         </div>
       </div>
       <p className="htc-step-desc">{step.desc}</p>
@@ -703,11 +1044,16 @@ export function ComplaintWorkflowSection() {
 
     const check = () => {
       const rect = el.getBoundingClientRect()
-      if (rect.top <= window.innerHeight * 0.88) {
+      if (rect.top <= window.innerHeight * 0.92) {
         setIsVisible(true)
       }
     }
     check()
+
+    const handleScroll = () => {
+      check()
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -716,13 +1062,14 @@ export function ComplaintWorkflowSection() {
           observer.disconnect()
         }
       },
-      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -20px 0px' }
     )
 
     observer.observe(el)
 
     return () => {
       observer.disconnect()
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [])
 

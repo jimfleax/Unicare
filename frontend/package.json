@@ -49,6 +49,7 @@
     "clsx": "^2.1.1",
     "face-api.js": "^0.22.2",
     "lucide-react": "^1.27.0",
+    "motion": "^14.9.0",
     "postprocessing": "^6.39.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

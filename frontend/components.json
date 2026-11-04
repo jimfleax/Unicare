@@ -29,6 +29,8 @@
       "headers": {
         "Authorization": "Bearer ${REACTBITS_LICENSE_KEY}"
       }
-    }
+    },
+    "@aceternity": "https://ui.aceternity.com/registry/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}"
   }
 }

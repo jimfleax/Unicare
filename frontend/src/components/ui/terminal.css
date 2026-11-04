@@ -1,0 +1,433 @@
+/* ================================================================
+   Magic UI & Aceternity Style macOS Terminal Window Card Component
+   Theme: Pitch Black Metallic / Light Slate with Subtle Crimson Backlight
+   ================================================================ */
+
+.terminal-window-wrapper {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Subtle Crimson Red Glow behind the terminal window visible slightly on the edges */
+.terminal-window-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  background: radial-gradient(
+    ellipse 92% 78% at 50% 50%,
+    rgba(220, 38, 38, 0.32) 0%,
+    rgba(239, 68, 68, 0.16) 48%,
+    rgba(220, 38, 38, 0) 78%
+  );
+  filter: blur(22px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.95;
+  transition: opacity 0.3s ease;
+}
+
+/* ── Outer Card Window Container ────────────────────────────── */
+.terminal-window-card {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: ui-monospace, 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Proper Dark Theme (Pitch Black Metallic with subtle Red Edge Glow) */
+.terminal-window-card.terminal-theme-dark {
+  background: linear-gradient(180deg, #101017 0%, #08080c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+  box-shadow: 
+    0 30px 70px -15px rgba(0, 0, 0, 0.98),
+    0 0 35px -5px rgba(220, 38, 38, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Light Theme */
+.terminal-window-card.terminal-theme-light {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  box-shadow: 
+    0 20px 50px -10px rgba(15, 23, 42, 0.14),
+    0 0 25px -5px rgba(220, 38, 38, 0.08),
+    inset 0 1px 0 #ffffff;
+}
+
+/* ── Header Title Bar ───────────────────────────────────────── */
+.terminal-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.terminal-theme-dark .terminal-window-header {
+  background: #14141c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+}
+
+.terminal-theme-light .terminal-window-header {
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+/* macOS Window Control Dots */
+.terminal-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-sizing: border-box;
+}
+
+.terminal-dot:hover {
+  transform: scale(1.15);
+  filter: brightness(1.1);
+}
+
+.terminal-dot-close {
+  background: #ff5f56;
+  border: 1px solid #e0443e;
+  box-shadow: 0 0 6px rgba(255, 95, 86, 0.4);
+}
+
+.terminal-dot-minimize {
+  background: #ffbd2e;
+  border: 1px solid #dea123;
+  box-shadow: 0 0 6px rgba(255, 189, 46, 0.4);
+}
+
+.terminal-dot-maximize {
+  background: #27c93f;
+  border: 1px solid #1aab29;
+  box-shadow: 0 0 6px rgba(39, 201, 63, 0.4);
+}
+
+/* Window Title */
+.terminal-window-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Proper Vibrant Terminal Green LED */
+.terminal-live-dot {
+  width: 7.5px;
+  height: 7.5px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  display: inline-block;
+  animation: terminalPulse 2s infinite ease-in-out;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+@keyframes terminalPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+}
+
+/* ── Terminal Window Body ───────────────────────────────────── */
+.terminal-window-body {
+  margin: 0;
+  padding: 24px 28px;
+  overflow-y: auto;
+  max-height: 500px;
+  font-family: ui-monospace, 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  font-size: 13.5px;
+  line-height: 1.85;
+  box-sizing: border-box;
+}
+
+.terminal-theme-dark .terminal-window-body {
+  background: linear-gradient(180deg, #0a0a0f 0%, #060609 100%);
+  color: #f4f4f5;
+}
+
+.terminal-theme-light .terminal-window-body {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Custom Scrollbar for Terminal */
+.terminal-window-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-theme-dark .terminal-window-body::-webkit-scrollbar-track {
+  background: #09090d;
+}
+
+.terminal-theme-dark .terminal-window-body::-webkit-scrollbar-thumb {
+  background: #27273a;
+  border-radius: 3px;
+}
+
+.terminal-theme-light .terminal-window-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.terminal-theme-light .terminal-window-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Code Stream Grid */
+.terminal-code-stream {
+  display: grid;
+  row-gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Animated Span & Typing Typography ──────────────────────── */
+.terminal-line {
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.terminal-command {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Proper Green Terminal Cursor */
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background-color: #22c55e;
+  margin-left: 3px;
+  vertical-align: middle;
+  animation: terminalCursorBlink 1s step-end infinite;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+@keyframes terminalCursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Proper Syntax Highlighting Colors ──────────────────────── */
+/* Proper Green (replacing bluish emerald) */
+.terminal-text-cmd-dark {
+  color: #22c55e;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.35);
+}
+.terminal-text-cmd-light {
+  color: #16a34a;
+}
+
+.terminal-text-success-dark {
+  color: #4ade80;
+  font-weight: 600;
+}
+.terminal-text-success-light {
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* Info lines */
+.terminal-text-info-dark {
+  color: #38bdf8;
+}
+.terminal-text-info-light {
+  color: #0284c7;
+}
+
+/* Warning lines */
+.terminal-text-warn-dark {
+  color: #facc15;
+}
+.terminal-text-warn-light {
+  color: #b45309;
+}
+
+/* Danger / Critical risk lines */
+.terminal-text-danger-dark {
+  color: #ef4444;
+  font-weight: 600;
+}
+.terminal-text-danger-light {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Muted / Calculation / System lines */
+.terminal-text-muted-dark {
+  color: #71717a;
+}
+.terminal-text-muted-light {
+  color: #64748b;
+}
+
+/* ── Footer Info Bar ────────────────────────────────────────── */
+.terminal-window-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  font-size: 11.5px;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.terminal-theme-dark .terminal-window-footer {
+  background: #0e0e14;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #71717a;
+}
+
+.terminal-theme-light .terminal-window-footer {
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.terminal-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.terminal-footer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* ── Quick Phase Action Cards Bar (Aceternity Style Tabs) ────── */
+.pm-phase-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto 20px auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .pm-phase-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pm-phase-cards-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pm-phase-tab-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.pm-phase-tab-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Dark Theme Phase Tabs */
+.terminal-theme-dark .pm-phase-tab-card {
+  background: rgba(18, 18, 24, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.terminal-theme-dark .pm-phase-tab-card:hover {
+  background: rgba(26, 26, 36, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.terminal-theme-dark .pm-phase-tab-card.active {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(220, 38, 38, 0.25);
+}
+
+/* Light Theme Phase Tabs */
+.terminal-theme-light .pm-phase-tab-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.terminal-theme-light .pm-phase-tab-card:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.terminal-theme-light .pm-phase-tab-card.active {
+  background: #fff5f5;
+  border-color: rgba(220, 38, 38, 0.45);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+}
+
+.pm-phase-tab-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ef4444;
+}
+
+.pm-phase-tab-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pm-phase-tab-desc {
+  font-size: 11px;
+  opacity: 0.75;
+  line-height: 1.35;
+}

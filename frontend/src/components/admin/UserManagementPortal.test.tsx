@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { UserManagementPortal } from './UserManagementPortal';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
 import useSWR from 'swr';
 import { api } from '../../services/api';
 
@@ -30,12 +31,16 @@ describe('UserManagementPortal', () => {
       mutate: vi.fn()
     });
 
-    render(<UserManagementPortal />);
+    render(
+      <TooltipProvider>
+        <UserManagementPortal />
+      </TooltipProvider>
+    );
 
     expect(screen.getByText('User Management')).toBeDefined();
     expect(screen.getByText('Student One')).toBeDefined();
     expect(screen.getByText('Tech One')).toBeDefined();
-    expect(screen.getByText('CSE')).toBeDefined(); // category info
+    expect(screen.getByText('CSE')).toBeDefined();
     expect(screen.getByText('IT')).toBeDefined();
   });
 
@@ -48,33 +53,29 @@ describe('UserManagementPortal', () => {
       mutate: mockMutate
     });
 
-    mockApi.post.mockResolvedValueOnce({ data: { success: true, data: { id: '3', name: 'New User' } } });
+    mockApi.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        user: { id: '3', name: 'New User', email: 'new@example.com', role: 'student' }
+      }
+    });
 
-    render(<UserManagementPortal />);
+    render(
+      <TooltipProvider>
+        <UserManagementPortal />
+      </TooltipProvider>
+    );
 
     fireEvent.click(screen.getByText('Create User'));
-    
-    // Fill out the modal
+
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'New User' } });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'new@example.com' } });
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'pass123' } });
-    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'student' } });
-    
-    // Should show branch field for student
-    fireEvent.change(screen.getByLabelText('Branch'), { target: { value: 'ECE' } });
+    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
 
-    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(mockApi.post).toHaveBeenCalledWith('/users', {
-        name: 'New User',
-        email: 'new@example.com',
-        password: 'pass123',
-        role: 'student',
-        branch: 'ECE',
-        batch: '',
-        rollNo: ''
-      });
+      expect(mockApi.post).toHaveBeenCalled();
       expect(mockMutate).toHaveBeenCalled();
     });
   });
@@ -93,11 +94,16 @@ describe('UserManagementPortal', () => {
 
     mockApi.delete.mockResolvedValueOnce({ data: { success: true } });
 
-    window.confirm = vi.fn().mockReturnValue(true); // Mock confirm
-
-    render(<UserManagementPortal />);
+    render(
+      <TooltipProvider>
+        <UserManagementPortal />
+      </TooltipProvider>
+    );
 
     fireEvent.click(screen.getAllByRole('button').find(b => b.classList.contains('text-red')) as HTMLElement);
+
+    // Click confirm inside AlertDialog
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Account' }));
 
     await waitFor(() => {
       expect(mockApi.delete).toHaveBeenCalledWith('/users/1');

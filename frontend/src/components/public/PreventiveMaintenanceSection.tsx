@@ -1,76 +1,65 @@
-import React from 'react'
-import {
-  Monitor, Rocket, BarChart3, Search
-} from 'lucide-react'
-
-interface StepCard {
-  id: string
-  stepNum: string
-  title: string
-  desc: string
-  icon: React.ElementType
-  isRed: boolean
-}
-
-const stepsData: StepCard[] = [
-  {
-    id: 'step-01',
-    stepNum: '01',
-    title: 'Detect Patterns',
-    desc: 'Repeated complaints around the same asset, location, or issue type are identified.',
-    icon: Monitor,
-    isRed: true, // Red Card
-  },
-  {
-    id: 'step-02',
-    stepNum: '02',
-    title: 'Identify Risk',
-    desc: 'Recurring failures are flagged as potential maintenance risks.',
-    icon: Rocket,
-    isRed: false, // Black in dark mode / White in light mode
-  },
-  {
-    id: 'step-03',
-    stepNum: '03',
-    title: 'Schedule Maintenance',
-    desc: 'Maintenance teams can inspect or service the affected asset before another breakdown occurs.',
-    icon: BarChart3,
-    isRed: true, // Red Card
-  },
-  {
-    id: 'step-04',
-    stepNum: '04',
-    title: 'Prevent Downtime',
-    desc: 'Problems are addressed proactively instead of waiting for users to report them again.',
-    icon: Search,
-    isRed: false, // Black in dark mode / White in light mode
-  },
-]
+import React, { useState } from 'react'
+import { Terminal, TypingAnimation, AnimatedSpan } from '@/components/ui/terminal'
+import { Activity, ShieldAlert, CalendarClock, CheckCircle2 } from 'lucide-react'
 
 interface PreventiveMaintenanceSectionProps {
   theme?: 'dark' | 'light'
 }
 
+interface PhaseInfo {
+  id: string
+  num: string
+  title: string
+  desc: string
+  icon: React.ElementType
+}
+
+const PHASES: PhaseInfo[] = [
+  {
+    id: 'p1',
+    num: '01',
+    title: 'Detect Patterns',
+    desc: 'Repeated complaints around the same asset, zone, or issue flagged proactively.',
+    icon: Activity,
+  },
+  {
+    id: 'p2',
+    num: '02',
+    title: 'Identify Risk',
+    desc: 'Recurring component degradation modeled with MTBF risk evaluation.',
+    icon: ShieldAlert,
+  },
+  {
+    id: 'p3',
+    num: '03',
+    title: 'Schedule Maintenance',
+    desc: 'Automated work orders dispatched with technician assignment & parts reserved.',
+    icon: CalendarClock,
+  },
+  {
+    id: 'p4',
+    num: '04',
+    title: 'Prevent Downtime',
+    desc: 'Zero-interruption proactive servicing with 99.98% verified campus uptime.',
+    icon: CheckCircle2,
+  },
+]
+
 export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaintenanceSectionProps) {
   const isLight = theme === 'light'
-
-  // Alternating palette: Red cards vs Contrast (Black in dark mode, White in light mode)
-  const redStroke: [string, string] = isLight ? ['#ef4444', '#dc2626'] : ['#f87171', '#ef4444']
-  const redShadow = isLight ? 'rgba(220, 38, 38, 0.22)' : 'rgba(239, 68, 68, 0.32)'
-  const redArc = isLight ? '#dc2626' : '#ef4444'
-
-  const contrastStroke: [string, string] = isLight ? ['#94a3b8', '#cbd5e1'] : ['#71717a', '#3f3f46']
-  const contrastShadow = isLight ? 'rgba(100, 116, 139, 0.18)' : 'rgba(0, 0, 0, 0.75)'
-  const contrastArc = isLight ? '#64748b' : '#a1a1aa'
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(null)
 
   return (
     <section id="preventive-maintenance" className="pm-section reveal-on-scroll">
-      {/* Background Ambient Glow & Vectors */}
+      {/* Background Ambient Glow */}
       <div className="pm-ambient-glow" aria-hidden="true" />
 
       <div className="pm-container">
         {/* Section Header */}
         <div className="pm-header reveal-fade-up">
+          <div className="pm-badge mb-2">
+            <span className="pm-badge-icon">●</span> PREVENTIVE INTELLIGENCE
+          </div>
           <h2 className="pm-title">
             Preventive <span className="text-red-highlight">Maintenance</span>
           </h2>
@@ -81,138 +70,108 @@ export function PreventiveMaintenanceSection({ theme = 'dark' }: PreventiveMaint
           </p>
         </div>
 
-        {/* 4 Alternating Red & Black/White Notched Cards */}
-        <div className="pm-cards-grid">
-          {stepsData.map((step, idx) => {
-            const Icon = step.icon
-            const isRed = step.isRed
-            const strokeGrad = isRed ? redStroke : contrastStroke
-            const shadowColor = isRed ? redShadow : contrastShadow
-            const arcColor = isRed ? redArc : contrastArc
-
+        {/* 4 Interactive Phase Component Cards (Aceternity / InfoData Style) */}
+        <div className={`pm-phase-cards-row ${isLight ? 'terminal-theme-light' : 'terminal-theme-dark'}`}>
+          {PHASES.map((p) => {
+            const Icon = p.icon
+            const isSelected = selectedPhase === p.id
             return (
-              <div
-                key={step.id}
-                className={`pm-card-wrapper ${isRed ? 'pm-card-red' : 'pm-card-contrast'} reveal-zoom-in delay-${idx + 1}`}
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedPhase(isSelected ? null : p.id)}
+                className={`pm-phase-tab-card ${isSelected ? 'active' : ''}`}
+                title={`Click to filter: Phase ${p.num} ${p.title}`}
               >
-                {/* SVG Card Frame: Notched outline, connecting wire, decorative arcs & drop shadow */}
-                <svg
-                  className="pm-card-svg"
-                  viewBox="0 0 280 370"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    {/* Dynamic Drop Shadow Filter */}
-                    <filter id={`pm-shadow-${step.id}`} x="-15%" y="-15%" width="130%" height="135%">
-                      <feDropShadow
-                        dx="3"
-                        dy="12"
-                        stdDeviation="10"
-                        floodColor={shadowColor}
-                        floodOpacity={isLight && !isRed ? 0.15 : 0.35}
-                      />
-                    </filter>
-
-                    {/* Outer Border Stroke Gradient */}
-                    <linearGradient id={`pm-stroke-${step.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor={strokeGrad[0]} />
-                      <stop offset="100%" stopColor={strokeGrad[1]} />
-                    </linearGradient>
-
-                    {/* Corner Accent Arc Gradient */}
-                    <linearGradient id={`pm-arc-grad-${step.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor={arcColor} stopOpacity="0.35" />
-                      <stop offset="100%" stopColor={arcColor} stopOpacity="0.05" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Main Notched Card Body */}
-                  <path
-                    className="pm-card-path"
-                    d="M 42 18
-                       L 222 18
-                       A 24 24 0 0 1 246 42
-                       L 246 70
-                       A 6 6 0 0 0 240 76
-                       L 220 76
-                       A 10 10 0 0 0 220 96
-                       L 240 96
-                       A 6 6 0 0 0 246 102
-                       L 246 296
-                       A 24 24 0 0 1 222 320
-                       L 78 320
-                       A 6 6 0 0 0 72 314
-                       L 72 294
-                       A 10 10 0 0 0 52 294
-                       L 52 314
-                       A 6 6 0 0 0 46 320
-                       L 42 320
-                       A 24 24 0 0 1 18 296
-                       L 18 42
-                       A 24 24 0 0 1 42 18 Z"
-                    stroke={`url(#pm-stroke-${step.id})`}
-                    strokeWidth="3.5"
-                    filter={`url(#pm-shadow-${step.id})`}
-                  />
-
-                  {/* Top-Left Decorative Subtle Arc */}
-                  <path
-                    d="M 28 85 A 60 60 0 0 1 85 28"
-                    stroke={`url(#pm-arc-grad-${step.id})`}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Bottom-Right Decorative Subtle Arc */}
-                  <path
-                    d="M 175 310 A 60 60 0 0 0 236 250"
-                    stroke={`url(#pm-arc-grad-${step.id})`}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Outer Loop Wire */}
-                  <path
-                    className="pm-loop-wire"
-                    d="M 222 86
-                       L 260 86
-                       A 12 12 0 0 1 272 98
-                       L 272 334
-                       A 16 16 0 0 1 256 350
-                       L 74 350
-                       A 12 12 0 0 1 62 338
-                       L 62 292"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-
-                {/* Card Content Overlay */}
-                <div className="pm-card-content">
-                  {/* Top Centered Icon */}
-                  <div className="pm-card-icon-wrap">
-                    <Icon size={26} className="pm-icon" />
-                  </div>
-
-                  {/* Title & Phase Number */}
-                  <div className="pm-card-header-text">
-                    <span className="pm-card-tag">
-                      INFODATA {step.stepNum}
-                    </span>
-                    <h3 className="pm-card-title">
-                      {step.stepNum} — {step.title}
-                    </h3>
-                  </div>
-
-                  {/* Description */}
-                  <p className="pm-card-desc">{step.desc}</p>
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="pm-phase-tab-badge">INFODATA {p.num}</span>
+                  <Icon size={16} className={isSelected ? 'text-red-500' : isLight ? 'text-slate-400' : 'text-zinc-500'} />
                 </div>
-              </div>
+                <div className="pm-phase-tab-title">
+                  {p.num} — {p.title}
+                </div>
+                <div className="pm-phase-tab-desc">
+                  {p.desc}
+                </div>
+              </button>
             )
           })}
+        </div>
+
+        {/* macOS Style Terminal Window Card (Magic UI / Aceternity) */}
+        <div className="w-full flex justify-center mt-3 mb-8">
+          <Terminal theme={theme} title="unicare@diagnostics-daemon — zsh (v2.4)" className="w-full">
+            {/* Phase 01: Detect Patterns */}
+            {(!selectedPhase || selectedPhase === 'p1') && [
+              <TypingAnimation key="p1-cmd" className={isLight ? "terminal-text-cmd-light" : "terminal-text-cmd-dark"}>
+                &gt; unicare telemetry scan --detect-patterns --depth 90d
+              </TypingAnimation>,
+              <AnimatedSpan key="p1-s1" className={isLight ? "terminal-text-info-light" : "terminal-text-info-dark"}>
+                <span>[INIT] Ingested 1,420 historical work tickets across 12 campus zones.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p1-s2" className={isLight ? "terminal-text-warn-light" : "terminal-text-warn-dark"}>
+                <span>▲ [ANOMALY] Cluster #ANM-8821: Repeated thermal spikes on Main Server UPS (Block C).</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p1-s3" className={isLight ? "terminal-text-success-light" : "terminal-text-success-dark"}>
+                <span>✔ Phase 01: Detect Patterns — 1 critical failure pattern flagged.</span>
+              </AnimatedSpan>,
+            ]}
+
+            {/* Phase 02: Identify Risk */}
+            {(!selectedPhase || selectedPhase === 'p2') && [
+              <TypingAnimation key="p2-cmd" delay={200} className={isLight ? "terminal-text-cmd-light mt-2" : "terminal-text-cmd-dark mt-2"}>
+                &gt; unicare risk-eval --asset UPS-8821 --threshold 0.85
+              </TypingAnimation>,
+              <AnimatedSpan key="p2-s1" className={isLight ? "terminal-text-muted-light" : "terminal-text-muted-dark"}>
+                <span>[CALC] Failure probability modeled: MTBF degradation -42% below baseline.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p2-s2" className={isLight ? "terminal-text-danger-light" : "terminal-text-danger-dark"}>
+                <span>✖ [CRITICAL RISK] Imminent component breakdown predicted within 72 hours (Confidence: 98.4%).</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p2-s3" className={isLight ? "terminal-text-success-light" : "terminal-text-success-dark"}>
+                <span>✔ Phase 02: Identify Risk — Priority Tier 1 (HIGH_RISK) indexed.</span>
+              </AnimatedSpan>,
+            ]}
+
+            {/* Phase 03: Schedule Maintenance */}
+            {(!selectedPhase || selectedPhase === 'p3') && [
+              <TypingAnimation key="p3-cmd" delay={200} className={isLight ? "terminal-text-cmd-light mt-2" : "terminal-text-cmd-dark mt-2"}>
+                &gt; unicare dispatch --schedule-maintenance --auto-assign --reserve-parts
+              </TypingAnimation>,
+              <AnimatedSpan key="p3-s1" className={isLight ? "terminal-text-info-light" : "terminal-text-info-dark"}>
+                <span>[DISPATCH] Work Order #WO-2026-9041 created. Matched certified technician: Alex Rivera.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p3-s2" className={isLight ? "terminal-text-muted-light" : "terminal-text-muted-dark"}>
+                <span>[INVENTORY] Replacement capacitor module Bay-3 reserved automatically.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p3-s3" className={isLight ? "terminal-text-success-light" : "terminal-text-success-dark"}>
+                <span>✔ Phase 03: Schedule Maintenance — Service window confirmed for Tomorrow 09:30 AM.</span>
+              </AnimatedSpan>,
+            ]}
+
+            {/* Phase 04: Prevent Downtime */}
+            {(!selectedPhase || selectedPhase === 'p4') && [
+              <TypingAnimation key="p4-cmd" delay={200} className={isLight ? "terminal-text-cmd-light mt-2" : "terminal-text-cmd-dark mt-2"}>
+                &gt; unicare audit --verify-uptime --prevent-downtime --report
+              </TypingAnimation>,
+              <AnimatedSpan key="p4-s1" className={isLight ? "terminal-text-muted-light" : "terminal-text-muted-dark"}>
+                <span>[VERIFY] Proactive maintenance completed with zero student or lab interruption.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p4-s2" className={isLight ? "terminal-text-info-light font-medium" : "terminal-text-info-dark font-medium"}>
+                <span>[METRICS] Duplicate complaints avoided: 100% | Critical downtime saved: ~4.5 hours.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p4-s3" className={isLight ? "terminal-text-success-light" : "terminal-text-success-dark"}>
+                <span>✔ Phase 04: Prevent Downtime — Campus-wide uptime: 99.98% verified.</span>
+              </AnimatedSpan>,
+              <AnimatedSpan key="p4-s4" className={isLight ? "terminal-text-muted-light text-xs mt-1" : "terminal-text-muted-dark text-xs mt-1"}>
+                <span>[SYSTEM] Cycle complete. Telemetry daemon listening for events...</span>
+              </AnimatedSpan>,
+            ]}
+          </Terminal>
         </div>
       </div>
     </section>
   )
 }
+
+export default PreventiveMaintenanceSection
